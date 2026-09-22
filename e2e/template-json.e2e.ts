@@ -41,6 +41,9 @@ const FILE = JSON.stringify(
       },
       { name: 'Rest day', type: 'rest', kind: 'R', blocks: [{ time: '10:00', title: 'Something outside', minutes: 60 }] },
     ],
+    routines: [
+      { title: 'Medication', minutes: 5, category: 'Health', core: true, weekdays: [1, 2, 3, 4, 5, 6, 7], times: { D: '06:15', N: '17:30', R: '09:30' } },
+    ],
     roster: { '2026-09-17': 'D', '2026-09-18': 'N', '2026-09-19': 'R', '2026-09-20': 'Q' },
   },
   null,
@@ -59,7 +62,7 @@ test('a pasted file is previewed inside the screen, applied, and its night lands
   const field = page.getByRole('textbox', { name: 'Templates and roster as JSON' })
   await field.fill(FILE)
   await page.getByRole('button', { name: 'Preview', exact: true }).click()
-  await expect(page.getByText('3 new templates. 3 dates set, 1 skipped.')).toBeVisible()
+  await expect(page.getByText('3 new templates. 1 new routine. 3 dates set, 1 skipped.')).toBeVisible()
   const skipped = page.getByRole('list', { name: 'Dates in the file' }).getByRole('listitem').filter({ hasText: '2026-09-20' })
   await expect(skipped).toContainText('No kind of day has the letter or name "Q".')
   // The meal names a recipe Kitchen has not got yet: the block waits for it.
@@ -85,6 +88,9 @@ test('a pasted file is previewed inside the screen, applied, and its night lands
   const saturday = page.locator('.mini-calendar [data-date="2026-09-19"]')
   if (await saturday.isVisible().catch(() => false)) await saturday.click()
   else for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Next day' }).click()
+  // The routine the file carried, on a rest day at the rest day's time.
+  const medication = page.getByRole('checkbox', { name: 'Medication', exact: true }).locator('xpath=ancestor::li[1]')
+  await expect(medication).toContainText('09:30')
   const meal = page.getByRole('checkbox', { name: 'Night meal', exact: true }).locator('xpath=ancestor::li[1]')
   await expect(meal).toContainText('01:00')
   await expect(meal).toContainText('last night')

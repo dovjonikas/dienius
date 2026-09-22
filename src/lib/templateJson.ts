@@ -1,9 +1,10 @@
-import { MEAL_TYPES, type AppData, type DayType, type MealType, type SleepProfile, type Template, type TemplateBlock } from './types'
+import { MEAL_TYPES, ROUTINE_LIMITS, type AppData, type DayType, type MealType, type Routine, type SleepProfile, type Template, type TemplateBlock } from './types'
 import { PALETTE_COLORS } from './colors'
 import { cleanLetter, dayKinds, isDayKind, kindOnDate } from './dayKinds'
 import { rosterApplied } from './shiftDay'
 import { sameName } from './recipeImport'
 import { mealFields } from './kitchen'
+import { cleanRoutine, routineMinutes, type RoutineInput } from './routines'
 
 /**
  * Templates and the roster as JSON - since v2.33, docs/TEMPLATE-JSON.md.
@@ -33,7 +34,8 @@ const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 const COLOR = /^#[0-9a-f]{6}$/i
 const LIMITS = { name: 120, title: 200, minutes: 1440 } as const
 
-const FILE_FIELDS = ['format', 'version', 'templates', 'roster']
+const FILE_FIELDS = ['format', 'version', 'templates', 'routines', 'roster']
+const ROUTINE_FIELDS = ['title', 'minutes', 'category', 'core', 'weekdays', 'times']
 const TEMPLATE_FIELDS = ['name', 'type', 'kind', 'color', 'sleep', 'blocks']
 const BLOCK_FIELDS = ['time', 'title', 'minutes', 'category', 'core', 'key', 'ongoing', 'afterMidnight', 'mealType', 'followMeal', 'recipes', 'note']
 
@@ -83,9 +85,42 @@ function templateEntry(template: Template, data: AppData): Entry {
   return out
 }
 
-/** An object on one line, the way the file writes a block and a sleep. */
+/**
+ * A routine as the file writes it: its length one number, or one per kind
+ * where it has them; its weekdays 1 to 7 with Monday first; its times by the
+ * kinds' letters, in the roster's order.
+ */
+function routineEntry(routine: Routine, kinds: readonly Template[], data: AppData): Entry {
+  const out: Entry = { title: routine.title }
+  const perKind = Object.keys(routine.kindMinutes ?? {}).length > 0
+  out.minutes = perKind
+    ? Object.fromEntries(kinds.map(k => [k.dayKind!.letter, routineMinutes(routine, k.id)]))
+    : routine.minutes
+  const category = routine.category ? data.categories.find(c => c.id === routine.category) : undefined
+  if (category) out.category = category.label
+  if (routine.core) out.core = true
+  out.weekdays = [...new Set(routine.weekdays)].map(day => (day === 0 ? 7 : day)).sort((a, b) => a - b)
+  out.times = Object.fromEntries(kinds.flatMap(k => (routine.times[k.id] ? [[k.dayKind!.letter, routine.times[k.id]]] : [])))
+  return out
+}
+
+/** An object on one line, the way the file writes a block, a sleep and a routine. */
 function inline(entry: Entry): string {
-  return `{ ${Object.entries(entry).map(([key, value]) => `${JSON.stringify(key)}: ${JSON.stringify(value)}`).join(', ')} }`
+  return `{ ${Object.entries(entry).map(([key, value]) => `${JSON.stringify(key)}: ${inlineValue(value)}`).join(', ')} }`
+}
+
+/**
+ * One value on that line. A list and an object are written with the line's
+ * own spacing - `[1, 3, 5]`, `{ "D": "20:10" }` - rather than
+ * `JSON.stringify`'s, so a routine's weekdays and its times read the way
+ * the rest of the line does.
+ */
+function inlineValue(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(item => JSON.stringify(item)).join(', ')}]`
+  if (value !== null && typeof value === 'object') {
+    return `{ ${Object.entries(value as Record<string, unknown>).map(([key, inner]) => `${JSON.stringify(key)}: ${JSON.stringify(inner)}`).join(', ')} }`
+  }
+  return JSON.stringify(value)
 }
 
 /** The day templates in the order the file writes them: the kinds in the roster's order, then the rest by name. */
@@ -97,6 +132,8 @@ function inFileOrder(templates: readonly Template[]): Template[] {
 /** The plan's templates and its roster from today on, in the contract's format. */
 export function templatesJson(data: AppData, today: string): string {
   const templates = inFileOrder(data.templates).map(t => templateEntry(t, data))
+  const kinds = dayKinds([...data.templates])
+  const routines = data.routines.map(r => routineEntry(r, kinds, data))
   const roster = Object.keys(data.days)
     .filter(date => date >= today)
     .sort()
@@ -129,6 +166,12 @@ export function templatesJson(data: AppData, today: string): string {
     })
     out.push('  ],')
   }
+  if (routines.length === 0) out.push('  "routines": [],')
+  else {
+    out.push('  "routines": [')
+    routines.forEach((routine, i) => out.push(`    ${inline(routine)}${i < routines.length - 1 ? ',' : ''}`))
+    out.push('  ],')
+  }
   if (roster.length === 0) out.push('  "roster": {}')
   else {
     out.push('  "roster": {')
@@ -145,6 +188,14 @@ export function templatesJson(data: AppData, today: string): string {
 export interface TemplateRow {
   /** Its name as the file writes it, or its place in the file when it has none. */
   name: string
+  action: 'create' | 'update' | 'unchanged' | 'skip'
+  notes: string[]
+}
+
+/** What Apply will do to one routine of the file. */
+export interface RoutineRow {
+  /** Its title as the file writes it, or its place in the file when it has none. */
+  title: string
   action: 'create' | 'update' | 'unchanged' | 'skip'
   notes: string[]
 }
@@ -166,6 +217,7 @@ export interface TemplatesImport {
   /** Notes about the file itself - a field it does not have. */
   notes: string[]
   templates: TemplateRow[]
+  routines: RoutineRow[]
   roster: RosterRow[]
   /** Dates around the roster's own, composed again because a kind beside them changed. */
   following: string[]
@@ -283,12 +335,118 @@ function readBlock(
   return { title, fields }
 }
 
+/**
+ * One routine as the file gives it, read against the kinds and the routine of
+ * that title the app already has: its fields, and a note for each it leaves
+ * out. Nothing when there is not enough of it to be a routine.
+ *
+ * The file writes a weekday 1 to 7 with Monday first, which is how a person
+ * writes one; the app keeps 0 for Sunday, which is what `Date` gives.
+ */
+function readRoutine(
+  raw: Record<string, unknown>,
+  known: Routine | undefined,
+  kinds: readonly Template[],
+  data: AppData,
+  notes: string[],
+): RoutineInput | undefined {
+  const title = (raw.title as string).trim()
+  const note = (text: string) => notes.push(`${title}: ${text}`)
+  const byLetter = (letter: string): Template | undefined => kinds.find(k => k.dayKind!.letter === cleanLetter(letter))
+
+  let minutes = known?.minutes
+  let kindMinutes = known?.kindMinutes
+  if (raw.minutes !== undefined) {
+    const one = raw.minutes
+    const whole = (value: unknown) => typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= ROUTINE_LIMITS.minutes
+    if (whole(one)) {
+      minutes = one as number
+      kindMinutes = undefined
+    } else if (isObject(one)) {
+      const per: Record<string, number> = {}
+      for (const [letter, value] of Object.entries(one)) {
+        const kind = byLetter(letter)
+        if (!kind) note(`no kind of day has the letter ${said(letter)} - its length is left out.`)
+        else if (!whole(value)) note(`minutes for ${said(letter)} is not a whole number from 1 to ${ROUTINE_LIMITS.minutes} - left out.`)
+        else per[kind.id] = value as number
+      }
+      const values = Object.values(per)
+      if (values.length === 0) note('minutes says nothing this app can read - left out.')
+      else {
+        kindMinutes = per
+        minutes = values[0]
+      }
+    } else note(`minutes ${said(one)} is not a whole number, nor a length for each kind - left out.`)
+  }
+  if (minutes === undefined) {
+    note('it needs minutes - skipped.')
+    return undefined
+  }
+
+  let category = known?.category
+  if (raw.category !== undefined) {
+    const found = typeof raw.category === 'string' ? data.categories.find(c => c.id === raw.category || sameName(c.label, raw.category as string)) : undefined
+    if (found) category = found.id
+    else note(`no category called ${said(raw.category)} - left out.`)
+  }
+
+  let core = known?.core
+  if (raw.core !== undefined) {
+    if (typeof raw.core === 'boolean') core = raw.core || undefined
+    else note('core must be true or false - left out.')
+  }
+
+  let weekdays = known?.weekdays
+  if (raw.weekdays !== undefined) {
+    if (!Array.isArray(raw.weekdays)) note('weekdays must be a list of 1 to 7, Monday first - left out.')
+    else {
+      const days: number[] = []
+      for (const day of raw.weekdays) {
+        if (typeof day !== 'number' || !Number.isInteger(day) || day < 1 || day > 7) note(`weekday ${said(day)} is not 1 to 7, Monday first - left out.`)
+        else days.push(day === 7 ? 0 : day)
+      }
+      if (days.length > 0) weekdays = days
+    }
+  }
+  if (!weekdays || weekdays.length === 0) {
+    note('it needs at least one weekday - skipped.')
+    return undefined
+  }
+
+  let times = known?.times ?? {}
+  if (raw.times !== undefined) {
+    if (!isObject(raw.times)) note('times must be an object of a kind\'s letter and a time - left out.')
+    else {
+      const out: Record<string, string> = {}
+      for (const [letter, time] of Object.entries(raw.times)) {
+        const kind = byLetter(letter)
+        if (!kind) note(`no kind of day has the letter ${said(letter)} - its time is left out.`)
+        else if (typeof time !== 'string' || !TIME.test(time)) note(`time ${said(time)} for ${said(letter)} is not HH:MM - left out.`)
+        else out[kind.id] = time
+      }
+      times = out
+    }
+  }
+
+  for (const key of Object.keys(raw)) if (!ROUTINE_FIELDS.includes(key)) note(`${said(key)} is not a field of a routine - left out.`)
+
+  return {
+    title,
+    ...(category ? { category } : {}),
+    minutes,
+    ...(kindMinutes && Object.keys(kindMinutes).length > 0 ? { kindMinutes } : {}),
+    ...(core ? { core: true } : {}),
+    weekdays,
+    times,
+  }
+}
+
 /** The fields this format writes on a block, all of them: a matched block's values give way to these. */
 const FORMAT_BLOCK_KEYS = ['time', 'minutes', 'category', 'core', 'highlight', 'unbounded', 'afterMidnight', 'mealType', 'followMeal', 'recipeIds', 'recipeId', 'waitingRecipes', 'note'] as const
 
 /** Reads a text in the contract's format against a plan. Pure. */
 export function readTemplatesJson(text: string, data: AppData, today: string): TemplatesImport {
-  const nothing: TemplatesImport = { notes: [], templates: [], roster: [], following: [], data }
+  const nothing: TemplatesImport = { notes: [], templates: [], routines: [], roster: [], following: [], data }
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
@@ -306,13 +464,15 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
   const notes: string[] = []
   for (const key of Object.keys(parsed)) if (!FILE_FIELDS.includes(key)) notes.push(`${said(key)} is not a field of the file - left out.`)
 
-  // The plan as the templates leave it - touched only where something changes.
+  // The plan as the templates and the routines leave it - touched only where
+  // something changes.
   let templates = data.templates
   let profiles = data.settings.sleepProfiles
+  let routines = data.routines
   const plan = (): AppData =>
-    templates === data.templates && profiles === data.settings.sleepProfiles
+    templates === data.templates && profiles === data.settings.sleepProfiles && routines === data.routines
       ? data
-      : { ...data, templates, settings: { ...data.settings, sleepProfiles: profiles } }
+      : { ...data, templates, routines, settings: { ...data.settings, sleepProfiles: profiles } }
 
   const rows: TemplateRow[] = []
   const entries: unknown[] = parsed.templates === undefined ? [] : Array.isArray(parsed.templates) ? parsed.templates : []
@@ -444,7 +604,63 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
     }
   })
 
-  // The roster, against the plan the templates leave.
+  // The routines, against the kinds the templates leave: a time and a length
+  // are written by a kind's letter, so the kinds have to be read first.
+  const routineRows: RoutineRow[] = []
+  const rawRoutines: unknown[] = parsed.routines === undefined ? [] : Array.isArray(parsed.routines) ? parsed.routines : []
+  if (parsed.routines !== undefined && !Array.isArray(parsed.routines)) notes.push('routines is not a list - left out.')
+  if (rawRoutines.length > 0) {
+    const kinds = dayKinds(templates)
+    const titles = rawRoutines.map(e => (isObject(e) && typeof e.title === 'string' ? e.title.trim() : ''))
+    rawRoutines.forEach((raw, i) => {
+      const place = `Routine ${i + 1}`
+      if (!isObject(raw)) {
+        routineRows.push({ title: place, action: 'skip', notes: ['It is not an object - skipped.'] })
+        return
+      }
+      const title = titles[i]
+      if (!title) {
+        routineRows.push({ title: place, action: 'skip', notes: ['It has no title - skipped.'] })
+        return
+      }
+      const shown = raw.title as string
+      if (title.length > ROUTINE_LIMITS.title) {
+        routineRows.push({ title: shown, action: 'skip', notes: [`Its title is longer than ${ROUTINE_LIMITS.title} characters - skipped.`] })
+        return
+      }
+      if (titles.slice(i + 1).some(later => later && sameName(later, title))) {
+        routineRows.push({ title: shown, action: 'skip', notes: ['The title comes again further down, and that one is read - skipped.'] })
+        return
+      }
+      const own: string[] = []
+      const known = routines.find(r => sameName(r.title, title))
+      const read = readRoutine(raw, known, kinds, plan(), own)
+      if (!read) {
+        routineRows.push({ title: shown, action: 'skip', notes: own })
+        return
+      }
+      const clean = cleanRoutine(read, kinds.map(k => k.id))
+      if (!clean) {
+        routineRows.push({ title: shown, action: 'skip', notes: [...own, 'There is no routine in it - skipped.'] })
+        return
+      }
+      const next: Routine = { ...(known ?? { id: crypto.randomUUID() }), ...clean, title: known?.title ?? clean.title }
+      if (known) {
+        const same = JSON.stringify(routineEntry(next, kinds, plan())) === JSON.stringify(routineEntry(known, kinds, plan()))
+        if (same) {
+          routineRows.push({ title: shown, action: 'unchanged', notes: own })
+          return
+        }
+        routines = routines.map(r => (r.id === known.id ? next : r))
+        routineRows.push({ title: shown, action: 'update', notes: own })
+      } else {
+        routines = [...routines, next]
+        routineRows.push({ title: shown, action: 'create', notes: own })
+      }
+    })
+  }
+
+  // The roster, against the plan the templates and the routines leave.
   const afterTemplates = plan()
   const roster: RosterRow[] = []
   const draft: Record<string, string | null> = {}
@@ -496,6 +712,7 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
   return {
     notes,
     templates: rows,
+    routines: routineRows,
     roster,
     following: applied.following.map(f => f.date),
     data: applied.plan,

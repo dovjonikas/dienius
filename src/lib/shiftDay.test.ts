@@ -240,7 +240,27 @@ test('a day stamped with a template that has since been deleted reads the defaul
 test("a routine goes at its kind's time when that time is free", () => {
   const plan = roster({ '2026-09-12': 'rest' })
   const placed = placeRoutines(plan, '2026-09-12', REST, busyOn(plan, '2026-09-12', kindOf(plan)))
-  expect(placed).toEqual([{ routine: plan.routines[0], time: '10:00' }])
+  expect(placed).toEqual([{ routine: plan.routines[0], time: '10:00', minutes: 60 }])
+})
+
+test('a routine as long as its kind says takes that length on the day, and its one length everywhere else', () => {
+  data.routines = [routine({ minutes: 60, kindMinutes: { rest: 90, day: 30 } })]
+  const plan = roster({ '2026-09-12': 'rest', '2026-09-14': 'day', '2026-09-15': 'night' })
+
+  expect(plan.days['2026-09-12'].tasks.find(t => t.routineId === 'gym')).toMatchObject({ minutes: 90 })
+  expect(plan.days['2026-09-14'].tasks.find(t => t.routineId === 'gym')).toMatchObject({ minutes: 30 })
+  // The night has no length of its own, so it is the one length.
+  expect(plan.days['2026-09-15'].tasks.find(t => t.routineId === 'gym')).toMatchObject({ minutes: 60 })
+})
+
+test("a core routine's task is core, so it counts on a day that is not a full one", () => {
+  data.routines = [routine({ core: true })]
+  const plan = roster({ '2026-09-12': 'rest' })
+  expect(plan.days['2026-09-12'].tasks.find(t => t.routineId === 'gym')).toMatchObject({ core: true })
+
+  data.routines = [routine()]
+  const plain = roster({ '2026-09-12': 'rest' })
+  expect(plain.days['2026-09-12'].tasks.find(t => t.routineId === 'gym')?.core).toBeUndefined()
 })
 
 test('a routine with no time for the kind needs a time, and is never given one', () => {
@@ -265,7 +285,9 @@ test('a routine whose time runs into the shift, or into sleep, is placed with no
 test('touching is not running into: a routine that ends as the shift starts is free', () => {
   data.routines = [routine({ times: { night: '21:00' } })]
   const plan = roster({ '2026-09-15': 'night', '2026-09-16': 'after' })
-  expect(placeRoutines(plan, '2026-09-15', NIGHT, busyOn(plan, '2026-09-15', kindOf(plan)))).toEqual([{ routine: plan.routines[0], time: '21:00' }])
+  expect(placeRoutines(plan, '2026-09-15', NIGHT, busyOn(plan, '2026-09-15', kindOf(plan)))).toEqual([
+    { routine: plan.routines[0], time: '21:00', minutes: 60 },
+  ])
 })
 
 test('a block with a time and no length takes its start minute only', () => {

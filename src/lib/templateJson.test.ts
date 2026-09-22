@@ -306,3 +306,121 @@ describe('an update', () => {
     expect(twice.templates.map(t => t.action)).toEqual(['unchanged', 'unchanged', 'unchanged'])
   })
 })
+
+// --- routines -----------------------------------------------------------------------------
+
+/**
+ * Routines in the file - the owner's brief of 2026-09-22, part 3, and
+ * section 4 of the contract. A weekday is written 1 to 7 with Monday first,
+ * a time and a length are written by the kind's letter.
+ */
+describe('routines', () => {
+  const withKinds = (): AppData => {
+    const read = imported(
+      JSON.stringify({
+        templates: [
+          { name: 'Day shift', type: 'shift', kind: 'D', blocks: [] },
+          { name: 'Rest day', type: 'rest', kind: 'R', blocks: [] },
+        ],
+      }),
+    )
+    return read.data
+  }
+
+  test('a routine is read by its title, with a time for each kind and the weekdays a person writes', () => {
+    const data = withKinds()
+    const read = imported(
+      JSON.stringify({
+        routines: [
+          { title: 'Medication', minutes: 5, category: 'Health', core: true, weekdays: [1, 7], times: { D: '06:15', R: '09:30' } },
+        ],
+      }),
+      data,
+    )
+    expect(read.routines.map(r => [r.title, r.action, r.notes])).toEqual([['Medication', 'create', []]])
+    const [routine] = read.data.routines
+    const day = read.data.templates.find(t => t.name === 'Day shift')!
+    const rest = read.data.templates.find(t => t.name === 'Rest day')!
+    expect(routine).toMatchObject({ title: 'Medication', minutes: 5, category: 'health', core: true })
+    // Monday is 1 in the file and 1 here; Sunday is 7 there and 0 here.
+    expect(routine.weekdays).toEqual([0, 1])
+    expect(routine.times).toEqual({ [day.id]: '06:15', [rest.id]: '09:30' })
+  })
+
+  test('a length for each kind is kept as one, and the first is its length anywhere else', () => {
+    const data = withKinds()
+    const read = imported(
+      JSON.stringify({ routines: [{ title: 'Walk', minutes: { D: 30, R: 60 }, weekdays: [1, 3, 5], times: { D: '20:10' } }] }),
+      data,
+    )
+    const day = read.data.templates.find(t => t.name === 'Day shift')!
+    const rest = read.data.templates.find(t => t.name === 'Rest day')!
+    expect(read.data.routines[0]).toMatchObject({ minutes: 30, kindMinutes: { [day.id]: 30, [rest.id]: 60 } })
+  })
+
+  test('a routine of the same title is updated, never copied, and keeps what the file does not say', () => {
+    const first = imported(
+      JSON.stringify({ routines: [{ title: 'Walk', minutes: 30, category: 'Health', weekdays: [1], times: {} }] }),
+      withKinds(),
+    )
+    const second = imported(JSON.stringify({ routines: [{ title: 'walk', minutes: 45 }] }), first.data)
+    expect(second.routines.map(r => [r.title, r.action])).toEqual([['walk', 'update']])
+    expect(second.data.routines).toHaveLength(1)
+    expect(second.data.routines[0]).toMatchObject({ title: 'Walk', minutes: 45, category: 'health', weekdays: [1] })
+  })
+
+  test('the same file twice changes nothing the second time', () => {
+    const text = JSON.stringify({ routines: [{ title: 'Walk', minutes: 30, weekdays: [1, 3], times: { D: '20:10' } }] })
+    const once = imported(text, withKinds())
+    const twice = imported(text, once.data)
+    expect(twice.routines.map(r => r.action)).toEqual(['unchanged'])
+    expect(twice.data).toBe(once.data)
+  })
+
+  test('a wrong field is left out with its note, and what cannot be a routine is skipped', () => {
+    const read = imported(
+      JSON.stringify({
+        routines: [
+          { title: 'Walk', minutes: 30, weekdays: [1, 9], times: { D: '20:10', Q: '10:00', R: 'half nine' }, core: 'yes', elephant: true },
+          { title: 'Nothing', minutes: 30 },
+          { minutes: 30, weekdays: [1] },
+        ],
+      }),
+      withKinds(),
+    )
+    expect(read.routines[0].action).toBe('create')
+    // In the order the fields are read: the length, the category, the core
+    // mark, the weekdays, the times, and then anything this format has no
+    // field for.
+    expect(read.routines[0].notes).toEqual([
+      'Walk: core must be true or false - left out.',
+      'Walk: weekday 9 is not 1 to 7, Monday first - left out.',
+      'Walk: no kind of day has the letter "Q" - its time is left out.',
+      'Walk: time "half nine" for "R" is not HH:MM - left out.',
+      'Walk: "elephant" is not a field of a routine - left out.',
+    ])
+    expect(read.data.routines[0].weekdays).toEqual([1])
+    expect(read.routines[1]).toMatchObject({ title: 'Nothing', action: 'skip' })
+    expect(read.routines[2]).toMatchObject({ title: 'Routine 3', action: 'skip' })
+    expect(read.data.routines).toHaveLength(1)
+  })
+
+  test('the file writes a routine back the way it reads one', () => {
+    const read = imported(
+      JSON.stringify({
+        routines: [
+          { title: 'Medication', minutes: 5, category: 'Health', core: true, weekdays: [1, 2, 3, 4, 5, 6, 7], times: { D: '06:15', R: '09:30' } },
+          { title: 'Walk', minutes: { D: 30, R: 60 }, weekdays: [1, 3, 5], times: { D: '20:10' } },
+        ],
+      }),
+      withKinds(),
+    )
+    const text = templatesJson(read.data, TODAY)
+    expect(text).toContain(
+      '{ "title": "Medication", "minutes": 5, "category": "Health", "core": true, "weekdays": [1, 2, 3, 4, 5, 6, 7], "times": { "D": "06:15", "R": "09:30" } }',
+    )
+    expect(text).toContain('{ "title": "Walk", "minutes": { "D": 30, "R": 60 }, "weekdays": [1, 3, 5], "times": { "D": "20:10" } }')
+    // And read again, it is the same plan.
+    expect(templatesJson(imported(text, withKinds()).data, TODAY)).toBe(text)
+  })
+})

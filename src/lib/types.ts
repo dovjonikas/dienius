@@ -288,8 +288,21 @@ export interface Routine extends Timestamped {
   id: string
   title: string
   category?: CategoryId
-  /** Its length in minutes, 1 to `ROUTINE_LIMITS.minutes`. */
+  /** Its length in minutes, 1 to `ROUTINE_LIMITS.minutes` - on every kind that has none of its own. */
   minutes: number
+  /**
+   * Its length on one kind of day, by kind template id, where it is not the
+   * same everywhere - an hour's gym on a rest day and half of one after a
+   * shift. A kind with none here is `minutes`. Absent: one length.
+   */
+  kindMinutes?: Record<string, number>
+  /**
+   * Whether its task counts on a day that is not a full one - the same mark
+   * a template block carries (`TemplateBlock.core`), and read the same way
+   * by the day's score. Absent or false: it counts on a full day like
+   * everything else, and not on a shift, a night or a rest day.
+   */
+  core?: boolean
   /** The weekdays it is on, 0 = Sunday to 6 = Saturday, at least one, each once. */
   weekdays: number[]
   /** Its time on each kind, by kind template id. A kind with none here needs a time. */
@@ -464,7 +477,7 @@ export interface Task extends Timestamped {
    * to tell a change from. A routine's task that arrived on its date by hand -
    * moved or pushed there - carries none, so it is left where it was put.
    */
-  fromRoutine?: { title?: string; time?: string; minutes: number; category?: CategoryId }
+  fromRoutine?: { title?: string; time?: string; minutes: number; category?: CategoryId; core?: boolean }
   /**
    * The night this task belongs to: the date whose template put it here, the
    * day before this one - docs/RESEARCH-SHIFTS.md section 10 and

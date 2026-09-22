@@ -25,14 +25,26 @@ function ruleOf(routine: Routine): string {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([kind, time]) => `${kind}:${time}`)
     .join(',')
-  return `${routine.minutes}|${[...routine.weekdays].sort((a, b) => a - b).join('')}|${times}`
+  const lengths = Object.entries(routine.kindMinutes ?? {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, minutes]) => `${kind}:${minutes}`)
+    .join(',')
+  return `${routine.minutes}|${lengths}|${routine.core ? 'core' : ''}|${[...routine.weekdays].sort((a, b) => a - b).join('')}|${times}`
 }
 
-/** What a routine is, in one line: its days, its length, and its time on each kind. */
+/**
+ * What a routine is, in one line: its days, its length - and where a kind
+ * gives it one of its own (a templates file may, docs/TEMPLATE-JSON.md
+ * section 4), that one beside the kind's letter - whether it counts on a day
+ * that is not a full one, and its time on each kind.
+ */
 function routineLine(routine: Routine, kinds: Template[]): string {
   const days = WEEK.filter(d => routine.weekdays.includes(d)).map(dayShort).join(', ')
-  const times = kinds.map(k => `${k.dayKind!.letter} ${routine.times[k.id] ?? 'needs a time'}`)
-  return [days, `${routine.minutes} min`, ...times].join(' · ')
+  const times = kinds.map(k => {
+    const length = routine.kindMinutes?.[k.id]
+    return `${k.dayKind!.letter} ${routine.times[k.id] ?? 'needs a time'}${length !== undefined ? `, ${length} min` : ''}`
+  })
+  return [days, `${routine.minutes} min`, ...(routine.core ? ['core'] : []), ...times].join(' · ')
 }
 
 /**
@@ -69,6 +81,14 @@ export function RoutinesSection() {
   const [minutes, setMinutes] = useState(30)
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [times, setTimes] = useState<Record<string, string>>({})
+  /**
+   * A length of its own on a kind, and the core mark. Neither is written on
+   * this screen - a templates file writes them (docs/TEMPLATE-JSON.md
+   * section 4) - and both are carried through an edit here rather than
+   * dropped by it. The line above says what they are.
+   */
+  const [kindMinutes, setKindMinutes] = useState<Record<string, number> | undefined>(undefined)
+  const [core, setCore] = useState(false)
   /** The routine whose rule just changed, while the offer about it stands. */
   const [changed, setChanged] = useState<string | null>(null)
 
@@ -81,11 +101,13 @@ export function RoutinesSection() {
     setMinutes(routine?.minutes ?? 30)
     setWeekdays(routine?.weekdays ?? [])
     setTimes(routine ? { ...routine.times } : {})
+    setKindMinutes(routine?.kindMinutes ? { ...routine.kindMinutes } : undefined)
+    setCore(!!routine?.core)
   }
 
   function save() {
     if (!open) return
-    const input = { title, category, minutes, weekdays, times }
+    const input = { title, category, minutes, kindMinutes, core, weekdays, times }
     if (open.id) {
       // What the days were made from, and what they would be made from now.
       // Compared after the write rather than before it, so the comparison is

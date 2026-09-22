@@ -6,7 +6,28 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.36 is done - the starting map of meal words and the recipes a template block waits for, part 2 of the owner's four-part brief; v2.35 before it, blocks that end by themselves, part 1. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.37 is done - routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.37 - Routines in the templates file
+
+The owner's four-part brief of 2026-09-22, part 3. docs/TEMPLATE-JSON.md
+section 4 is the contract; DECISIONS "Routines in the templates file" has
+why.
+
+- **The file reads and writes routines**: a title (its key, matched the way a
+  template's name is), a length - one number, or one for each kind of day -
+  a category by name, a core mark, the weekdays written 1 to 7 with Monday
+  first, and a time for each kind by its letter. The preview lists every
+  routine new, updated, unchanged or skipped beside the templates and the
+  dates; Apply is one step and one undo.
+- **A routine may be a different length on each kind** (`Routine.kindMinutes`)
+  and **may be core** (`Routine.core`), which is what a shift day counts.
+  Both travel with the routine, so a day composed on any device gets the
+  same task.
+- **Tests**: the contract's example with two routines in it, imported with no
+  notes and exported as itself; the reader's own tests (weekdays, a length
+  per kind, an update by title, wrong fields, what is skipped); the day's
+  composition for the length and the core mark.
 
 ## v2.36 - The words a name opens with, and the recipes a block waits for
 

@@ -22,6 +22,17 @@ export function importSummary(read: TemplatesImport): string {
   if (templateParts.length > 0) {
     said.push(templateParts.map(([n, word], i) => (i === 0 ? `${n} ${word} template${n === 1 ? '' : 's'}` : `${n} ${word}`)).join(', '))
   }
+  const routineParts = (
+    [
+      [count(read.routines, 'create'), 'new'],
+      [count(read.routines, 'update'), 'updated'],
+      [count(read.routines, 'unchanged'), 'unchanged'],
+      [count(read.routines, 'skip'), 'skipped'],
+    ] as const
+  ).filter(([n]) => n > 0)
+  if (routineParts.length > 0) {
+    said.push(routineParts.map(([n, word], i) => (i === 0 ? `${n} ${word} routine${n === 1 ? '' : 's'}` : `${n} ${word}`)).join(', '))
+  }
   const dateParts = (
     [
       [count(read.roster, 'set'), 'set'],
@@ -43,7 +54,8 @@ export function importSummary(read: TemplatesImport): string {
  * by the person, or by another agent - and brought in as one text.
  *
  * Import: the text pasted, Preview says what Apply will do - every template
- * new, updated, unchanged or skipped and why, every date, every note - and
+ * and every routine new, updated, unchanged or skipped and why, every date,
+ * every note - and
  * Apply does exactly that, in one step that one undo takes back. A preview is
  * of the text as it was: typing in the field puts it away until Preview is
  * pressed again, so what Apply does is always what was read. Export: the
@@ -137,6 +149,21 @@ export function TemplateJsonSettings() {
               {preview.templates.map((row, i) => (
                 <li key={`${i}:${row.name}`} className={row.action === 'skip' ? 'template-json-row is-skipped' : 'template-json-row'}>
                   <span className="template-json-name">{row.name}</span>
+                  <span className="template-json-action">{TEMPLATE_WORDS[row.action]}</span>
+                  {row.notes.map(note => (
+                    <span key={note} className="template-json-note">
+                      {note}
+                    </span>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          )}
+          {preview.routines.length > 0 && (
+            <ul className="template-json-rows" aria-label="Routines in the file">
+              {preview.routines.map((row, i) => (
+                <li key={`${i}:${row.title}`} className={row.action === 'skip' ? 'template-json-row is-skipped' : 'template-json-row'}>
+                  <span className="template-json-name">{row.title}</span>
                   <span className="template-json-action">{TEMPLATE_WORDS[row.action]}</span>
                   {row.notes.map(note => (
                     <span key={note} className="template-json-note">

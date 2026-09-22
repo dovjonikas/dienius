@@ -170,8 +170,9 @@ rule; one changed on the day is the person's.
 |---|---|
 | `title` | The routine's title. |
 | `time` | The time its rule placed it at; absent where it placed it with no time. |
-| `minutes` | The routine's length. |
+| `minutes` | The routine's length on that kind of day. |
 | `category` | The routine's category. |
+| `core` | **v2.37.** The routine's core mark. |
 
 ### Template
 
@@ -234,7 +235,9 @@ rule; one changed on the day is the person's.
 | `id` | Unique; a routine's task names it in `routineId`. |
 | `title` | What it is. |
 | `category` | A category id. |
-| `minutes` | Its length, 1 to 720. |
+| `minutes` | Its length, 1 to 720, on every kind that has none of its own. |
+| `kindMinutes` | **v2.37.** Its length on one kind of day, by the kind's template id: `{ "day": 30, "rest": 60 }`. A kind with none: `minutes`. |
+| `core` | **v2.37.** Its task counts on a day that is not a full one, the way a block's `core` does. |
 | `weekdays` | The weekdays it is on, 0 is Sunday. |
 | `times` | Its time on each kind of day, by the kind's template id: `{ "day": "17:00", "night": "14:00" }`. A kind with none: the routine lands on it with no time. |
 
@@ -317,3 +320,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.32 | `followMeal` on a block; `mealWords` in the settings - `[{ word, meals }]`, the words a recipe's name starts with and the meals each says, read past anything malformed rather than refused. |
 | v2.35 | `missed` on a task, `endsItself` on a category: an ongoing block, and a block of a category that ends by itself, is marked done by the app once its end has passed, unless it was said not to have happened. |
 | v2.36 | `waitingRecipes` on a block: a recipe named by a templates file before Kitchen had it, taken when a recipe of that name arrives. |
+| v2.37 | `kindMinutes` and `core` on a routine, and `core` on what its rule gave a task: a routine may be a different length on each kind of day, and may count on a day that is not a full one. |

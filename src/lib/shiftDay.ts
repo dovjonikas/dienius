@@ -3,6 +3,7 @@ import { isDayKind, kindOnDate } from './dayKinds'
 import { weekdayOf } from './repeats'
 import { applyStamps, columnFor, isNightBlock } from './stamping'
 import { originFor } from './taskIdentity'
+import { routineMinutes } from './routines'
 import { ROUTINE_LIMITS, type AppData, type DayPlan, type Routine, type SleepWindow, type Task, type Template, type TemplateBlock } from './types'
 import { ownedSleep, type WakingDay } from './wakingDay'
 import { clockTimeExists, wallInstant } from './wallClock'
@@ -40,7 +41,7 @@ export interface Busy {
 
 /** Where a routine goes on a date: at a time, or with none and the reason. */
 export type Placement =
-  | { routine: Routine; time: string }
+  | { routine: Routine; time: string; minutes: number }
   | { routine: Routine; reason: 'needs-time' | 'clock-skips' }
   | { routine: Routine; reason: 'runs-into'; into: BusyReason }
 
@@ -295,10 +296,12 @@ function place(routine: Routine, date: string, kind: Template, busy: Busy[]): Pl
   if (time === undefined || !CLOCK.test(time)) return { routine, reason: 'needs-time' }
   if (!clockTimeExists(date, time)) return { routine, reason: 'clock-skips' }
   const minutes = timeToMinutes(time)
+  // Its length on this kind of day - see Routine.kindMinutes.
+  const long = routineMinutes(routine, kind.id)
   const start = wallInstant(date, minutes)
-  const end = wallInstant(date, minutes + routine.minutes)
+  const end = wallInstant(date, minutes + long)
   const hit = busy.find(b => Math.min(end, b.end) - Math.max(start, b.start) >= MINUTE)
-  return hit ? { routine, reason: 'runs-into', into: hit.reason } : { routine, time }
+  return hit ? { routine, reason: 'runs-into', into: hit.reason } : { routine, time, minutes: long }
 }
 
 /**
@@ -343,12 +346,18 @@ export function placeRoutines(data: AppData, date: string, kind: Template | unde
 
 type RoutineEcho = NonNullable<Task['fromRoutine']>
 
-const ECHOED = ['title', 'time', 'minutes', 'category'] as const
+const ECHOED = ['title', 'time', 'minutes', 'category', 'core'] as const
 
 /** What a placement gives a routine's task. */
 function gaveBy(placement: Placement): RoutineEcho & { title: string } {
   const { routine } = placement
-  return { title: routine.title, time: 'time' in placement ? placement.time : undefined, minutes: routine.minutes, category: routine.category }
+  return {
+    title: routine.title,
+    time: 'time' in placement ? placement.time : undefined,
+    minutes: 'minutes' in placement ? placement.minutes : routine.minutes,
+    category: routine.category,
+    ...(routine.core ? { core: true } : {}),
+  }
 }
 
 /**
@@ -388,6 +397,7 @@ function routineTask(placement: Placement): Task {
     time: gave.time,
     minutes: gave.minutes,
     category: gave.category,
+    ...(gave.core ? { core: true } : {}),
     routineId: placement.routine.id,
     fromRoutine: gave,
   }

@@ -59,7 +59,10 @@ test("the contract's example, pasted and previewed, says what Apply will make; A
     ['2030-01-11', 'R, Rest day'],
     ['2030-01-12', 'R, Rest day'],
   ])
-  expect(screen.getByText('3 new templates. 6 dates set.')).toBeInTheDocument()
+  expect(screen.getByText('3 new templates. 2 new routines. 6 dates set.')).toBeInTheDocument()
+  // The routines the file carries, each said the way a template is.
+  const routineRows = within(screen.getByRole('list', { name: 'Routines in the file' })).getAllByRole('listitem')
+  expect(routineRows.map(row => row.textContent)).toEqual(['MedicationNew', 'WalkNew'])
 
   await user.click(screen.getByRole('button', { name: 'Apply' }))
   expect(getData().templates.map(t => t.name)).toEqual(['Day shift', 'Rest day', 'Night shift'])

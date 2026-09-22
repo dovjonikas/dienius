@@ -4609,3 +4609,31 @@ token again brings the plan back, which is exactly how a new device joins.
 The crash screen's own reset is deliberately not this. It exists to get past
 a state the app cannot render, and sync pulling the plan back afterwards is
 the recovery, not the bug.
+
+## Routines in the templates file
+
+v2.37, the owner's brief of 2026-09-22, part 3, and section 4 of
+docs/TEMPLATE-JSON.md. A file could write the kinds of day and the roster,
+and not the routines that cross them - so a plan written somewhere else
+arrived with half of itself missing and the rest typed in by hand.
+
+**A weekday is 1 to 7, Monday first.** The app keeps 0 for Sunday because
+that is what `Date` gives, and a file written by a person or by another
+agent should not have to know that. The file never says 0, and the reader
+turns 7 into it.
+
+**A length may be one number or one for each kind.** An hour's walk on a
+rest day and half of one after a twelve-hour shift is the same routine, not
+two - the owner writes one title and a length per kind
+(`Routine.kindMinutes`). The file writes one number where there is one, and
+a length for every kind where there is any, so the text a plan exports is
+the text it reads back.
+
+**A routine may be core.** A shift day counts only what had to happen, and
+the medication is exactly that. It is the same mark a block carries, read by
+the same score, and it travels with the routine rather than being set on
+each day's task.
+
+**Matched by title, like a template by name.** Ids are the app's own
+bookkeeping and no file can know them; a routine of the same title is
+updated, and what the file does not say is left as it was.

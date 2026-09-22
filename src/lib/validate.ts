@@ -245,6 +245,8 @@ const FROM_ROUTINE = record({
   time: optional(clockTime),
   minutes: wholeNumber(0, 1440),
   category: categoryRef,
+  // v2.37: a routine whose task counts on a day that is not a full one.
+  core: optional(boolean),
 })
 
 const TASK = record({
@@ -496,6 +498,9 @@ const ROUTINE = record({
   title: text(1, ROUTINE_LIMITS.title),
   category: categoryRef,
   minutes: wholeNumber(1, ROUTINE_LIMITS.minutes),
+  // v2.37: a length of its own on a kind, and the core mark.
+  kindMinutes: optional(mapOf(text(1, Number.POSITIVE_INFINITY), wholeNumber(1, ROUTINE_LIMITS.minutes))),
+  core: optional(boolean),
   weekdays: weekdayList,
   times: mapOf(text(1, Number.POSITIVE_INFINITY), clockTime),
 })

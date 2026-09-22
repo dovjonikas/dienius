@@ -94,6 +94,28 @@ test('a routine is edited in the same form, and the times it keeps are the kinds
   expect(getData().routines[0]).toMatchObject({ weekdays: [3], times: { day: '17:00', night: '09:00' } })
 })
 
+/**
+ * A length of its own on a kind and the core mark are written by a templates
+ * file (docs/TEMPLATE-JSON.md section 4), not on this screen - so an edit
+ * here must carry them rather than drop them, and the line has to say what
+ * they are or nobody would know they were there.
+ */
+test("a length per kind and the core mark are said in the line, and survive an edit", async () => {
+  const user = userEvent.setup()
+  actions.addRoutine({ title: 'Medication', minutes: 5, kindMinutes: { day: 10 }, core: true, weekdays: [1], times: { day: '06:15' } })
+  render(<RoutinesSection />)
+
+  expect(screen.getByText(/5 min/)).toHaveTextContent('core')
+  expect(screen.getByText(/5 min/)).toHaveTextContent('D 06:15, 10 min')
+
+  await user.click(screen.getByRole('button', { name: 'Edit Medication' }))
+  await user.clear(screen.getByRole('textbox', { name: 'Name' }))
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Morning medication')
+  await user.click(screen.getByRole('button', { name: 'Save routine' }))
+
+  expect(getData().routines[0]).toMatchObject({ title: 'Morning medication', minutes: 5, kindMinutes: { day: 10 }, core: true })
+})
+
 test('a routine removed is gone, and the undo puts it back', async () => {
   const user = userEvent.setup()
   render(<RoutinesSection />)

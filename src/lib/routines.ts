@@ -14,6 +14,9 @@ export interface RoutineInput {
   title: string
   category?: CategoryId
   minutes: number
+  /** A length on one kind where it differs - see `Routine.kindMinutes`. */
+  kindMinutes?: Record<string, number>
+  core?: boolean
   weekdays: number[]
   times: Record<string, string>
 }
@@ -30,6 +33,8 @@ const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/
  * - A time kept only for a kind that exists and only on the clock (`HH:MM`): a
  *   time for a template that is no longer a kind would sit in the file meaning
  *   nothing, and a half-typed "9:" is not a time.
+ * - A length for a kind kept the same way, and held to the same bounds as the
+ *   one length: a kind that is gone takes its length with it.
  */
 export function cleanRoutine(input: RoutineInput, kindIds: string[]): Omit<Routine, 'id'> | undefined {
   const title = input.title.trim().slice(0, ROUTINE_LIMITS.title)
@@ -40,8 +45,19 @@ export function cleanRoutine(input: RoutineInput, kindIds: string[]): Omit<Routi
   const minutes = Math.min(ROUTINE_LIMITS.minutes, Math.max(1, whole))
   const kinds = new Set(kindIds)
   const times = Object.fromEntries(Object.entries(input.times).filter(([kind, time]) => kinds.has(kind) && CLOCK.test(time)))
+  const perKind = Object.entries(input.kindMinutes ?? {})
+    .filter(([kind, value]) => kinds.has(kind) && Number.isFinite(value))
+    .map(([kind, value]) => [kind, Math.min(ROUTINE_LIMITS.minutes, Math.max(1, Math.round(value)))] as const)
   const category = input.category?.trim()
-  return { title, ...(category ? { category } : {}), minutes, weekdays, times }
+  return {
+    title,
+    ...(category ? { category } : {}),
+    minutes,
+    ...(perKind.length > 0 ? { kindMinutes: Object.fromEntries(perKind) } : {}),
+    ...(input.core ? { core: true } : {}),
+    weekdays,
+    times,
+  }
 }
 
 /**
@@ -73,4 +89,9 @@ export function arrivingByHand(task: Task): Task {
   if (!task.fromRoutine && task.nightOf === undefined) return task
   const { fromRoutine: _echo, nightOf: _night, ...rest } = task
   return rest
+}
+
+/** How long a routine is on a kind of day: its own length there, or the one length. */
+export function routineMinutes(routine: Routine, kindId: string): number {
+  return routine.kindMinutes?.[kindId] ?? routine.minutes
 }

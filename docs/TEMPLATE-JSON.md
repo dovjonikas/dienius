@@ -24,7 +24,8 @@ One JSON object.
 | `format` | no | `"dienius-templates"`. Any other value, and the text is not read at all. |
 | `version` | no | `1`. Any other number, and the text is not read at all. |
 | `templates` | no | A list of day templates - section 2. |
-| `roster` | no | Which kind of day stands on which date - section 4. |
+| `routines` | no | A list of routines - section 4. |
+| `roster` | no | Which kind of day stands on which date - section 5. |
 
 A field the format does not have is left out and said in the preview. A text
 that is not JSON, or not an object, is not read, and the preview says why.
@@ -69,7 +70,27 @@ from it stay its days.
 A field with a wrong value - a length of -5, a time of 25:00 - is left out,
 the rest of the block is read, and the preview says which.
 
-## 4. The roster
+## 4. A routine
+
+A routine is one thing that happens on some weekdays, at a time each kind of
+day gives it - the medication, the walk. It is not a block: a template's
+blocks are that kind of day, and a routine crosses the kinds.
+
+| Field | Required | Bounds | Means, and when it is missing |
+|---|---|---|---|
+| `title` | **yes** | 1 to 120 characters | Its name, and its key: a routine of the same title - the same words, whatever their case or spacing - is updated, never copied. Missing or empty, the routine is skipped. A title given twice in one file: the later one is read. |
+| `minutes` | **yes** on a new one | 1 to 720, or an object of kind letters | How long it is. One number is its length on every kind; an object - `{ "D": 45, "N": 60 }` - is its length on each kind named, and its first is its length anywhere else. A letter no kind has is left out with a note. Missing on an update: the length it has. |
+| `category` | no | a category's name | Which category its task takes, by name - the same words, whatever their case. A name no category has is left out with a note. |
+| `core` | no | `true` or `false` | Whether it counts on a day that is not a full one - a shift, a night, a rest day - the way a block's `core` does. Missing: not core. |
+| `weekdays` | **yes** on a new one | a list of 1 to 7, **1 is Monday** | The weekdays it is on. Written the way a person writes them, Monday first; the app keeps Sunday as 0 and the file never says 0. A number outside 1 to 7 is left out with a note; none left, and the routine is skipped. Missing on an update: the days it has. |
+| `times` | no | `{ "<letter>": "HH:MM" }` | Its time on each kind of day, by the kind's letter. A kind with no time here **needs one**: the day says so rather than guessing a time. A letter no kind has, or a time that is not `HH:MM`, is left out with a note. Missing on an update: the times it has. |
+
+A routine lands on a date that has a kind - the roster's dates, and any date
+stamped with a kind - on its weekdays, at its time for that kind. Where its
+time runs into the day's blocks or into sleep, or the clock skips it that
+night, the day says so and gives it no time: see docs/RESEARCH-SHIFTS.md.
+
+## 5. The roster
 
 An object from dates to kinds of day.
 
@@ -89,26 +110,30 @@ composed with its kind's blocks, its routines and its sleep; a night's hours
 after midnight land on the morning after; and the dates around a date whose
 kind changed are composed again, and the preview counts them.
 
-## 5. Import
+## 6. Import
 
 Paste the text, press Preview, read what it will do, press Apply.
 
 - **Preview** lists every template - new, updated, unchanged, or skipped and
-  why - every date of the roster the same way, and every note: a field left
-  out, a recipe not found, a letter already taken.
+  why - every routine and every date of the roster the same way, and every
+  note: a field left out, a recipe not in Kitchen yet, a letter already
+  taken.
 - **One bad entry never stops the rest.** A template, a block, a field or a
   date that cannot be read is skipped, with its note; everything else is
   read.
 - **Apply** writes it all in one step, and one undo takes it all back.
 - The same text imported twice changes nothing the second time.
 
-## 6. Export
+## 7. Export
 
 The templates and the roster the app has, in this format:
 
 - `format` and `version` first, then the templates - the kinds in their
-  roster order, then the other day templates by name - then the roster from
-  today on, by date.
+  roster order, then the other day templates by name - then the routines in
+  the order they are kept, then the roster from today on, by date.
+- A routine's length is one number, or one for every kind when it has a
+  length of its own on any of them; its weekdays are 1 to 7 with Monday
+  first; its times are by the kinds' letters, in the roster's order.
 - A field is written only when it says something: no `type` for a full day,
   no `sleep` for a template on the first schedule, no `false`.
 - Two spaces of indent, one block to a line.
@@ -116,12 +141,13 @@ The templates and the roster the app has, in this format:
 Exported, imported and exported again, the text is the same, character for
 character.
 
-## 7. A whole example
+## 8. A whole example
 
 Three kinds of day - a day shift, a rest day, and a night shift whose meal
-and journey home are after midnight - and six dates of a roster. Every name
-here is invented. Imported into an app with a recipe called "A lentil soup",
-it reads with no notes, and exports as itself.
+and journey home are after midnight - two routines, one of them a different
+length on each kind, and six dates of a roster. Every name here is invented.
+Imported into an app with a recipe called "A lentil soup", it reads with no
+notes, and exports as itself.
 
 ```json
 {
@@ -164,6 +190,10 @@ it reads with no notes, and exports as itself.
         { "time": "07:15", "title": "Travel home", "minutes": 45, "category": "Commute", "afterMidnight": true }
       ]
     }
+  ],
+  "routines": [
+    { "title": "Medication", "minutes": 5, "category": "Health", "core": true, "weekdays": [1, 2, 3, 4, 5, 6, 7], "times": { "D": "06:15", "R": "09:30", "N": "17:30" } },
+    { "title": "Walk", "minutes": { "D": 30, "R": 60, "N": 30 }, "category": "Health", "weekdays": [1, 3, 5], "times": { "D": "20:10", "R": "11:00" } }
   ],
   "roster": {
     "2030-01-07": "D",
