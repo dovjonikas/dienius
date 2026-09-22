@@ -4563,3 +4563,49 @@ they were lived, so a month of the review does not change under anybody.
 
 **No length or no time, no end.** "Being at a place" with no hours has no
 moment to be over at, and is left for a person to tick.
+
+## The words a name opens with, and the recipes a block waits for
+
+v2.36, the owner's brief of 2026-09-22, part 2.
+
+**The starting map is in the app now.** Kitchen's list of words started as
+the six meals' own names, each for itself, and the note beside it said the
+rest was somebody's own way of naming their food and belonged in their
+Settings rather than in a public repo. The brief asked twice for the map
+itself - Breakfast; Lunch, which is lunch and dinner; Pre-gym; After, for
+after the gym and dinner; Pack, a packed lunch or a snack; Evening, a snack;
+Side, which says none - so it is what a new device starts with, with the
+meals it does not name after it. It is a first answer, not a fact about
+anybody: no plan, no day and no recipe is in it, every press changes it, and
+Settings, Kitchen rewrites the whole list in a minute.
+
+**A name outlives its absence.** A templates file names its recipes, and is
+pasted before them as often as after: the week first, the cooking later. A
+name Kitchen does not have was dropped with a note, so the block kept only
+its meal type and somebody had to go back and put the recipes in by hand.
+Now the name waits on the block (`TemplateBlock.waitingRecipes`) and the
+block takes the recipe the moment Kitchen has one of that name - pasted,
+written, or renamed into it - found by the same comparison an import uses.
+An export names the ones still waiting beside the ones found, so a file
+written before its recipes still says what it meant.
+
+## An erase takes this device's keys with it
+
+v2.36, the owner's report of 2026-09-22: everything erased on the computer,
+and a second later the day was back and the screen had flickered from
+"nothing here" to the plan it was supposed to have forgotten.
+
+"Erase all data" removed the plan, the timer, the snapshots and the cached
+calendars - and left the sync switch on, with the repo and the token beside
+it. So the next load pulled the shared plan straight back in. An erase that
+undoes itself is not an erase, and a token left behind on a machine somebody
+is handing on is worse than an untidy one.
+
+It now takes every key this app wrote here - by their `dienius:` prefix, so
+a key added next year goes too - and says so where it is pressed. **What is
+on GitHub stays**: this is a device, not an account. Setting the repo and the
+token again brings the plan back, which is exactly how a new device joins.
+
+The crash screen's own reset is deliberately not this. It exists to get past
+a state the app cannot render, and sync pulling the plan back afterwards is
+the recovery, not the bug.

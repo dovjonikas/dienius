@@ -1,6 +1,7 @@
 import { commit, getData } from './core'
 import { blockRecipeIds, cleanRecipe, isMealCategory, mealFields, type RecipeInput } from '../kitchen'
 import { sameName } from '../recipeImport'
+import { joinWaitingRecipes } from '../waitingRecipes'
 import { MEAL_TYPES, type MealType, type Recipe, type TemplateBlock } from '../types'
 
 /** A recipe with these meals, in the app's order - and with none, no field at all. */
@@ -25,7 +26,9 @@ export const kitchenActions = {
     if (!fields) return undefined
     const data = getData()
     const recipe: Recipe = { id: crypto.randomUUID(), ...fields }
-    commit({ ...data, recipes: [...data.recipes, recipe] })
+    const recipes = [...data.recipes, recipe]
+    // A template meal block waiting for a recipe of this name takes it now.
+    commit({ ...data, recipes, templates: joinWaitingRecipes(data.templates, recipes) })
     // The stored one, stamped by the commit.
     return getData().recipes.find(r => r.id === recipe.id) ?? recipe
   },
@@ -39,10 +42,9 @@ export const kitchenActions = {
     const fields = cleanRecipe(input)
     if (!fields) return
     const data = getData()
-    commit({
-      ...data,
-      recipes: data.recipes.map(r => (r.id !== id ? r : { id: r.id, ...fields, ...(r.cooked !== undefined ? { cooked: r.cooked } : {}), updatedAt: r.updatedAt })),
-    })
+    const recipes = data.recipes.map(r => (r.id !== id ? r : { id: r.id, ...fields, ...(r.cooked !== undefined ? { cooked: r.cooked } : {}), updatedAt: r.updatedAt }))
+    // Renamed into a name a block was waiting for, it is that block's now.
+    commit({ ...data, recipes, templates: joinWaitingRecipes(data.templates, recipes) })
   },
 
   /**
@@ -75,7 +77,7 @@ export const kitchenActions = {
         added++
       }
     }
-    if (added + updated > 0) commit({ ...previous, recipes })
+    if (added + updated > 0) commit({ ...previous, recipes, templates: joinWaitingRecipes(previous.templates, recipes) })
     return { added, updated, undo: () => commit(previous) }
   },
 

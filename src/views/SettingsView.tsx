@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
 import { canInstall, isInstalled,
   isInstalledElsewhere, onInstallAvailabilityChange, promptInstall } from '../lib/install'
-import { clearSnapshots, listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type SnapshotMeta } from '../lib/snapshots'
-import { STORAGE_KEY, exportJson } from '../lib/storage'
+import { listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type SnapshotMeta } from '../lib/snapshots'
+import { eraseThisDevice } from '../lib/eraseDevice'
+import { exportJson } from '../lib/storage'
 import { addDays, todayKey } from '../lib/dates'
-import { clearClockTools } from '../lib/clockTools'
-import { clearCalendarCache } from '../lib/calendars'
 import { enterTourSandbox } from '../lib/tourMode'
 import { findPreset } from '../lib/themes'
 
@@ -179,32 +178,17 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
     }
   }
 
-  // Same shape as the crash screen's own reset in ErrorBoundary.tsx - a
-  // second confirming tap, then the storage key is removed and the page
-  // reloads. Reusing that exact pattern rather than a soft in-memory clear
-  // is deliberate: AppData is one JSON blob under one key, so removing the
-  // key and reloading is what actually leaves nothing behind - templates,
-  // every day's tasks, if-then rules, and any theme choices all live
-  // inside it, and a reload means the app comes back through the same
-  // loadData() path a fresh install goes through, landing on defaultData()
-  // rather than some other code path that has to be kept in sync with it.
+  // A second confirming tap, then every key this app wrote here goes and the
+  // page reloads - see lib/eraseDevice.ts, which is what "everything on this
+  // device" means: the plan, the timer, the cached calendars, the snapshots,
+  // and the sync switch and the repo and token Backup holds. Leaving those
+  // two behind had the plan back from GitHub a second after the erase.
+  // Removing the keys and reloading rather than a soft in-memory clear is
+  // deliberate: the app comes back through the same loadData() a fresh
+  // install goes through, rather than some other path to keep in step.
   function handleResetClick() {
     if (confirmReset) {
-      localStorage.removeItem(STORAGE_KEY)
-      // The timer and stopwatch live under their own key - see clockTools.ts -
-      // so "erase all data" has to clear that too, or a running timer would
-      // outlive the erase and reappear on the fresh install.
-      clearClockTools()
-      // The daily snapshots live in IndexedDB, under their own database -
-      // same reasoning. A copy of everything left behind by "remove
-      // everything on this device" is not a snapshot, it is a surprise.
-      // Not awaited: the reload below is the point, and a delete that has
-      // not finished by then finishes without anybody watching.
-      void clearSnapshots()
-      // And the cached calendar feeds, under their own key for the same
-      // reason. Somebody else's meetings surviving "remove everything on this
-      // device" would be the most surprising leftover of the three.
-      clearCalendarCache()
+      eraseThisDevice()
       window.location.reload()
     } else {
       setConfirmReset(true)
@@ -424,8 +408,10 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
               <div className="setting-label">
                 <span className="setting-name">Erase all data</span>
                 <span className="setting-desc">
-                  Removes everything on this device: every template, every day, your North and the
-                  theme. Export a backup first if you want to keep a copy.
+                  Removes everything on this device: every template, every day, your North, the
+                  theme, and the repo and token this device syncs and backs up with - so nothing
+                  brings the plan back afterwards. What is on GitHub stays. Export a backup first
+                  if you want to keep a copy.
                 </span>
               </div>
               <div className="setting-control">

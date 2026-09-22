@@ -6,7 +6,35 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.35 is done - blocks that end by themselves, part 1 of the owner's four-part brief. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.36 is done - the starting map of meal words and the recipes a template block waits for, part 2 of the owner's four-part brief; v2.35 before it, blocks that end by themselves, part 1. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.36 - The words a name opens with, and the recipes a block waits for
+
+The owner's four-part brief of 2026-09-22, part 2.
+
+- **The map a new device starts with** (`lib/mealWords.ts`): Breakfast;
+  Lunch, which is lunch and dinner; Pre-gym; After, dinner and post-gym;
+  Pack, lunch and snack; Evening, a snack; Side, none - and Dinner, Post-gym
+  and Snack after them for themselves. Read in Paste many and in New recipe,
+  as before, and rewritten in Settings, Kitchen.
+- **A block waits for a recipe by name** (`lib/waitingRecipes.ts`,
+  `TemplateBlock.waitingRecipes`): a templates file that names a recipe
+  Kitchen does not have keeps the name on the block, the preview says so, and
+  the block takes the recipe as soon as one of that name is added - pasted
+  many at once, written one at a time, or renamed into it. A day already
+  stamped takes it the next time it is opened, as it takes any change to its
+  template. An export names what is still waiting beside what was found.
+- **An erase takes this device's keys with it** (`lib/eraseDevice.ts`) - the
+  owner's report the same evening: erased on the computer, and the plan was
+  back from GitHub a second later, because the sync switch and the token
+  stayed behind. Every key the app wrote here goes now, by its `dienius:`
+  prefix; what is on GitHub stays. DECISIONS "An erase takes this device's
+  keys with it".
+- **Tests**: the map in `mealWords`, `recipeImport`, Kitchen's paste and
+  Settings' words; the waiting names in `templateJson.test.ts` and the
+  Kitchen store's, and the kitchen-many walk; `eraseDevice.test.ts` and the
+  erase in `e2e/data.e2e.ts`. DECISIONS "The words a name opens with, and
+  the recipes a block waits for" has why.
 
 ## v2.35 - Blocks that end by themselves
 

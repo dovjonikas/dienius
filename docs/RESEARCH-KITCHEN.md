@@ -225,11 +225,21 @@ below.
 - **In Paste many and in New recipe.** In the form the meals are chosen when
   the word is typed or changed, More opens so they are seen, and a press on
   them after is kept while the word stays.
-- **The list starts as the six meals' own names**, each for itself. The brief
-  gave the owner's own words - which of them say two meals, which say none -
-  and those are the owner's way of naming their food, which the public repo
-  does not carry (the same rule as North's text): they are written in Settings
-  once, in a minute, and travel with the settings to every device.
+- **The list starts as a map of the words a name commonly opens with**, and
+  every meal the map does not name after it, for itself: Breakfast;
+  Lunch, which is lunch and dinner; Pre-gym; After, which is after the gym
+  and dinner; Pack, a packed lunch or a snack; Evening, a snack; Side, which
+  says none; then Dinner, Post-gym and Snack. It was the six meals' names
+  alone until v2.36 - the map is somebody's way of naming their food, and the
+  repo carried none of it - and the brief asked for it twice as the starting
+  point, which is a different thing from a person's own text: it is a
+  starting guess every press can change, and Settings, Kitchen is one line to
+  change any of it.
+- **A block may name a recipe Kitchen does not have yet.** A templates file
+  (docs/TEMPLATE-JSON.md) is usually pasted before the recipes it names, so
+  the name is kept on the block and the block takes the recipe as soon as
+  Kitchen has one of that name - `lib/waitingRecipes.ts`, and the same
+  comparison a paste uses to find the recipe it writes over.
 
 ### 7.3 Meals changed on the card, and many at once
 

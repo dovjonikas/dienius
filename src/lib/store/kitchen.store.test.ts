@@ -127,7 +127,7 @@ test('thirty recipes pasted at once are thirty recipes, each with its numbers an
   expect(done).toMatchObject({ added: 30, updated: 0 })
   const recipes = getData().recipes
   expect(recipes).toHaveLength(30)
-  expect(recipes[0]).toMatchObject({ title: 'Lunch: Bowl number 1', kcal: 300, protein: 10, mealTypes: ['lunch'] })
+  expect(recipes[0]).toMatchObject({ title: 'Lunch: Bowl number 1', kcal: 300, protein: 10, mealTypes: ['lunch', 'dinner'] })
   expect(recipes[29]).toMatchObject({ title: 'Lunch: Bowl number 30', kcal: 329, protein: 39 })
 })
 
@@ -192,4 +192,39 @@ test("the words a recipe's name starts with are kept as Settings writes them, an
   ])
   expect(getData().settings.mealWords).toEqual([{ word: 'Brunch', meals: ['breakfast', 'lunch'] }])
   expect(getData().settingsUpdatedAt?.mealWords).toBeDefined()
+})
+
+/**
+ * A templates file is often pasted before the recipes it names - the week
+ * first, the recipes after. The block keeps the name and takes the recipe as
+ * soon as Kitchen has one of it: the owner's brief of 2026-09-22, part 2.
+ */
+test('a template meal block waiting for a recipe takes it when the recipes are pasted in', () => {
+  const file = JSON.stringify({
+    templates: [{ name: 'A day', blocks: [{ time: '12:00', title: 'Lunch', mealType: 'lunch', recipes: ['A bean bowl'] }] }],
+  })
+  const { read } = actions.importTemplatesJson(file)
+  expect(read.templates[0].action).toBe('create')
+  const waiting = getData().templates.find(t => t.name === 'A day')!
+  expect(waiting.blocks[0].waitingRecipes).toEqual(['A bean bowl'])
+
+  const rows = readPastedRecipes(['NAME: A bean bowl', '400 kcal', 'INGREDIENTS', 'beans'].join('\n'), [], DEFAULT_MEAL_WORDS)
+  actions.importRecipes(rows.map(r => r.input))
+
+  const block = getData().templates.find(t => t.name === 'A day')!.blocks[0]
+  const bowl = getData().recipes.find(r => r.title === 'A bean bowl')!
+  expect(block.recipeIds).toEqual([bowl.id])
+  expect(block.waitingRecipes).toBeUndefined()
+})
+
+test('a recipe written one at a time is taken by a block waiting for its name, whatever its case', () => {
+  const file = JSON.stringify({
+    templates: [{ name: 'A day', blocks: [{ time: '12:00', title: 'Lunch', mealType: 'lunch', recipes: ['A Bean Bowl'] }] }],
+  })
+  actions.importTemplatesJson(file)
+  const bowl = actions.addRecipe({ title: 'a bean bowl', text: 'beans' })!
+
+  const block = getData().templates.find(t => t.name === 'A day')!.blocks[0]
+  expect(block.recipeIds).toEqual([bowl.id])
+  expect(block.waitingRecipes).toBeUndefined()
 })

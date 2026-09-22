@@ -319,6 +319,8 @@ const TEMPLATE_BLOCK = record({
   recipeIds: optional(listOf(string)),
   mealType: optional(oneOf(MEAL_TYPES)),
   followMeal: optional(boolean),
+  // v2.36: the recipes a block named before Kitchen had them, by name.
+  waitingRecipes: optional(listOf(string)),
   note: optional(string),
   noteExpanded: optional(boolean),
   steps: optional(listOf(TEMPLATE_STEP)),

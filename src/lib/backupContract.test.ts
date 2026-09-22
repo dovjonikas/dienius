@@ -24,7 +24,9 @@ import type { AppData, DayPlan } from './types'
 const FIXTURES = join(__dirname, 'fixtures')
 const BACKUP = readFileSync(join(FIXTURES, 'backup-v2.30-rota.json'), 'utf8')
 const GOLDEN = JSON.parse(readFileSync(join(FIXTURES, 'backup-v2.30-rota.golden.json'), 'utf8')) as Record<string, unknown>
-const CONTRACT = readFileSync(join(__dirname, '../../docs/BACKUP-FORMAT.md'), 'utf8')
+// Read with one kind of line ending: the checkout is CRLF on Windows, and
+// every search below is written with the other one.
+const CONTRACT = readFileSync(join(__dirname, '../../docs/BACKUP-FORMAT.md'), 'utf8').replace(/\r\n/g, '\n')
 
 /** The day it was recorded on, which the month was opened from. */
 const TODAY = '2026-09-22'

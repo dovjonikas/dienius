@@ -58,7 +58,7 @@ file; an update keeps its place.
 | `afterMidnight` | no | `true` or `false` | After the template's midnight: its time is on the next date's clock, and it lands on **the date after**, as the night's (the editor's **Next day**). Needs a `time`; without one it is left out. |
 | `mealType` | no | `breakfast`, `lunch`, `dinner`, `pre-gym`, `post-gym`, `snack` | A meal's kind of meal, chosen on the day. |
 | `followMeal` | no | `true` or `false` | With `mealType`: the block walks every recipe Kitchen has for that meal, the ones added later too. |
-| `recipes` | no | a list of recipe names | The recipes the meal walks, a date at a time, **by name**: each is looked for in Kitchen - the same words, whatever their case or spacing. A name Kitchen does not have is said in the preview; if none is found, the block keeps its `mealType` alone. Recipes win over `mealType` when both are given and found. |
+| `recipes` | no | a list of recipe names | The recipes the meal walks, a date at a time, **by name**: each is looked for in Kitchen - the same words, whatever their case or spacing. A name Kitchen does not have yet is said in the preview and **kept on the block**: it takes that recipe as soon as Kitchen has one of that name - pasted many at once, written one at a time, or renamed into it - and until then the block keeps its `mealType`. So a week may be pasted before its recipes are. Recipes win over `mealType` when both are given and found, and an export names the ones still waiting along with the ones found. |
 | `note` | no | text | What the block says when it lands. |
 
 On an update, a block with the same title as one the template has - the

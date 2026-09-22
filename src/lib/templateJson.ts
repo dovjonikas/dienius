@@ -54,11 +54,14 @@ function blockEntry(block: TemplateBlock, data: AppData): Entry {
   if (block.unbounded) out.ongoing = true
   if (block.afterMidnight) out.afterMidnight = true
   const ids = block.recipeIds?.length ? block.recipeIds : block.recipeId ? [block.recipeId] : []
-  const recipes = ids.flatMap(id => data.recipes.filter(r => r.id === id).map(r => r.title))
-  if (recipes.length === 0 && block.mealType) {
+  const found = ids.flatMap(id => data.recipes.filter(r => r.id === id).map(r => r.title))
+  if (found.length === 0 && block.mealType) {
     out.mealType = block.mealType
     if (block.followMeal) out.followMeal = true
   }
+  // The names still waiting for Kitchen after the ones it has, so a file
+  // exported before its recipes arrived still names them.
+  const recipes = [...found, ...(block.waitingRecipes ?? [])]
   if (recipes.length > 0) out.recipes = recipes
   if (block.note) out.note = block.note
   return out
@@ -249,18 +252,28 @@ function readBlock(
     follow = undefined
   }
   const recipeIds: string[] = []
+  const waiting: string[] = []
   if (raw.recipes !== undefined) {
     if (!Array.isArray(raw.recipes)) note('recipes must be a list of names - left out.')
     else {
       for (const name of raw.recipes) {
-        const recipe = typeof name === 'string' ? data.recipes.find(r => sameName(r.title, name)) : undefined
+        if (typeof name !== 'string' || !name.trim() || name.trim().length > LIMITS.title) {
+          note(`recipe ${said(name)} is not a recipe's name - left out.`)
+          continue
+        }
+        const recipe = data.recipes.find(r => sameName(r.title, name))
         if (recipe) {
           if (!recipeIds.includes(recipe.id)) recipeIds.push(recipe.id)
-        } else note(`no recipe called ${said(name)} in Kitchen - ${mealType ? 'the block keeps its meal type' : 'left out'}.`)
+        } else {
+          // Kept by name, and taken as soon as Kitchen has it - lib/waitingRecipes.ts.
+          if (!waiting.some(w => sameName(w, name))) waiting.push(name.trim())
+          note(`no recipe called ${said(name)} in Kitchen yet - the block waits for it, and takes it when a recipe of that name is added${mealType && recipeIds.length === 0 ? '; until then it keeps its meal type' : ''}.`)
+        }
       }
     }
   }
   Object.assign(fields, mealFields({ ...(recipeIds.length ? { recipeIds } : {}), ...(mealType ? { mealType } : {}), ...(follow ? { follow: true } : {}) }))
+  if (waiting.length > 0) fields.waitingRecipes = waiting
   if (raw.note !== undefined) {
     if (typeof raw.note === 'string') {
       if (raw.note.trim()) fields.note = raw.note
@@ -271,7 +284,7 @@ function readBlock(
 }
 
 /** The fields this format writes on a block, all of them: a matched block's values give way to these. */
-const FORMAT_BLOCK_KEYS = ['time', 'minutes', 'category', 'core', 'highlight', 'unbounded', 'afterMidnight', 'mealType', 'followMeal', 'recipeIds', 'recipeId', 'note'] as const
+const FORMAT_BLOCK_KEYS = ['time', 'minutes', 'category', 'core', 'highlight', 'unbounded', 'afterMidnight', 'mealType', 'followMeal', 'recipeIds', 'recipeId', 'waitingRecipes', 'note'] as const
 
 /** Reads a text in the contract's format against a plan. Pure. */
 export function readTemplatesJson(text: string, data: AppData, today: string): TemplatesImport {

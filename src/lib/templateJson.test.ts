@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { readTemplatesJson, templatesJson } from './templateJson'
+import { joinWaitingRecipes } from './waitingRecipes'
 import { defaultData } from './storage'
 import { kindOnDate } from './dayKinds'
 import type { AppData, Recipe, Template } from './types'
@@ -150,10 +151,60 @@ describe('what is left out, and why', () => {
         ],
       }),
     )
-    expect(read.templates[0].notes).toEqual(['Lunch: no recipe called "A dish nobody wrote down" in Kitchen - the block keeps its meal type.'])
+    expect(read.templates[0].notes).toEqual([
+      'Lunch: no recipe called "A dish nobody wrote down" in Kitchen yet - the block waits for it, and takes it when a recipe of that name is added; until then it keeps its meal type.',
+    ])
     const block = named(read.data, 'A day').blocks[0]
     expect(block).toMatchObject({ mealType: 'lunch', category: 'meal' })
     expect(block.recipeIds).toBeUndefined()
+    // Kept by name, so the block takes it the moment Kitchen has one - see
+    // lib/waitingRecipes.ts - and the file still names it on the way out.
+    expect(block.waitingRecipes).toEqual(['A dish nobody wrote down'])
+    expect(templatesJson(read.data, TODAY)).toContain('"recipes": ["A dish nobody wrote down"]')
+  })
+
+  test('a block waiting for a recipe takes it as soon as Kitchen has one of that name', () => {
+    const read = imported(
+      JSON.stringify({
+        templates: [
+          {
+            name: 'A day',
+            blocks: [
+              { time: '12:00', title: 'Lunch', mealType: 'lunch', recipes: ['A bean bowl', 'A lentil soup'] },
+              { time: '19:00', title: 'Dinner', mealType: 'dinner', recipes: ['A bean bowl'] },
+            ],
+          },
+        ],
+      }),
+    )
+    const waiting = named(read.data, 'A day')
+    expect(waiting.blocks[0].recipeIds).toEqual(['soup'])
+    expect(waiting.blocks[0].waitingRecipes).toEqual(['A bean bowl'])
+
+    // The bowl arrives, written however it was named.
+    const bowl: Recipe = { id: 'bowl', title: 'a  BEAN bowl', text: '', mealTypes: ['lunch'] }
+    const joined = joinWaitingRecipes(read.data.templates, [...read.data.recipes, bowl])
+    expect(joined[0].blocks[0].recipeIds).toEqual(['soup', 'bowl'])
+    expect(joined[0].blocks[0].waitingRecipes).toBeUndefined()
+    // The block that had only the name takes it, and its meal type gives way
+    // to the recipe, as a block with a recipe always has.
+    expect(joined[0].blocks[1].recipeIds).toEqual(['bowl'])
+    expect(joined[0].blocks[1].mealType).toBeUndefined()
+    expect(joined[0].blocks[1].waitingRecipes).toBeUndefined()
+  })
+
+  test('a name still nobody has keeps waiting, and the plan is left alone when nothing arrives', () => {
+    const read = imported(
+      JSON.stringify({
+        templates: [{ name: 'A day', blocks: [{ time: '12:00', title: 'Lunch', mealType: 'lunch', recipes: ['A bean bowl', 'A rice bowl'] }] }],
+      }),
+    )
+    expect(joinWaitingRecipes(read.data.templates, read.data.recipes)).toBe(read.data.templates)
+
+    const bowl: Recipe = { id: 'bowl', title: 'A bean bowl', text: '' }
+    const joined = joinWaitingRecipes(read.data.templates, [...read.data.recipes, bowl])
+    expect(joined[0].blocks[0].recipeIds).toEqual(['bowl'])
+    expect(joined[0].blocks[0].waitingRecipes).toEqual(['A rice bowl'])
   })
 
   test('a wrong field is left out with a note, and the rest of its template and block are read', () => {

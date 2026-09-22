@@ -73,6 +73,13 @@ export interface TemplateBlock {
    */
   unbounded?: boolean
   /**
+   * Recipes this meal block named before Kitchen had them - by name, from a
+   * templates file (docs/TEMPLATE-JSON.md). The block takes each as soon as
+   * Kitchen has a recipe of that name - lib/waitingRecipes.ts - and the name
+   * leaves this list. Absent: nothing waits.
+   */
+  waitingRecipes?: string[]
+  /**
    * Which of `AppData.categories` this block belongs to.
    * Copied onto `Task.category` at stamp time exactly the way `core` and
    * `unbounded` already are, so a stamped day arrives already coloured and

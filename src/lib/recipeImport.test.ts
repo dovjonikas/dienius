@@ -68,12 +68,12 @@ test('each piece is read the way New recipe reads one: the numbers from its text
   expect(row).toMatchObject({
     title: 'Lunch: Bowl number 1',
     state: 'new',
-    meals: ['lunch'],
+    meals: ['lunch', 'dinner'],
     from: 'name',
     kcal: 301,
     protein: 11,
   })
-  expect(row.input).toMatchObject({ title: 'Lunch: Bowl number 1', kcal: 301, protein: 11, servings: 2, minutes: 20, mealTypes: ['lunch'] })
+  expect(row.input).toMatchObject({ title: 'Lunch: Bowl number 1', kcal: 301, protein: 11, servings: 2, minutes: 20, mealTypes: ['lunch', 'dinner'] })
   expect(row.input.text.startsWith('301 kcal, 11 g protein')).toBe(true)
   // An amount inside the ingredients is a line, never a number of the recipe's.
   expect(row.input.carbs).toBeUndefined()

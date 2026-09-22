@@ -23,14 +23,18 @@ function rows(): [string, string][] {
   ])
 }
 
-test('a new device lists the six meals by their own names, each for itself', () => {
+test('a new device lists the starting map, and every meal it does not name by its own name', () => {
   render(<MealWordSettings />)
   expect(screen.getByRole('heading', { level: 3, name: 'Kitchen' })).toBeInTheDocument()
   expect(rows()).toEqual([
     ['Breakfast', 'Breakfast'],
-    ['Lunch', 'Lunch'],
-    ['Dinner', 'Dinner'],
+    ['Lunch', 'Lunch, dinner'],
     ['Pre-gym', 'Pre-gym'],
+    ['After', 'Dinner, post-gym'],
+    ['Pack', 'Lunch, snack'],
+    ['Evening', 'Snack'],
+    ['Side', 'No meal'],
+    ['Dinner', 'Dinner'],
     ['Post-gym', 'Post-gym'],
     ['Snack', 'Snack'],
   ])
@@ -39,9 +43,9 @@ test('a new device lists the six meals by their own names, each for itself', () 
 test("a word's meals are changed in its row, and the list is kept at once", async () => {
   const user = userEvent.setup()
   render(<MealWordSettings />)
-  await user.click(screen.getByRole('button', { name: 'Meals for Lunch: Lunch' }))
+  await user.click(screen.getByRole('button', { name: 'Meals for Lunch: Lunch, dinner' }))
   await user.click(within(screen.getByRole('group', { name: 'Meals for Lunch' })).getByRole('button', { name: 'Dinner' }))
-  expect(getData().settings.mealWords?.[1]).toEqual({ word: 'Lunch', meals: ['lunch', 'dinner'] })
+  expect(getData().settings.mealWords?.[1]).toEqual({ word: 'Lunch', meals: ['lunch'] })
 })
 
 test('a word is added with its meals, renamed, and taken away', async () => {
@@ -49,8 +53,8 @@ test('a word is added with its meals, renamed, and taken away', async () => {
   render(<MealWordSettings />)
   await user.click(screen.getByRole('button', { name: 'Add a word' }))
   // An empty word is a row to write in, and nothing kept yet.
-  expect(rows()).toHaveLength(7)
-  await user.type(screen.getByRole('textbox', { name: 'Word 7' }), 'Brunch')
+  expect(rows()).toHaveLength(11)
+  await user.type(screen.getByRole('textbox', { name: 'Word 11' }), 'Brunch')
   await user.click(screen.getByRole('button', { name: 'Meals for Brunch: No meal' }))
   const six = within(screen.getByRole('group', { name: 'Meals for Brunch' }))
   await user.click(six.getByRole('button', { name: 'Breakfast' }))
@@ -62,7 +66,18 @@ test('a word is added with its meals, renamed, and taken away', async () => {
   expect(getData().settings.mealWords?.[0]).toEqual({ word: 'Morning', meals: ['breakfast'] })
 
   await user.click(screen.getByRole('button', { name: 'Remove Snack' }))
-  expect(getData().settings.mealWords?.map(w => w.word)).toEqual(['Morning', 'Lunch', 'Dinner', 'Pre-gym', 'Post-gym', 'Brunch'])
+  expect(getData().settings.mealWords?.map(w => w.word)).toEqual([
+    'Morning',
+    'Lunch',
+    'Pre-gym',
+    'After',
+    'Pack',
+    'Evening',
+    'Side',
+    'Dinner',
+    'Post-gym',
+    'Brunch',
+  ])
 })
 
 test('a word may say no meal at all, and is kept as a word', async () => {
@@ -72,4 +87,6 @@ test('a word may say no meal at all, and is kept as a word', async () => {
   await user.click(within(screen.getByRole('group', { name: 'Meals for Snack' })).getByRole('button', { name: 'Snack' }))
   expect(getData().settings.mealWords?.at(-1)).toEqual({ word: 'Snack', meals: [] })
   expect(rows().at(-1)).toEqual(['Snack', 'No meal'])
+  // And the one that starts saying none stays that way.
+  expect(rows()[6]).toEqual(['Side', 'No meal'])
 })

@@ -52,12 +52,12 @@ test('thirty recipes pasted at once are read into a list, and one Save saves the
   expect(rows()[0]).toEqual(['Lunch: Bowl number 1', 'New'])
   const first = document.querySelector('.kitchen-paste-row')!
   expect(within(first as HTMLElement).getByText('300 kcal · 10 g protein')).toBeInTheDocument()
-  expect(within(first as HTMLElement).getByRole('button', { name: 'Meals for Lunch: Bowl number 1: Lunch' })).toBeInTheDocument()
+  expect(within(first as HTMLElement).getByRole('button', { name: 'Meals for Lunch: Bowl number 1: Lunch, dinner' })).toBeInTheDocument()
   expect(screen.getByText('30 new')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(getData().recipes).toHaveLength(30)
-  expect(getData().recipes[29]).toMatchObject({ title: 'Lunch: Bowl number 30', kcal: 329, protein: 39, mealTypes: ['lunch'] })
+  expect(getData().recipes[29]).toMatchObject({ title: 'Lunch: Bowl number 30', kcal: 329, protein: 39, mealTypes: ['lunch', 'dinner'] })
   // Back on the cards, and the whole import is one undo.
   expect(screen.getByRole('heading', { level: 2, name: 'Kitchen' })).toBeInTheDocument()
   expect(getUndo()?.label).toBe('Recipes saved: 30 added')
@@ -92,7 +92,7 @@ test("a row left out is not saved, and a row's meals changed in the row are the 
   expect(screen.getByText('2 new')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(getData().recipes.map(r => [r.title, r.mealTypes])).toEqual([
-    ['Lunch: A bean bowl', ['lunch']],
+    ['Lunch: A bean bowl', ['lunch', 'dinner']],
     ['A plain rice', ['dinner', 'snack']],
   ])
 })
@@ -178,11 +178,12 @@ test("a name typed with a first word like Lunch: chooses its meals, and a press 
   // More opens so the chosen meal is seen.
   const meals = within(screen.getByRole('group', { name: 'Meals' }))
   expect(meals.getByRole('button', { name: 'Lunch' })).toHaveAttribute('aria-pressed', 'true')
-  await user.click(meals.getByRole('button', { name: 'Dinner' }))
-  await user.type(screen.getByRole('textbox', { name: 'Name' }), ' with rice')
   expect(meals.getByRole('button', { name: 'Dinner' })).toHaveAttribute('aria-pressed', 'true')
+  await user.click(meals.getByRole('button', { name: 'Snack' }))
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), ' with rice')
+  expect(meals.getByRole('button', { name: 'Snack' })).toHaveAttribute('aria-pressed', 'true')
   await user.click(screen.getByRole('button', { name: 'Save' }))
-  expect(getData().recipes[0]).toMatchObject({ title: 'Lunch: A bean bowl with rice', mealTypes: ['lunch', 'dinner'] })
+  expect(getData().recipes[0]).toMatchObject({ title: 'Lunch: A bean bowl with rice', mealTypes: ['lunch', 'dinner', 'snack'] })
 })
 
 test("a word of somebody's own from Settings chooses its meals too, and a word it does not know chooses none", async () => {

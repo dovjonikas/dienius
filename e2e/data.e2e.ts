@@ -28,11 +28,22 @@ test('export, erase, import: the day comes back exactly', async ({ page }) => {
   expect(backup.templates.map((t: { name: string }) => t.name)).toEqual(['Working day'])
   expect(Object.keys(backup.days)).toEqual(['2026-09-16'])
 
+  // This device set up to sync and back up, the way the owner's computer is.
+  await page.route('https://api.github.com/**', route => route.abort())
+  await page.evaluate(() => {
+    localStorage.setItem('dienius:cloud-backup', JSON.stringify({ repo: 'someone/plans', token: 'a token', lastBackupAt: null }))
+    localStorage.setItem('dienius:sync', JSON.stringify({ url: '', token: '', enabled: true, via: 'github' }))
+  })
+
   // Two presses, the second on the armed button, then the app reloads empty.
   await page.getByRole('button', { name: 'Erase all data' }).click()
   await page.getByRole('button', { name: 'Erase?' }).click()
   await page.getByRole('button', { name: 'Take the tour' }).waitFor()
   await expect(page.getByRole('checkbox')).toHaveCount(0)
+  // And the sync switch and the token went with it, so nothing pulls the
+  // plan back in from GitHub a second later - the owner's report of
+  // 2026-09-22, and lib/eraseDevice.ts.
+  expect(await page.evaluate(() => [localStorage.getItem('dienius:sync'), localStorage.getItem('dienius:cloud-backup')])).toEqual([null, null])
 
   await settings(page)
   const [chooser] = await Promise.all([

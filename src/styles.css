@@ -941,6 +941,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   align-items: start;
 }
 
+/* The settings themselves, in the layout's one column. A grid item stands
+   at its own min-content unless it is told it may be narrower, and one long
+   row - a word, its meals and Delete - made the whole page wider than a
+   375px phone. One look, rule 6: nothing ever scrolls sideways. */
+.settings-content { min-width: 0; }
+
 .settings-nav {
   display: flex;
   gap: var(--s2);
@@ -15589,6 +15595,11 @@ main:has(.week) > .calendar {
 
 .template-json-note {
   grid-column: 1 / -1;
+  /* A note is a sentence, and a long one on a phone has to wrap inside its
+     row rather than set the row width - a grid item will not, at its own
+     min-content, without being told it may. */
+  min-width: 0;
+  overflow-wrap: break-word;
   color: var(--muted);
   font-size: var(--t-xs);
   line-height: var(--lh-ui);

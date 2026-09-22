@@ -10,9 +10,12 @@ import { MEAL_TYPES, type MealType, type MealWord, type Settings } from './types
  * many recipes are pasted at once and when a name is typed into New recipe,
  * and in both places it is a first answer that a press changes.
  *
- * The list starts as the six meals' own names, each for itself. Anything
- * else is somebody's own way of naming their food, and theirs to write in
- * Settings - not the app's to guess.
+ * The list starts as a map of the words a recipe's name commonly starts
+ * with - Breakfast, Lunch that is also dinner, Pre-gym, After for after the
+ * gym and dinner, Pack for a packed lunch or snack, Evening, and Side for
+ * none - with every meal's own name after them for itself. Asked for as the
+ * starting map in the owner's brief of 2026-09-22, twice; Settings, Kitchen
+ * changes any of it.
  */
 
 /** Written the way the meals are named on every screen - lib/kitchen.ts has the same words. */
@@ -25,8 +28,24 @@ const MEAL_NAMES: Record<MealType, string> = {
   snack: 'Snack',
 }
 
-/** The words a new device starts with: each meal's own name, for itself. */
-export const DEFAULT_MEAL_WORDS: MealWord[] = MEAL_TYPES.map(meal => ({ word: MEAL_NAMES[meal], meals: [meal] }))
+/** The map a new device starts with, and every meal's own name after it that the map does not already hold. */
+const STARTING_MAP: MealWord[] = [
+  { word: 'Breakfast', meals: ['breakfast'] },
+  { word: 'Lunch', meals: ['lunch', 'dinner'] },
+  { word: 'Pre-gym', meals: ['pre-gym'] },
+  { word: 'After', meals: ['dinner', 'post-gym'] },
+  { word: 'Pack', meals: ['lunch', 'snack'] },
+  { word: 'Evening', meals: ['snack'] },
+  { word: 'Side', meals: [] },
+]
+
+export const DEFAULT_MEAL_WORDS: MealWord[] = [
+  ...STARTING_MAP,
+  ...MEAL_TYPES.filter(meal => !STARTING_MAP.some(w => key(w.word) === key(MEAL_NAMES[meal]))).map(meal => ({
+    word: MEAL_NAMES[meal],
+    meals: [meal],
+  })),
+]
 
 /** The longest a name's first word may be - a few words, never a sentence. */
 export const MEAL_WORD_MAX = 24

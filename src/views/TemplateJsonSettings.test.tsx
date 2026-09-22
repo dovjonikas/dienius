@@ -80,7 +80,11 @@ test('a note is said under its template, and a date that is skipped says why', a
   )
   await user.click(screen.getByRole('button', { name: 'Preview' }))
   const day = within(screen.getByRole('list', { name: 'Templates in the file' })).getByRole('listitem')
-  expect(within(day).getByText('Lunch: no recipe called "A dish nobody wrote down" in Kitchen - the block keeps its meal type.')).toBeInTheDocument()
+  expect(
+    within(day).getByText(
+      'Lunch: no recipe called "A dish nobody wrote down" in Kitchen yet - the block waits for it, and takes it when a recipe of that name is added; until then it keeps its meal type.',
+    ),
+  ).toBeInTheDocument()
   const date = within(screen.getByRole('list', { name: 'Dates in the file' })).getByRole('listitem')
   expect(within(date).getByText('Skipped')).toBeInTheDocument()
   expect(within(date).getByText('No kind of day has the letter or name "Q".')).toBeInTheDocument()

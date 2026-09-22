@@ -36,7 +36,7 @@ const FILE = JSON.stringify(
         kind: 'N',
         blocks: [
           { time: '21:00', title: 'Shift', minutes: 600, category: 'Deep work', core: true },
-          { time: '01:00', title: 'Night meal', minutes: 30, category: 'Meals', afterMidnight: true, mealType: 'dinner' },
+          { time: '01:00', title: 'Night meal', minutes: 30, category: 'Meals', afterMidnight: true, mealType: 'dinner', recipes: ['A bean bowl'] },
         ],
       },
       { name: 'Rest day', type: 'rest', kind: 'R', blocks: [{ time: '10:00', title: 'Something outside', minutes: 60 }] },
@@ -62,6 +62,8 @@ test('a pasted file is previewed inside the screen, applied, and its night lands
   await expect(page.getByText('3 new templates. 3 dates set, 1 skipped.')).toBeVisible()
   const skipped = page.getByRole('list', { name: 'Dates in the file' }).getByRole('listitem').filter({ hasText: '2026-09-20' })
   await expect(skipped).toContainText('No kind of day has the letter or name "Q".')
+  // The meal names a recipe Kitchen has not got yet: the block waits for it.
+  await expect(page.getByText(/Night meal: no recipe called "A bean bowl" in Kitchen yet/)).toBeVisible()
 
   // The field, the rows and their notes inside the screen, and nothing sideways.
   expect(await sideways(page)).toBeLessThanOrEqual(0)
@@ -86,6 +88,16 @@ test('a pasted file is previewed inside the screen, applied, and its night lands
   const meal = page.getByRole('checkbox', { name: 'Night meal', exact: true }).locator('xpath=ancestor::li[1]')
   await expect(meal).toContainText('01:00')
   await expect(meal).toContainText('last night')
+
+  // The recipe is written afterwards, the way a week is pasted before its
+  // cooking, and the block that was waiting takes it by name.
+  await tab(page, 'Kitchen')
+  await page.getByRole('button', { name: 'Paste many' }).click()
+  await page.getByRole('textbox', { name: 'Recipes' }).fill(['NAME: A bean bowl', '400 kcal', 'INGREDIENTS', 'beans'].join('\n'))
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await tab(page, 'Templates')
+  await page.getByRole('button', { name: 'Edit Night shift' }).click()
+  await expect(page.getByRole('button', { name: /^Recipes for Night meal: / })).toHaveAccessibleName('Recipes for Night meal: A bean bowl')
 
   // Export gives the same format back, with the roster from today on.
   await tab(page, 'Settings')

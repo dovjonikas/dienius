@@ -208,6 +208,7 @@ rule; one changed on the day is the person's.
 | `recipeId` | The first of `recipeIds`, for versions before the walk. |
 | `mealType` | A meal's kind of meal. |
 | `followMeal` | **v2.32.** With `mealType`: the block walks every recipe Kitchen has for that meal, in the order of their names, worked out when a date is stamped. Absent: its list, or its meal to choose on the day. |
+| `waitingRecipes` | **v2.36.** Recipes this block named in a templates file before Kitchen had them, by name. The block takes each as soon as Kitchen has a recipe of that name, and the name leaves this list. |
 | `weekday` | On a week template: its weekday, 0 is Sunday. |
 | `groupId` | On a week template: blocks added to several weekdays together. |
 | `afterMidnight` | **v2.31.** After the template's midnight: its time is on the next date's clock, and a stamp puts it on **the date after** the template's date, as a task with `nightOf`. Shown in the editor as **Next day**. Absent: on the template's own date. |
@@ -315,3 +316,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.31 | `afterMidnight` on a block, `nightOf` on a task. |
 | v2.32 | `followMeal` on a block; `mealWords` in the settings - `[{ word, meals }]`, the words a recipe's name starts with and the meals each says, read past anything malformed rather than refused. |
 | v2.35 | `missed` on a task, `endsItself` on a category: an ongoing block, and a block of a category that ends by itself, is marked done by the app once its end has passed, unless it was said not to have happened. |
+| v2.36 | `waitingRecipes` on a block: a recipe named by a templates file before Kitchen had it, taken when a recipe of that name arrives. |

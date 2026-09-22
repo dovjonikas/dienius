@@ -66,16 +66,18 @@ test('thirty recipes pasted at once are saved with one press, fit the screen, an
   expect(rows.some(r => r.out)).toBe(false)
   expect(new Set(rows.map(r => r.numbers)).size).toBe(1)
 
-  // One row's meals changed in the row: its six open inside the screen.
-  await page.getByRole('button', { name: 'Meals for Lunch: Bowl number 2: Lunch' }).click()
+  // One row's meals changed in the row: its six open inside the screen. The
+  // name's word already says lunch and dinner - the map a new device starts
+  // with - so the press here adds a third.
+  await page.getByRole('button', { name: 'Meals for Lunch: Bowl number 2: Lunch, dinner' }).click()
   await expect(page.getByRole('group', { name: 'Meals for Lunch: Bowl number 2' })).toBeVisible()
   expect(await inside(page, '.meals-picker-panel')).toBe(true)
-  await page.getByRole('group', { name: 'Meals for Lunch: Bowl number 2' }).getByRole('button', { name: 'Dinner' }).click()
+  await page.getByRole('group', { name: 'Meals for Lunch: Bowl number 2' }).getByRole('button', { name: 'Snack' }).click()
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 
-  await expect(page.locator('.kitchen-section-name')).toHaveText(['Lunch', 'Dinner'])
-  await expect(page.locator('.kitchen-section-count')).toHaveText(['30', '1'])
+  await expect(page.locator('.kitchen-section-name')).toHaveText(['Lunch', 'Dinner', 'Snack'])
+  await expect(page.locator('.kitchen-section-count')).toHaveText(['30', '30', '1'])
 
   // The same text again: each row says it writes over the one there, and
   // Kitchen still has thirty - the meal given by hand kept.
@@ -84,7 +86,7 @@ test('thirty recipes pasted at once are saved with one press, fit the screen, an
   await expect(page.getByText('30 updated')).toBeVisible()
   await expect(page.locator('.kitchen-paste-state').first()).toHaveText('Updates the one in Kitchen')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
-  await expect(page.locator('.kitchen-section-count')).toHaveText(['30', '1'])
+  await expect(page.locator('.kitchen-section-count')).toHaveText(['30', '30', '1'])
   await expect(page.locator('.kitchen-card').first()).toContainText('500 kcal')
 })
 

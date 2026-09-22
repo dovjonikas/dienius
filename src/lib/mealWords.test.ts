@@ -8,12 +8,16 @@ import type { MealWord } from './types'
  * keeps. Every name and every word here is a generic one.
  */
 
-test('a new device knows the six meals by their own names, each for itself', () => {
+test('a new device starts with the map, and every meal the map does not name by its own name', () => {
   expect(DEFAULT_MEAL_WORDS).toEqual([
     { word: 'Breakfast', meals: ['breakfast'] },
-    { word: 'Lunch', meals: ['lunch'] },
-    { word: 'Dinner', meals: ['dinner'] },
+    { word: 'Lunch', meals: ['lunch', 'dinner'] },
     { word: 'Pre-gym', meals: ['pre-gym'] },
+    { word: 'After', meals: ['dinner', 'post-gym'] },
+    { word: 'Pack', meals: ['lunch', 'snack'] },
+    { word: 'Evening', meals: ['snack'] },
+    { word: 'Side', meals: [] },
+    { word: 'Dinner', meals: ['dinner'] },
     { word: 'Post-gym', meals: ['post-gym'] },
     { word: 'Snack', meals: ['snack'] },
   ])
@@ -33,9 +37,15 @@ test("a name's first word is the word before its first colon, and only a word", 
 })
 
 test("the list's word says the meals, however it is capitalised or hyphenated", () => {
-  expect(mealsFromName('Lunch: A bean bowl', DEFAULT_MEAL_WORDS)).toEqual(['lunch'])
-  expect(mealsFromName('lunch: a bean bowl', DEFAULT_MEAL_WORDS)).toEqual(['lunch'])
+  expect(mealsFromName('Lunch: A bean bowl', DEFAULT_MEAL_WORDS)).toEqual(['lunch', 'dinner'])
+  expect(mealsFromName('lunch: a bean bowl', DEFAULT_MEAL_WORDS)).toEqual(['lunch', 'dinner'])
   expect(mealsFromName('PRE GYM: rice cakes', DEFAULT_MEAL_WORDS)).toEqual(['pre-gym'])
+  expect(mealsFromName('After: A shake', DEFAULT_MEAL_WORDS)).toEqual(['dinner', 'post-gym'])
+  expect(mealsFromName('Pack: A wrap', DEFAULT_MEAL_WORDS)).toEqual(['lunch', 'snack'])
+  expect(mealsFromName('Evening: Yoghurt', DEFAULT_MEAL_WORDS)).toEqual(['snack'])
+  // A word that says no meal is still a word: the recipe is sorted by it, for none.
+  expect(mealsFromName('Side: Coleslaw', DEFAULT_MEAL_WORDS)).toEqual([])
+  expect(mealsFromName('Dinner: A stew', DEFAULT_MEAL_WORDS)).toEqual(['dinner'])
   // A word the list does not know, and a name with none, say nothing.
   expect(mealsFromName('Soup: a thick one', DEFAULT_MEAL_WORDS)).toBeUndefined()
   expect(mealsFromName('A bean bowl', DEFAULT_MEAL_WORDS)).toBeUndefined()
