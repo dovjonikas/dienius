@@ -155,11 +155,15 @@
  */
 :root {
   /* Spacing, in steps of four and named by multiples of four: 4, 8, 12, 16,
-     24, 32 and 48 - docs/DESIGN.md. Every margin, padding and gap in the app
-     comes from it. --s0 exists so "half a step" has a name rather than being
-     written as a bare 2px in six places; it is a hairline's offset, not a
-     gap. */
-  --s0: 2px;
+     24, 32 and 48 - docs/DESIGN.md, one look, rule 1. Every margin, padding
+     and gap in the app is one of them, written as its token. There is no
+     half step since the one-look pass: --s0 (2px) and the 1, 3 and 6px that
+     sat inside the smallest boxes are the next step up or none. What is two
+     pixels wide or one is a line, not a gap, and is named as one: --stroke,
+     a category's edge drawn inside a block, and --hairline, a border's
+     width wherever a sum has to allow for it. */
+  --stroke: 2px;
+  --hairline: 1px;
   --s1: 4px;
   --s2: 8px;
   --s3: 12px;
@@ -202,29 +206,37 @@
      it - docs/DESIGN.md.
      The two shapes are not sizes: a pill is a capsule whatever it holds,
      and round is a circle. */
-  --r-mark: 6px;
-  --r-control: var(--radius);
-  --r-card: var(--edge);
-  --r-pill: 999px;
+  /* One corner since the one-look pass, rule 3 - docs/DESIGN.md: 8px, a
+     step of the grid, on a check box and a card alike, and on a chip, which
+     was a capsule. The names stay for what each rule rounds; they are one
+     value. A circle is a shape, not a corner, and stays: a dot, a swatch, the
+     timer's ring. A bar thinner than twice the corner draws its ends round
+     by itself. */
+  --r: 8px;
+  --r-mark: var(--r);
+  --r-control: var(--r);
+  --r-card: var(--r);
+  --r-pill: var(--r);
   --r-round: 50%;
 
-  /* Type. Six sizes, each a role - caption, interface, body, reading, title,
-     display - and at most four of them on one screen: docs/DESIGN.md. A
-     size outside them is almost never information, it is just a decision
-     nobody wrote down.
+  /* Type. Five sizes in the whole app since the one-look pass, rule 3 -
+     docs/DESIGN.md: caption, interface, body, title and display. Body and
+     reading were two sizes a point apart, 15 and 17, and are one: 16px,
+     which is also the floor iOS Safari needs before it stops zooming a field
+     on a finger. --t-read stays as the name of that use and is the same size,
+     never below 16px at any text setting. The Focus screen's two fluid sizes
+     and the glyph size are the display and title steps now.
 
-     Nothing is 10px, which is below a size worth reading, and no field is
-     pinned to 16px any more: a field is --t-md on a mouse and --t-read on a
-     finger, which is the 16px floor iOS Safari needs before it stops zooming
-     a field, and a desktop form does not read in two sizes. */
+     Nothing is 10px at the default size, which is below a size worth
+     reading. */
   --t-xs: 11px;
   --t-sm: 13px;
-  --t-md: 15px;
+  --t-md: 16px;
   /* Reading and writing: North's text, a note being read, the journal's
-     page - and every field on a phone. */
-  --t-read: 17px;
+     page - and every field on a phone, which never drops under 16px. */
+  --t-read: max(16px, var(--t-md));
   --t-lg: 20px;
-  --t-xl: 34px;
+  --t-xl: 40px;
 
   /* Three line heights and three weights, and a rule names one of them
      rather than a number - docs/DESIGN.md. Tight for a title, a numeral and
@@ -236,16 +248,13 @@
   --w-regular: 400;
   --w-medium: 500;
   --w-strong: 600;
-  /* The two fluid sizes, both on the Focus screen: the countdown and the
-     task's name over it. Fluid because that screen is the one place type
-     is meant to fill the window rather than sit in a column. */
-  --t-focus: clamp(38px, 8vw, 68px);
-  --t-focus-title: clamp(20px, 3.2vw, 30px);
-  /* Also not a step in the scale: this sizes a glyph drawn as text - the
-     vertical dots of an actions menu, the slashed circle of the no-tag
-     swatch - where the number is picking how big a small piece of art is,
-     not how readable a line of prose is. Two of them, named once. */
-  --t-glyph: 18px;
+  /* The Focus screen's countdown and the task's name over it, and a glyph
+     drawn as text - the dots of an actions menu, the slashed circle of the
+     no-tag swatch. They were three sizes of their own, two of them fluid;
+     under the five-size rule they are the display and the title steps. */
+  --t-focus: var(--t-xl);
+  --t-focus-title: var(--t-lg);
+  --t-glyph: var(--t-lg);
 
   /* Elevation. Shadows belong to layers - docs/DESIGN.md: --e2 for a
      popover, a menu, a bubble and a thing in the hand while it is dragged,
@@ -337,18 +346,18 @@
    the payoff for having scales at all: the entire app gets tighter or larger
    in six declarations, and nothing anywhere else knows either setting exists.
 
-   Compact is roughly three quarters of Comfortable at the sizes that matter,
-   with the smallest steps held where they are - two pixels of separation
-   cannot usefully become one and a half. */
+   Compact is every step one step tighter, on the same grid: a gap of 8 is
+   4, a card's inner 16 is 12, a section's 24 is 16 - the one-look pass took
+   it off the three-quarters it was, whose 3, 6, 9 and 18px were off the
+   four-pixel grid. The smallest step stays 4. */
 :root[data-density='compact'] {
-  --s0: 2px;
-  --s1: 3px;
-  --s2: 6px;
-  --s3: 9px;
+  --s1: 4px;
+  --s2: 4px;
+  --s3: 8px;
   --s4: 12px;
-  --s6: 18px;
+  --s6: 16px;
   --s8: 24px;
-  --s12: 36px;
+  --s12: 32px;
   --control-h: 32px;
 }
 
@@ -362,25 +371,24 @@
 
 /* Text size scales every step together, so the ratios between them - and
    therefore the whole visual hierarchy - are identical at every setting. The
-   small setting stops at 16px for --t-read, which is every field on a
-   finger: below it, iOS Safari zooms the page when a field takes focus, and
-   that is a bug rather than a preference. */
+   reading step never drops under 16px, which is every field on a finger:
+   below it, iOS Safari zooms the page when a field takes focus, and that is
+   a bug rather than a preference - so the small setting draws its fields a
+   point over its body. */
 :root[data-text-scale='s'] {
   --t-xs: 10px;
   --t-sm: 12px;
-  --t-md: 14px;
-  --t-read: 16px;
+  --t-md: 15px;
   --t-lg: 18px;
-  --t-xl: 31px;
+  --t-xl: 36px;
 }
 
 :root[data-text-scale='l'] {
   --t-xs: 12px;
   --t-sm: 14.5px;
-  --t-md: 17px;
-  --t-read: 19px;
+  --t-md: 18px;
   --t-lg: 23px;
-  --t-xl: 39px;
+  --t-xl: 44px;
 }
 
 * { box-sizing: border-box; }
@@ -402,7 +410,7 @@
   width: 1px;
   height: 1px;
   padding: 0;
-  margin: -1px;
+  margin: 0;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -527,6 +535,11 @@ textarea {
 button {
   font-family: inherit;
   font-size: inherit;
+  /* None of the browser's own: its 1px 6px was the most drawn value off the
+     grid in the app, on every button no rule gave room of its own - a row's
+     menu, a gap on the timeline, an arrow. A button that wants room says so
+     with the scale - one look, rule 1. */
+  padding: 0;
 }
 
 /* One shell for every tab. The header has to sit in exactly the same place
@@ -675,7 +688,7 @@ main { flex: 1 1 auto; min-height: 0; }
 .nav-rail-list {
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1023,6 +1036,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 .setting-desc {
+  margin: 0;
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
@@ -1049,7 +1063,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
     top: 16px;
     flex-direction: column;
     overflow: visible;
-    gap: var(--s0);
+    gap: var(--s1);
   }
 
   /* Beside the page a list of quiet rows, the one in view on the fill. */
@@ -1323,8 +1337,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .segmented {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--s0);
-  padding: var(--s0);
+  gap: var(--s1);
+  padding: var(--s1);
   border-radius: var(--r-control);
   background: var(--fill);
 }
@@ -1338,7 +1352,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 .segmented button {
-  min-height: calc(var(--control-h) - var(--s0) * 2);
+  min-height: calc(var(--control-h) - var(--s1) * 2);
   padding: 0 var(--s4);
   border: none;
   border-radius: var(--r-mark);
@@ -1519,7 +1533,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   display: flex;
   flex-direction: column;
   gap: var(--s1);
-  margin: var(--s0) 0;
+  margin: var(--s1) 0;
 }
 
 /* A stronger tint than the real grid uses. At this size a block is eleven
@@ -1539,7 +1553,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .theme-card-now {
   height: 1.5px;
-  margin: 1px 0;
+  margin: 0 0;
   border-radius: var(--r-pill);
   background: var(--pv-mark);
 }
@@ -1566,7 +1580,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   border: 1px solid var(--pv-border);
   border-radius: var(--pv-edge);
   box-shadow: var(--pv-shadow);
-  padding: 6px var(--s2);
+  padding: var(--s2) var(--s2);
 }
 
 .theme-card-chip {
@@ -1597,7 +1611,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   color: var(--pv-mark-ink);
   background: var(--pv-mark);
   border-radius: var(--r-mark);
-  padding: 3px var(--s2);
+  padding: var(--s1) var(--s2);
   white-space: nowrap;
 }
 
@@ -1780,7 +1794,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    line that always answers the same question rather than three arrangements
    that happen to sit in the same place. */
 .day-when {
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: var(--fill);
   color: var(--muted);
@@ -1826,7 +1840,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    timeline beside it. */
 .day-now-left {
   flex-shrink: 0;
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 20%, transparent);
   color: var(--text);
@@ -2068,8 +2082,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: var(--s0);
-  padding: 6px var(--s2) 6px var(--s3);
+  gap: var(--s1);
+  padding: var(--s2) var(--s2) var(--s2) var(--s3);
   overflow: hidden;
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--cat, var(--muted)) 12%, var(--surface));
@@ -2254,7 +2268,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   flex: 1 1 auto;
   min-width: 0;
   margin-right: var(--s3);
-  padding: var(--s0) 0;
+  padding: var(--s1) 0;
   color: var(--faint);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
@@ -2307,8 +2321,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
      regardless of block height, keeps the line and the title from
      reading as a strikethrough over each other. */
   justify-content: flex-start;
-  gap: var(--s0);
-  padding: 6px var(--s2);
+  gap: var(--s1);
+  padding: var(--s2) var(--s2);
   border-radius: var(--r-control);
   background: var(--fill);
   border: 1px solid transparent;
@@ -2320,7 +2334,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    TimelineGrid.tsx for why 32px, not the padding, is now the thing that
    actually decides a short anchor's height. */
 .timeline-anchor.timeline-anchor-compact {
-  padding: 3px var(--s2);
+  padding: var(--s1) var(--s2);
 }
 
 /* One line of room, so the times sit beside the title - see TWO_LINES_PX
@@ -2555,7 +2569,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 .timeline-note {
-  margin: var(--s2) var(--s0) 0;
+  margin: var(--s2) var(--s1) 0;
   color: var(--muted);
   font-size: var(--t-sm);
 }
@@ -2788,7 +2802,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   position: absolute;
   left: 0;
   width: calc(var(--timeline-gutter) - var(--s1));
-  padding: 0 var(--s0);
+  padding: 0 var(--s1);
   border: 1px solid color-mix(in srgb, var(--mark) 70%, transparent);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 22%, var(--bg));
@@ -2835,7 +2849,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   position: absolute;
   left: 2px;
   transform: translateY(-50%);
-  padding: 1px var(--s1);
+  padding: 0 var(--s1);
   border: 1px solid var(--accent);
   border-radius: var(--r-mark);
   background: var(--surface);
@@ -3266,13 +3280,12 @@ input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([
    :not()s deep, and a class on its own cannot reach past it - the other
    three overrides of it in this file repeat the chain the same way.
 
-   Measured in the mark's own size rather than in pixels. The word is about
-   2.9 times --t-xs wide in this face; 3.4 is that plus half an em of
-   clearance, so the reservation grows with the text scale rather than the
-   word growing out of a fixed gap at scale l. Measured at s, m and l: 50,
-   53.4 and 56.8 pixels, with the same 13px of clear space at each. */
+   The scale's largest step, one look's rule 1. The word is about 2.9 times
+   --t-xs wide in this face and stands a step in from the edge, so what is
+   typed stops 11px short of it at text size s, 8px at m and 5px at l -
+   measured, and clear at each. */
 input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)).has-return {
-  padding-right: calc(var(--s2) * 2 + var(--t-xs) * 3.4);
+  padding-right: var(--s12);
 }
 
 .return-mark {
@@ -3432,6 +3445,7 @@ textarea:focus {
 .time-picker .time-input {
   width: 82px;
   min-height: calc(var(--control-h) - 2px);
+  padding: 0;
   border: none;
   border-radius: 0;
   background: none;
@@ -3512,7 +3526,7 @@ textarea:focus {
 .time-picker-column {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   max-height: 216px;
   overflow-y: auto;
 }
@@ -3618,7 +3632,7 @@ textarea:focus {
 .setting-name-input {
   width: 100%;
   max-width: 220px;
-  margin-left: calc((var(--s2) + 1px) * -1);
+  margin-left: calc((var(--s2) + var(--hairline)) * -1);
   padding: 0 var(--s2);
   border-color: transparent;
   background: none;
@@ -3636,7 +3650,7 @@ textarea:focus {
 .setting-remove {
   align-self: flex-start;
   min-height: var(--s6);
-  margin-top: var(--s0);
+  margin-top: var(--s1);
   padding: 0 var(--s2);
   border: none;
   border-radius: var(--r-control);
@@ -3664,7 +3678,7 @@ textarea:focus {
 select {
   min-width: 0;
   min-height: var(--control-h);
-  padding: var(--s2) calc(var(--s3) + 18px) var(--s2) var(--s3);
+  padding: var(--s2) var(--s8) var(--s2) var(--s3);
   border: 1px solid transparent;
   border-radius: var(--r-control);
   background-color: var(--fill);
@@ -3764,12 +3778,12 @@ select:focus {
    The thin gap is the whole reason this is a separate element rather than
    part of the value: the field is right-aligned with no padding of its own,
    so "120" and "min" met with nothing between them and the box read "120min",
-   which is a word. 0.15 of the unit's own size is enough to make it two
-   things and small enough that it is still one value - about two pixels at
-   the size this sits at, which is what a thin space is for. */
+   which is a word. The scale's smallest step is enough to make it two
+   things and small enough that it is still one value, which is what a thin
+   space is for. */
 .time-stepper-unit {
   align-self: center;
-  margin-left: 0.15em;
+  margin-left: var(--s1);
   padding-right: var(--s2);
   color: var(--muted);
   font-size: var(--t-sm);
@@ -3778,7 +3792,7 @@ select:focus {
 
 /* The same gap on the chips and on the value button, where the two halves
    come out of one string - see DurationText in DurationControl.tsx. */
-.duration-unit { margin-left: 0.15em; }
+.duration-unit { margin-left: var(--s1); }
 
 .time-stepper:has(.time-stepper-unit) .minutes-input {
   width: 58px;
@@ -4147,11 +4161,11 @@ select:focus {
   gap: var(--s2);
   flex-wrap: wrap;
   min-height: 22px;
-  padding-left: var(--s0);
+  padding-left: var(--s1);
 }
 
 .quick-add-chip {
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
@@ -4222,7 +4236,7 @@ select:focus {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--s0) var(--s2);
+  gap: var(--s1) var(--s2);
   /* The check box's 24px and the gap after it, so the line starts where
      the title does. It was 34px, two short of the title. */
   padding-left: calc(var(--s6) + var(--s3));
@@ -4543,8 +4557,8 @@ select:focus {
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   min-height: 0;
-  padding: var(--s1) 6px;
-  margin: calc(var(--s1) * -1) -6px;
+  padding: var(--s1) var(--s2);
+  margin: calc(var(--s1) * -1) calc(var(--s2) * -1);
   border-radius: var(--r-control);
   flex-shrink: 0;
 }
@@ -4694,7 +4708,7 @@ select:focus {
    would, which visibility or a zero height would not. */
 .done-section:not(.open) .task-list-done { display: none; }
 
-.task-list-done { margin-top: var(--s0); }
+.task-list-done { margin-top: var(--s1); }
 
 .task-list-done .task {
   background: none;
@@ -5725,10 +5739,12 @@ button.danger {
 }
 
 /* A phone's cell is the height of two lines, and at the largest text size the
-   letter at the reading size was taller than what was left under the date. It
-   is a letter either way: one step down still reads across the grid. */
+   letter at the reading size was taller than what was left under the date -
+   and at the body size too, once the body became 16 (18 at that size). It is
+   a letter either way: the interface size, bold, still reads across the
+   grid, and is whole at every text size. */
 @media (max-width: 599px) {
-  .cell-kind { font-size: var(--t-md); }
+  .cell-kind { font-size: var(--t-sm); }
 }
 
 
@@ -5774,12 +5790,12 @@ button.danger {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--s0);
+  gap: var(--s1);
   background: var(--surface);
   border: 1px solid transparent;
   border-radius: var(--r-control);
   color: var(--text);
-  padding: 6px var(--s0);
+  padding: var(--s2) var(--s1);
   overflow: hidden;
   touch-action: none;
 }
@@ -5856,7 +5872,7 @@ button.danger {
    so the cell color carries the meaning and the name is hidden. */
 @media (max-width: 420px) {
   .calendar-grid { gap: var(--s1); }
-  .cell { padding: var(--s1) 1px; }
+  .cell { padding: var(--s1) 0; }
   .cell-template { display: none; }
 }
 
@@ -6162,7 +6178,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s0);
+  gap: var(--s1);
   min-height: var(--control-h);
   padding: var(--s2) var(--s3);
   border: none;
@@ -6295,7 +6311,7 @@ button.danger {
    discovered - this view covers everything, so how to leave it should never
    be a guess. */
 .focus-close-hint {
-  padding: 1px 6px;
+  padding: 0 var(--s2);
   border-radius: var(--r-mark);
   background: var(--fill-strong);
   font-size: var(--t-xs);
@@ -6648,8 +6664,8 @@ button.danger {
   transform-origin: bottom center;
 }
 
-.clock-button-face::before { width: 1.5px; height: 5px; margin-left: -0.75px; }
-.clock-button-face::after { width: 1.5px; height: 3.5px; margin-left: -0.75px; transform: rotate(90deg); }
+.clock-button-face::before { width: 1.5px; height: 5px; transform: translateX(-50%); }
+.clock-button-face::after { width: 1.5px; height: 3.5px; transform: translateX(-50%) rotate(90deg); }
 
 .clock-button:focus-visible {
   outline: 2px solid var(--accent);
@@ -6981,7 +6997,7 @@ button.danger {
    in exactly that corner on a desktop, at both sizes the sweep measures -
    is not under it. The widget carries the class onto body while it is
    there; the shell is not the widget's to render. */
-body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + env(safe-area-inset-bottom)); }
+body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + var(--s12) + env(safe-area-inset-bottom)); }
 
 /* On a phone the bottom corners belong to the navigation bar. */
 @media (max-width: 1023px) {
@@ -7210,7 +7226,7 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 /* Bedtime, once it is close enough to matter - see SLEEP_NOTICE_MINUTES. */
 .day-sleep {
   flex-shrink: 0;
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   color: var(--muted);
   font-size: var(--t-xs);
@@ -7296,7 +7312,7 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 
 .focus-bar-left {
   flex-shrink: 0;
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 20%, transparent);
   color: var(--text);
@@ -8262,11 +8278,11 @@ button.danger:focus-visible {
   }
 
   .task-pane .task-title { font-size: var(--t-md); line-height: var(--lh-tight); }
-  .task-pane .task-meta { min-height: 16px; gap: var(--s0) var(--s2); }
+  .task-pane .task-meta { min-height: 16px; gap: var(--s1) var(--s2); }
   .task-pane .task-time,
   .task-pane .task-size,
   .task-pane .task-state { font-size: var(--t-sm); }
-  .task-pane .task-size { padding: var(--s0) 6px; margin: calc(var(--s0) * -1) -6px; }
+  .task-pane .task-size { padding: var(--s1) var(--s2); margin: calc(var(--s1) * -1) calc(var(--s2) * -1); }
   .task-pane .quick-add { padding: var(--s2) var(--s3); min-height: 0; }
   .task-pane .quick-add-block { gap: var(--s2); }
   .task-pane .category-swatch { width: 18px; height: 18px; }
@@ -8312,9 +8328,9 @@ button.danger:focus-visible {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
   padding: var(--s2) var(--s3);
-  padding-left: calc(var(--s3) + 4px);
+  padding-left: calc(var(--s3) + var(--s1));
   background: var(--surface);
   border-radius: var(--r-card);
   box-shadow: inset 4px 0 0 var(--cat, var(--border));
@@ -8326,7 +8342,7 @@ button.danger:focus-visible {
    exists to say is which thing is coming. */
 .up-next-time {
   align-self: flex-start;
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--cat, var(--muted)) 22%, transparent);
   color: color-mix(in srgb, var(--cat, var(--muted)) 30%, var(--text));
@@ -8472,14 +8488,14 @@ button.danger:focus-visible {
 .mini-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .mini-weekday {
   color: var(--muted);
   font-size: var(--t-xs);
   text-align: center;
-  padding: var(--s0) 0;
+  padding: var(--s1) 0;
 }
 
 /* Deliberately escapes this app's usual `button { min-height: 44px }`
@@ -8680,7 +8696,7 @@ button.danger:focus-visible {
 /* The third way to move a row, and the only one that is neither a gesture nor
    a key. A drag on a phone is a guess about whether the list or the page is
    about to move; a button is not. */
-.library-item-move { display: flex; flex: 0 0 auto; gap: var(--s0); }
+.library-item-move { display: flex; flex: 0 0 auto; gap: var(--s1); }
 
 .library-item-move-button {
   min-height: 0;
@@ -8870,7 +8886,7 @@ button.danger:focus-visible {
 .library-add-controls {
   display: flex;
   align-items: stretch;
-  gap: 1px;
+  gap: var(--hairline);
   flex: 0 0 auto;
 }
 
@@ -9014,7 +9030,7 @@ button.danger:focus-visible {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s1);
 }
 
 .library-item-title {
@@ -9104,8 +9120,8 @@ button.danger:focus-visible {
 .library-schedule {
   display: flex;
   align-items: center;
-  gap: var(--s0);
-  padding: var(--s0);
+  gap: var(--s1);
+  padding: var(--s1);
   border-radius: var(--r-pill);
   background: var(--fill);
 }
@@ -9493,15 +9509,16 @@ button.danger:focus-visible {
   outline: none;
 }
 
-/* The title runs the width of the head and the close cross sits in the
-   sheet's own corner, over the head's padding. It used to be a flex item
-   beside the title, which put it inside what read as the title's field. */
+/* The title runs the width of the head and the close cross stands at its
+   end, a step after the title's field - so the field's ground under the
+   pointer stops short of the cross's, and the cross is not read as part of
+   the title. The head keeps no room of its own for it: one look, rule 1. */
 .task-detail-head {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s3) calc(var(--control-h) + var(--s4) + var(--s2)) var(--s3) var(--s4);
+  padding: var(--s3) var(--s4);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
@@ -9515,7 +9532,7 @@ button.danger:focus-visible {
 .task-detail-title {
   flex: 1;
   min-width: 0;
-  margin-left: calc((var(--s2) + 1px) * -1);
+  margin-left: calc((var(--s2) + var(--hairline)) * -1);
   padding: var(--s2) var(--s2);
   border-color: transparent;
   background: none;
@@ -9524,17 +9541,6 @@ button.danger:focus-visible {
 }
 
 .task-detail-title:hover { background: var(--fill); }
-
-/* The cross at the same inset from its corner as the title from the other
-   one, on the head's centre line - by its margins, not a transform, so its
-   glyph stays on whole pixels. */
-.task-detail-head .task-detail-close {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: var(--s4);
-  margin: auto 0;
-}
 
 .task-detail-close {
   flex-shrink: 0;
@@ -9722,7 +9728,7 @@ button.danger:focus-visible {
 .task-note-mark,
 .task-recipe {
   flex-shrink: 0;
-  padding: 1px var(--s2);
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 50%, transparent);
   /* A step toward the content ink rather than plain --muted. These three sit
@@ -10041,7 +10047,7 @@ button.task-recipe:focus-visible {
    DayView's own comment. Quieter than the line above, because it is the one
    figure on the day that never changes with what you plan. */
 .capacity-sleep {
-  margin: 3px 0 0;
+  margin: var(--s1) 0 0;
   color: var(--muted);
   font-size: var(--t-sm);
 }
@@ -10113,7 +10119,7 @@ button.task-recipe:focus-visible {
 }
 
 .library-schedule-note {
-  padding: 3px var(--s2);
+  padding: var(--s1) var(--s2);
   color: var(--muted);
   font-size: var(--t-xs);
   white-space: nowrap;
@@ -10393,7 +10399,7 @@ button.task-recipe:focus-visible {
   /* "Ctrl K" is one key chip, and at 390px it broke into "Ctrl" over "K" -
      a two-line key cap that reads as two keys. */
   white-space: nowrap;
-  padding: var(--s0) 6px;
+  padding: var(--s1) var(--s2);
   border-radius: var(--r-mark);
   background: var(--fill);
   color: var(--text);
@@ -10770,7 +10776,7 @@ button.task-recipe:focus-visible {
 .review-chart {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  gap: var(--s1);
   height: 108px;
 }
 
@@ -10912,7 +10918,7 @@ button.task-recipe:focus-visible {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: max(calc(var(--s8) * 2), 10vh) var(--s4) var(--s4);
+  padding: var(--s12) var(--s4) var(--s4);
   background: var(--scrim);
 }
 
@@ -11006,7 +11012,6 @@ button.task-recipe:focus-visible {
 .palette-empty { padding: var(--s4) var(--s3); color: var(--muted); font-size: var(--t-sm); }
 
 @media (max-width: 599px) {
-  .palette-scrim { padding-top: max(var(--s8), 6vh); }
   .palette-input { font-size: var(--t-read); }
 }
 
@@ -11097,7 +11102,7 @@ button.task-recipe:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s0);
+  gap: var(--s1);
   width: calc(100% + var(--s2) * 2);
   min-height: 0;
   margin: 0 calc(var(--s2) * -1);
@@ -11149,7 +11154,7 @@ button.task-recipe:focus-visible {
   align-items: center;
   gap: var(--s2);
   min-width: 0;
-  margin-top: var(--s0);
+  margin-top: var(--s1);
 }
 
 .journal-line-label {
@@ -11205,13 +11210,15 @@ button.task-recipe:focus-visible {
 /* One line each: a heading too long for the rail is cut with an ellipsis,
    never wrapped onto a second line, and its card says it whole. The ground
    under the pointer, and while the card is out, reaches past the words
-   rather than pushing them in. */
+   rather than pushing them in. A single line, so set at the single line's
+   height - with the scale's smallest step above and below, eight headings
+   and the rest of the rail stand on a 1080p window with North open. */
 .north-day-heading {
   display: block;
   width: calc(100% + var(--s2) * 2);
   min-height: 0;
   margin: 0 calc(var(--s2) * -1);
-  padding: var(--s0) var(--s2);
+  padding: var(--s1) var(--s2);
   border: none;
   border-radius: var(--r-control);
   background: none;
@@ -11219,7 +11226,7 @@ button.task-recipe:focus-visible {
   font: inherit;
   font-size: var(--t-sm);
   font-weight: var(--w-regular);
-  line-height: var(--lh-ui);
+  line-height: var(--lh-tight);
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -12041,7 +12048,7 @@ button.north-day-line:focus-visible {
 .cell-stats {
   display: flex;
   align-items: baseline;
-  gap: 3px;
+  gap: var(--s1);
   max-width: 100%;
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
@@ -12101,7 +12108,7 @@ button.north-day-line:focus-visible {
   right: 4px;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--s1);
   pointer-events: none;
 }
 
@@ -12177,8 +12184,8 @@ button.north-day-line:focus-visible {
        slipped. On a phone, where a cell holds a number and a score and
        nothing else, both stay centred. */
     align-items: flex-start;
-    padding: var(--s1) 6px 6px;
-    gap: 1px;
+    padding: var(--s1) var(--s2) var(--s2);
+    gap: 0;
   }
 
   .stamp-bar { flex-shrink: 0; padding: 0; }
@@ -12197,7 +12204,7 @@ button.north-day-line:focus-visible {
   /* A phone keeps square-ish cells but loses the template name, which never
      fit anyway - see the existing rule at 420px. The ratio is the more
      useful of the two in the same space. */
-  .cell { padding: var(--s1) var(--s0) 6px; }
+  .cell { padding: var(--s1) var(--s1) var(--s2); }
   .cell-stats { font-size: var(--t-xs); }
 }
 
@@ -12295,7 +12302,7 @@ main:has(.week) > .calendar {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--s0);
+  gap: var(--s1);
   padding-bottom: var(--s1);
   position: relative;
   min-width: 0;
@@ -12370,7 +12377,7 @@ main:has(.week) > .calendar {
   justify-content: center;
   gap: var(--s1);
   min-width: 0;
-  padding: 1px var(--s1);
+  padding: 0 var(--s1);
   border-radius: var(--r-mark);
   border: 1px solid transparent;
   background: color-mix(in srgb, var(--chip, var(--border)) 22%, transparent);
@@ -12422,7 +12429,7 @@ main:has(.week) > .calendar {
   min-width: max(100%, 140px);
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
   padding: var(--s1);
   background: var(--surface-raised);
   border-radius: var(--r-card);
@@ -12541,7 +12548,7 @@ main:has(.week) > .calendar {
      1.15 and the 2px of padding are 14.65, so 15 - at 14 the line's
      descenders were under the block's edge. */
   min-height: 15px;
-  padding: 1px 3px;
+  padding: 0 var(--s1);
   border: none;
   border-radius: var(--r-mark);
   overflow: hidden;
@@ -12556,7 +12563,6 @@ main:has(.week) > .calendar {
   text-align: left;
   cursor: grab;
   background: color-mix(in srgb, var(--block, var(--accent)) 32%, var(--surface));
-  border-left: 2px solid var(--block, var(--accent));
   color: var(--text);
   font-size: var(--t-xs);
   line-height: 1.15;
@@ -12599,15 +12605,15 @@ main:has(.week) > .calendar {
   position: absolute;
   left: 0;
   right: 0;
-  /* The words where a block's stand: its 2px edge, then its 3px in. */
-  padding: 1px 3px 1px calc(var(--s0) + 3px);
+  /* The words where a block's stand: its edge, then a step in - see the
+     edge the two share, after this rule. */
+  padding: 0 var(--s1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--block, var(--muted)) 12%, var(--surface));
-  box-shadow: inset var(--s0) 0 0 var(--block, var(--muted));
   color: color-mix(in srgb, var(--muted) 70%, var(--text));
   font-size: var(--t-xs);
   line-height: var(--lh-tight);
@@ -12615,6 +12621,12 @@ main:has(.week) > .calendar {
   container-type: size;
   z-index: 1;
 }
+
+/* A block's edge: its category's colour down its left side, the one border a
+   block has. Last night's block draws it the same way, as a done block does,
+   so its words stand a step after it where a block's words stand. */
+.week-block,
+.week-carried { border-left: var(--stroke) solid var(--block, var(--accent)); }
 
 .week-block-title {
   display: block;
@@ -12651,7 +12663,7 @@ main:has(.week) > .calendar {
   grid-row: 3;
   grid-column: var(--week-col);
   min-height: 21px;
-  padding-top: 3px;
+  padding-top: var(--s1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12759,7 +12771,7 @@ main:has(.week) > .calendar {
   right: 4px;
   width: min(34%, 160px);
   z-index: 3;
-  padding: var(--s0) 6px;
+  padding: var(--s1) var(--s2);
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 3px solid var(--cal, var(--muted));
   border-radius: var(--r-mark);
@@ -12801,7 +12813,7 @@ main:has(.week) > .calendar {
   right: 0;
   width: 42%;
   z-index: 3;
-  padding: 0 var(--s0);
+  padding: 0 var(--s1);
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 2px solid var(--cal, var(--muted));
   border-radius: var(--r-mark);
@@ -12856,7 +12868,7 @@ main:has(.week) > .calendar {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .calendar-row-name { color: var(--text); font-weight: var(--w-strong); }
@@ -13473,7 +13485,7 @@ main:has(.week) > .calendar {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
+  padding: var(--s12) var(--s4) var(--s4);
   background: var(--scrim);
 }
 
@@ -13798,7 +13810,7 @@ main:has(.week) > .calendar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s0);
+  gap: var(--s1);
   min-height: 56px;
   padding: var(--s3) var(--s4);
   border: none;
@@ -13992,7 +14004,7 @@ main:has(.week) > .calendar {
 /* One line: the free windows, which is the answer for the person on the
    phone, over the plan's own sentence. Weight rather than colour, so it is
    the first thing read and still reads as part of the same answer. */
-.replan-free { display: block; font-weight: var(--w-strong); margin-bottom: var(--s0); }
+.replan-free { display: block; font-weight: var(--w-strong); margin-bottom: var(--s1); }
 
 /* A block in the way is a row you can press: the row itself says what
    happens to it, and pressing it opens the four ways out for that one. The
@@ -14062,7 +14074,7 @@ main:has(.week) > .calendar {
 .joined-line {
   display: flex;
   align-items: stretch;
-  gap: 1px;
+  gap: var(--hairline);
   border-radius: var(--r-control);
 }
 
@@ -14223,7 +14235,7 @@ main:has(.week) > .calendar {
 .quick-add-time-modes {
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .quick-add-time-modes button,
@@ -14442,7 +14454,7 @@ main:has(.week) > .calendar {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
 }
 
 .later-item-title {
@@ -15087,7 +15099,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   gap: var(--s1);
   min-width: 0;
-  padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) + 3px);
+  padding: var(--s4);
   border: 0;
   border-radius: var(--r-card);
   background: color-mix(in srgb, var(--cat, var(--surface)) 6%, var(--surface));
@@ -15994,7 +16006,7 @@ main:has(.week) > .calendar {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1px;
+  gap: 0;
   width: 100%;
   min-width: 0;
   padding: 0;
@@ -16006,7 +16018,7 @@ main:has(.week) > .calendar {
 
 .cell-point {
   display: flex;
-  gap: 3px;
+  gap: var(--s1);
   min-width: 0;
   font-size: var(--t-xs);
   line-height: var(--lh-tight);
@@ -16137,7 +16149,7 @@ main:has(.week) > .calendar {
 .day-card-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--hairline);
   margin: 0;
   padding: 0;
   max-height: 40vh;
@@ -16294,7 +16306,7 @@ main:has(.week) > .calendar {
 .agenda-date-button {
   font-variant-numeric: tabular-nums;
   min-height: 0;
-  padding: var(--s0) 0;
+  padding: var(--s1) 0;
   border: none;
   background: none;
   color: var(--muted);
@@ -16337,7 +16349,7 @@ main:has(.week) > .calendar {
 .agenda-journal {
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: var(--s1);
   margin: var(--s1) 0 0;
   padding: var(--s1) var(--s3);
   border-left: 2px solid var(--border);
@@ -16372,7 +16384,7 @@ main:has(.week) > .calendar {
 .agenda-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--hairline);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -16674,21 +16686,21 @@ main:has(.week) > .calendar {
    column with one more line under it - the day type shows under the column
    in hand - was centred as a taller stack, and its untimed chip sat a line
    above the six beside it. */
-.wt-col-foot { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: var(--s0); }
+.wt-col-foot { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: var(--s1); }
 
 /* Blocks with no time, which the clock has nowhere to put. */
 .week-block-from { display: block; font-size: var(--t-xs); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* As tall as the busiest day's strip in every column - see untimedRows in
    WeekTemplateGrid - so the feet under it share their lines. A chip is a
-   caption's line and its two pixels of padding; the strip is that many of
-   them and a pixel between each. */
+   caption's line; the strip is that many of them and a hairline between
+   each. */
 .wt-untimed {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--hairline);
   width: 100%;
-  min-height: calc(var(--untimed-rows, 0) * (var(--t-xs) * var(--lh-ui) + 2px) + (var(--untimed-rows, 1) - 1) * 1px);
+  min-height: calc(var(--untimed-rows, 0) * var(--t-xs) * var(--lh-ui) + (var(--untimed-rows, 1) - 1) * var(--hairline));
 }
 
 /* Room under the strip on a finger. Copy to sits straight under it since
@@ -16706,7 +16718,7 @@ main:has(.week) > .calendar {
 .wt-untimed-block {
   width: 100%;
   min-height: 0;
-  padding: 1px var(--s1);
+  padding: 0 var(--s1);
   border: none;
   border-radius: var(--r-mark);
   background: var(--fill);
@@ -16824,7 +16836,7 @@ main:has(.week) > .calendar {
 .week-preview {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  gap: var(--s1);
   height: 26px;
 }
 
@@ -16833,7 +16845,7 @@ main:has(.week) > .calendar {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 1px;
+  gap: 0;
   width: 12px;
   height: 100%;
 }
@@ -17318,7 +17330,7 @@ main:has(.week) > .calendar {
 
 .timeline-ghost-length {
   display: block;
-  padding: 1px var(--s1);
+  padding: 0 var(--s1);
   color: var(--text);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
@@ -17418,7 +17430,7 @@ main:has(.week) > .calendar {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
+  padding: var(--s12) var(--s4) var(--s4);
   background: var(--scrim);
 }
 
@@ -17436,6 +17448,20 @@ main:has(.week) > .calendar {
   background: var(--surface-raised);
   --ground: var(--surface-raised);
   box-shadow: var(--e3);
+}
+
+/* On a phone the journal is the sheet the task opens in: full width, square
+   at the bottom, most of the screen tall - one kind of sheet on a finger.
+   As a card with the page's gutter round it, its month's days were 43px at
+   390 and 41 at 375, under a finger's 44. */
+@media (max-width: 599px) {
+  .journal-scrim { align-items: flex-end; padding: 0; }
+  .journal-overlay {
+    width: 100%;
+    max-height: 86dvh;
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    padding-bottom: max(var(--s4), env(safe-area-inset-bottom));
+  }
 }
 
 /* The cross stands on the centre line of the head's row, at the same inset
@@ -17509,7 +17535,7 @@ main:has(.week) > .calendar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
+  gap: 0;
   width: 100%;
   min-height: 0;
   padding: var(--s1) var(--s2);
@@ -17540,7 +17566,7 @@ main:has(.week) > .calendar {
   flex: 0 0 auto;
   width: var(--touch);
   height: var(--touch);
-  margin: calc((var(--touch) - 20px) / -2);
+  margin: calc((var(--touch) - var(--s6)) / -2);
   color: var(--muted);
   border-radius: var(--r-control);
 }

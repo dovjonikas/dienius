@@ -27,7 +27,7 @@ the short form of it for somebody writing a rule.
    ground; focused from a keyboard, a halo. Nothing moves.
 4. **One frame for every page.** A title stands in the same place on every
    page, over one of two column widths, with its actions at the right of the
-   same row.
+   same row - one look, rule 7.
 5. **Motion answers, it never performs.** A press answers in 120ms, a layer
    arrives in 180ms, easing out. Nothing bounces, nothing scales on a press,
    nothing is staggered. With reduced motion nothing moves at all; colour and
@@ -40,25 +40,80 @@ on a finger.
 
 ---
 
+## One look, seven rules
+
+The owner's brief of 2026-09-22: the whole app held to seven rules, on
+every screen and every modal, at 1920x1080 and on a 375x812 phone. Moving
+from Templates to Kitchen to the day, nothing may jump.
+
+1. **One grid.** Every margin, padding and gap is a step of the scale under
+   Spacing, by its token. No spacing in `styles.css` is written as a number.
+2. **One left line.** In a card or a form, every row starts on one edge.
+3. **One height in a row, one corner, five sizes.** The controls in a row
+   are one height and stand on one centre line; everything that has a
+   corner has the one corner; the app has five type sizes.
+4. **Nothing stretched.** A field is as wide as what goes in it, up to a
+   limit, and what belongs to a field stands in the field's row.
+5. **A row stays a row.** A row that does not fit is redesigned - made
+   smaller, its chips made a menu, or given a second row with its own
+   label - and never left to wrap.
+6. **It fits.** On a desktop no page scrolls: a list that is long scrolls
+   inside its own box. On a phone the page scrolls only where the content
+   is long by nature, the day and the week. Nothing ever scrolls sideways.
+7. **One frame.** The title, the page's width, the first card's edge and
+   the primary button stand in the same place on every screen.
+
+`scripts/unify.js` measures the seven on the screen in front of it;
+`node scripts/sweep.mjs --unify` walks every screen and modal the sweep
+knows at both sizes, and `scripts/unify-report.mjs` writes what it found
+into [`DESIGN-AUDIT.md`](DESIGN-AUDIT.md). A screen is closed when it
+measures nothing. Rules 1 and 3 are held in the source as well:
+`design.test.ts` fails on a pixel in a margin, a padding or a gap, on a font
+size that is not a token, and on a corner that is not `--r`.
+
+Five things look like room and are not gaps, and the audit knows each by
+what it measures rather than by a name:
+
+- **A line.** `--hairline` (1px) where two grounds meet, `--stroke` (2px)
+  down an edge.
+- **An indent onto an edge.** The meta line under its title, a sentence on
+  the answers' edge after a form's label column, a list's words where the
+  next list's words start: rule 2's left line, as wide as the mark or the
+  label it steps past, and written as that width's token and a step.
+- **A line on a control's centre line.** Half of what a control's height
+  leaves round one line of the type scale, written from those two tokens.
+- **An edge taken back.** A negative margin that takes a field's own inner
+  edge and hairline back out, so its words stand on the row's edge; or one
+  that keeps a mark's 44px target without its line growing taller.
+- **The frame's room.** The mount node keeps the rail's width and the
+  phone bar's height free: those bars' own sizes.
+
+---
+
 ## Type
 
-One family, the system sans (`--font-body`), and six sizes.
+One family, the system sans (`--font-body`), and five sizes - one look,
+rule 3.
 
 | Token | Size | Role |
 |---|---|---|
 | `--t-xs` | 11px | Captions: labels over fields, meta under a title, counts, hour marks |
 | `--t-sm` | 13px | Interface: buttons, chips, rows, secondary text, most of what is on a screen |
-| `--t-md` | 15px | Body and titles in a list: a task's title, a field on a desktop, a sheet's lines |
-| `--t-read` | 17px | Reading and writing: North's text, a note being read, the journal's page; every field on a phone |
+| `--t-md` | 16px | Body, reading and writing: a task's title, every field, North's text, a note, the journal's page |
 | `--t-lg` | 20px | A page's title, a sheet's title, the clock |
-| `--t-xl` | 34px | Display numerals: the timer's reading |
+| `--t-xl` | 40px | Display numerals: the timer's reading, the time on the Focus screen |
 
-The Focus screen's two fluid sizes are the one place type fills the window,
-and `--t-glyph` sizes a glyph drawn as text (a menu's dots); neither is text
-somebody reads at size. There is no 10px, which is below a size worth
-reading, and no field pinned to 16px: a field is `--t-md` on a mouse and
-`--t-read` on a finger, which is also the 16px floor iOS needs before it
-stops zooming a field.
+Body and reading were two sizes, 15 and 17, and are one: 16, which is also
+the floor a field on a finger needs before iOS stops zooming into it.
+`--t-read` is written `max(16px, var(--t-md))` for that floor, and at the
+default text size it is `--t-md` itself; at text size s, where the body is
+15px, the fields and the pages read at length keep 16px - the one setting
+with a sixth size, and for that reason only. The Focus screen's time and
+task, `--t-focus` and `--t-focus-title`, are `--t-xl` and `--t-lg`, and
+`--t-glyph`, a glyph drawn as text (a menu's dots), is `--t-lg`. The text
+size setting scales the five together: s is 10, 12, 15, 18 and 36, l is 12,
+14.5, 18, 23 and 44. There is no 10px at the default size, which is below a
+size worth reading.
 
 **Weights: three.** `--w-regular` 400 for reading and body; `--w-medium` 500
 for a row's title and a label; `--w-strong` 600 for a page's title, a button,
@@ -72,20 +127,25 @@ owner's brief for writing there asked for - written as `--lh-read` plus 0.1
 where it is used, so the step stays tied to the scale. The smallest boxes
 the app draws - a week's block, a month cell's lines, a squeezed block on
 the timeline - set their one line at 1.1 to 1.2, written as numbers beside
-the boxes they fit, the way `1px`, `3px` and `6px` are their half-steps.
+the boxes they fit.
 
 **Labels are sentence case.** A label is `--t-xs`, `--w-medium`, `--muted`,
 with no tracking - "How long", not "HOW LONG". Capitals appear only where a
 person typed them: North's headings are the owner's own capitals and stay
 so. A figure that changes or lines up with another uses tabular numerals.
 
-**At most four sizes on one screen.** Today is 11, 13, 15 and 20; North is
-13, 17 and 20 - the picture, the headings and the signature at 20, the
-lines under the headings at 17.
+**At most four sizes on one screen, and five in the app.** Today is 11, 13,
+16 and 20; North is 13, 16 and 20 - the picture, the headings and the
+signature at 20, the lines under the headings at 16. Measured on every
+screen at both sizes on 2026-09-22: the app draws 11, 13, 16 and 20, and 40
+only on the timer.
 
 ## Spacing
 
-One scale, in steps of four, named by multiples of four.
+One scale, seven steps - one look, rule 1. Every margin, padding and gap is
+one of them, by its token: `design.test.ts` fails on a spacing declaration
+that writes a number of pixels, even inside a `calc()`, and
+`scripts/unify.js` on a computed one that is not a step.
 
 | Token | Size | Between |
 |---|---|---|
@@ -97,26 +157,39 @@ One scale, in steps of four, named by multiples of four.
 | `--s8` | 32px | Regions of a screen side by side |
 | `--s12` | 48px | The top of a page's content, and the space before a page ends |
 
-`--s0` (2px) is a hairline's offset and not a gap, and `1px`, `3px` and `6px`
-stay the half-steps inside the smallest boxes the app draws (a week block, a
-timeline block). There is no 20 and no 28: nobody could choose between them
-and their neighbours, and every place that used one is 16, 24 or 32.
+A line is not a gap. `--hairline` (1px) is where two grounds meet - the
+parts of a joined line like quick-add's, the rows of a list that touch -
+and `--stroke` (2px) is an edge drawn down a card or a block. A card draws
+its stroke inside its own room, so its words stand where every other card's
+do; a block on the week or the timeline draws its edge as a border and its
+words stand a step after it. The half-steps the smallest boxes had, 2, 3 and
+6, are gone, and there is no 20 and no 28: nobody could choose between them
+and their neighbours.
 
-Density redefines the scale at the source; the steps keep their ratios.
+Compact density is one step tighter on the same grid - 4, 4, 8, 12, 16, 24
+and 32 - never off it.
+
+A dialog stands `--s12` under the top of the window at every size: the
+command palette, the scratch pad and the journal open at one height.
+
+The five kinds of room that are not gaps - a line, an indent onto another
+line's edge, a line on a control's centre line, an edge taken back, the
+frame's room for the rail and the bar - are under "One look, seven rules".
 
 ## Corners
 
-Two radii and one shape.
+One corner - one look, rule 3.
 
 | Token | Value | For |
 |---|---|---|
-| `--r-mark` | 6px | Anything under about 24px: a check box, a calendar cell, a bar, a segment inside a segmented control |
-| `--r-control`, `--r-card` | 10px | Everything pressed or typed in, and every surface: a card, a sheet, a popover, a menu |
-| `--r-pill`, `--r-round` | full | A chip, a count, a dot, a swatch |
+| `--r` | 8px | Everything with a corner: a check box, a cell, a chip, a control, a card, a sheet, a menu |
+| `--r-round` | 50% | The circle: a dot, a swatch, a ring |
 
-`--r-control` and `--r-card` are the preset's own `--radius` and `--edge`,
-both 10px since v2.25 - a card no longer rounds more than the button inside
-it.
+`--r-mark`, `--r-control`, `--r-card` and `--r-pill` are all `var(--r)`,
+kept as names so a rule still says what it rounds. `--r-control` and
+`--r-card` are the preset's own `--radius` and `--edge`, 8px in every
+preset. There were two radii, 6 and 10, and a pill: three shapes where the
+eye reads one thing. A chip is a control, and has a control's corner.
 
 ## Colour
 
@@ -393,8 +466,8 @@ holds every count to what is written there, so a number only goes down, and
 it is lowered in the commit that earns it; docs/DESIGN-AUDIT.md says, thing
 by thing, why the ones that are not nought are kept.
 
-- `--s5`, `--s7`, `--t-2xs`, `--t-input` and `--e1`: none, not even
-  declared
+- `--s0`, `--s5`, `--s7`, `--t-2xs`, `--t-input` and `--e1`: none, not
+  even declared
 - a font weight written as a number, a tracked capital, a press that scales:
   none
 - a line height written as a number: the smallest boxes' lines, above

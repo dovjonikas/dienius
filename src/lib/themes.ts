@@ -194,8 +194,8 @@ const TYPE_AND_SHAPE = {
   fontDisplay: SYSTEM_SANS,
   fontBody: SYSTEM_SANS,
   fontMono: SYSTEM_MONO,
-  radius: '10px',
-  edge: '10px',
+  radius: '8px',
+  edge: '8px',
 } as const
 
 /**

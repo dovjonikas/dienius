@@ -302,13 +302,14 @@ This section is the short form for somebody writing a rule, and
 **No hard-coded values.** Everything comes from a token declared once on
 `:root`:
 
-- Spacing `--s1`..`--s4`, `--s6`, `--s8`, `--s12` (4 to 48), with `--s0` for a
-  hairline's offset
-- Type `--t-xs`, `--t-sm`, `--t-md`, `--t-read`, `--t-lg`, `--t-xl`; line
-  heights `--lh-tight`, `--lh-ui`, `--lh-read`; weights `--w-regular`,
-  `--w-medium`, `--w-strong`; `--t-glyph` and the two fluid sizes on the Focus
-  screen
-- Corners `--r-mark`, `--r-control`, `--r-card`, `--r-pill`, `--r-round`
+- Spacing `--s1`..`--s4`, `--s6`, `--s8`, `--s12` (4 to 48), and two lines,
+  `--hairline` (1px) and `--stroke` (2px)
+- Type `--t-xs`, `--t-sm`, `--t-md`, `--t-lg`, `--t-xl` - five sizes - and
+  `--t-read`, the body's size with a 16px floor; line heights `--lh-tight`,
+  `--lh-ui`, `--lh-read`; weights `--w-regular`, `--w-medium`, `--w-strong`;
+  `--t-glyph`, `--t-focus` and `--t-focus-title`, which are steps of the five
+- One corner, `--r` (8px), named by what it rounds as `--r-mark`,
+  `--r-control`, `--r-card` and `--r-pill`; and `--r-round`, the circle
 - One control height, `--control-h`; two page widths, `--page-w` and
   `--read-w`
 - Elevation `--e2` (a popover, a menu) and `--e3` (a modal, a sheet); motion
@@ -329,7 +330,7 @@ nothing floating between them; a period's arrows stand last at the right of
 its title row, so nothing moves when the name changes. `npm run precision`
 measures it - see DESIGN.md, "Where actions stand".
 
-**Retired, not to be used:** `--s5`, `--s7`, `--t-2xs`, `--t-input`,
+**Retired, not to be used:** `--s0`, `--s5`, `--s7`, `--t-2xs`, `--t-input`,
 `--e1` (none of them is declared any more, so a rule naming one is thrown
 away whole), a font weight written as a number, tracked capitals, a press
 that scales - all at nought - and a line height or a height written in
@@ -349,17 +350,15 @@ that ground in a dark theme, or its fields and buttons have no shape there;
 |---|---|---|
 | `--t-xs` | 11px | Captions: labels, meta, counts, hour marks |
 | `--t-sm` | 13px | Interface: buttons, chips, rows, secondary text |
-| `--t-md` | 15px | Body and titles in a list; a field on a desktop |
-| `--t-read` | 17px | Reading and writing; every field on a phone |
+| `--t-md` | 16px | Body, reading and writing; every field |
 | `--t-lg` | 20px | A page's or a sheet's title, the clock |
-| `--t-xl` | 34px | Display numerals: the timer's reading |
-| `--t-focus`, `--t-focus-title` | fluid | The Focus screen, the one place type fills the window |
+| `--t-xl` | 40px | Display numerals: the timer, the Focus screen's time |
 
-**At most four of them on one screen**, not counting the glyph size: a
-screen with five sizes is a screen with no hierarchy. The body carries
-`--t-sm` and a button inherits, so nothing falls to the browser's 16px -
-which is not on the scale, and was the fifth size on four screens until the
-v2.4 critique measured them.
+**Five in the app, at most four on one screen**, not counting the glyph
+size: a screen with five sizes is a screen with no hierarchy. The body
+carries `--t-sm` and a button inherits, so nothing falls to the browser's
+own size. `--t-read` is `max(16px, var(--t-md))`, the body's size with the
+floor a field on a finger needs.
 
 | Spacing | Size | Between |
 |---|---|---|
@@ -372,13 +371,13 @@ v2.4 critique measured them.
 | `--s12` | 48px | The top of a page's content, and before it ends |
 
 Every padding, margin and gap is one of these, as a token - which is also
-what lets density redefine all of them at once. Three bare pixel values are
-allowed beside them and nothing else: `1px` for a hairline, `3px` and `6px`
-for the half-steps inside the smallest boxes the app draws, a week block and
-a timeline block. A pixel amount may also stand inside a `calc()` beside a
-token when it names a size the scale has no step for. A bare `14px` is a
-defect: it means somebody tuned one screen by eye, and the next screen will
-not match it.
+what lets density redefine all of them at once, one step tighter on the same
+grid. No spacing declaration writes a number of pixels, not even inside a
+`calc()`: a line is `--hairline` or `--stroke`, and a size the scale has no
+step for is a named token - `--field-label-w`, `--rail-w`, `--touch`. A
+bare `14px` is a defect: it means somebody tuned one screen by eye, and the
+next screen will not match it. What looks like room and is not a gap is in
+DESIGN.md, "One look, seven rules".
 
 Two are derived at runtime rather than declared: `--safe-ink` (readable on
 `--surface`) and `--on-accent` (readable on whatever accent is in force).

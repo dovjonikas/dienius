@@ -1114,7 +1114,8 @@ test('the add line in both template editors is one joined line of three, the sam
 
   const css = readFileSync(join(__dirname, '../styles.css'), 'utf8').replace(/\r\n/g, '\n')
   const joined = css.match(/\n\.joined-line \{([^}]*)\}/)?.[1] ?? ''
-  expect(joined).toMatch(/gap:\s*1px/)
+  // The parts meet at a hairline, the one line a gap draws - one look, rule 1.
+  expect(joined).toMatch(/gap:\s*var\(--hairline\)/)
   expect(css).toMatch(/\n\.joined-line:focus-within \{[^}]*outline:/)
   // The template line keeps no gap of its own that would part the three.
   const own = css.match(/\n\.block-add-line \{([^}]*)\}/)?.[1] ?? ''

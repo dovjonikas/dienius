@@ -47,6 +47,36 @@
   }
 
   // ---- 1. one grid -------------------------------------------------------------------
+  const rootStyle = getComputedStyle(document.documentElement)
+  const token = (/** @type {string} */ n) => parseFloat(rootStyle.getPropertyValue(n))
+  /** Half of what a control's height leaves round a line of the type scale. */
+  function centring(/** @type {number} */ v) {
+    const heights = ['--control-h', '--touch'].map(token).filter(Number.isFinite)
+    const sizes = ['--t-xs', '--t-sm', '--t-md', '--t-lg'].map(token).filter(Number.isFinite)
+    const leads = ['--lh-ui', '--lh-tight', '--lh-read'].map(token).filter(Number.isFinite)
+    return heights.some(h => sizes.some(s => leads.some(l => Math.abs(2 * v + s * l - h) < 0.5)))
+  }
+  /** A box as tall or as wide as a touch target. */
+  function touchTarget(/** @type {Element} */ el) {
+    const touch = token('--touch')
+    const r = el.getBoundingClientRect()
+    return Math.abs(r.width - touch) < 0.5 || Math.abs(r.height - touch) < 0.5
+  }
+  /** Whether the start an indent makes is where another line in the same
+   *  surface starts: the left of a word or a control outside this element. */
+  function onAnEdge(/** @type {HTMLElement} */ el, /** @type {string} */ prop, /** @type {number} */ v, /** @type {CSSStyleDeclaration} */ cs) {
+    const r = el.getBoundingClientRect()
+    const x = prop === 'padding-left' ? r.left + parseFloat(cs.borderLeftWidth) + v : r.left
+    let scope = el.parentElement
+    for (let up = 0; scope && up < 6 && !isSurface(scope); up++) scope = scope.parentElement
+    if (!scope) return false
+    for (const other of scope.querySelectorAll('*')) {
+      if (!(other instanceof HTMLElement) || other === el || el.contains(other) || other.contains(el) || !shown(other)) continue
+      if (other.children.length && !other.matches(CONTROLS)) continue
+      if (Math.abs(startOf(other) - x) < 1) return true
+    }
+    return false
+  }
   function offScale(/** @type {Element[]} */ all) {
     const out = new Map()
     const props = ['margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'row-gap', 'column-gap']
@@ -54,6 +84,29 @@
       for (const prop of props) {
         const v = lengthOf(el, prop)
         if (v === null || v === 0) continue
+        // A one-pixel gap between two grounds is the line where they meet -
+        // --hairline, a stroke - not a gap.
+        if (v === 1 && prop.endsWith('gap')) continue
+        const cs = getComputedStyle(el)
+        // A line of text set on a control's centre line: equal room above and
+        // below, a line of the type scale and the room one control tall -
+        // rule 3's centre line, worked out from two tokens rather than chosen.
+        if ((prop === 'padding-top' || prop === 'padding-bottom') && cs.paddingTop === cs.paddingBottom && centring(v)) continue
+        // A negative margin that stands a field's words on the row's edge:
+        // exactly its own padding and border - rule 2's left line.
+        if (prop === 'margin-left' && v < 0 && Math.abs(-v - parseFloat(cs.paddingLeft) - parseFloat(cs.borderLeftWidth)) < 0.5) continue
+        if (prop === 'margin-right' && v < 0 && Math.abs(-v - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth)) < 0.5) continue
+        // A negative margin that keeps a mark's touch target without the
+        // target pushing its line taller: the target is a size, rule 3's.
+        if (v < 0 && prop.startsWith('margin') && touchTarget(el)) continue
+        // The mount node's room for the rail and for the phone's bar is those
+        // bars' own size - the frame of rule 7, not a gap between things.
+        if (el.id === 'root' && (prop === 'padding-left' || prop === 'padding-bottom')) continue
+        // An indent that stands a line's start on another line's edge - the
+        // meta under its title, a sentence on the answers' edge after a label
+        // column, a list's words where the next list's words start - is rule
+        // 2's left line, as wide as the label or the mark it steps past.
+        if ((prop === 'padding-left' || prop === 'margin-left') && v > 0 && el instanceof HTMLElement && onAnEdge(el, prop, v, cs)) continue
         const n = Math.round(Math.abs(v) * 10) / 10
         if (SCALE.includes(n)) continue
         const key = `${name(el)} ${prop} ${Math.round(v * 10) / 10}px`

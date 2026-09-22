@@ -8,9 +8,10 @@ import { FILLS, PRESETS } from './themes'
  * The design system, held to what docs/DESIGN.md says it is.
  *
  * Two kinds of check. The first reads the tokens and the presets and fails on
- * any value that is not the one written down: the scale in fours, the six
- * type sizes, the three line heights and weights, one control height, two
- * corners, 120 and 180ms, and the quiet grounds a control sits on - which are
+ * any value that is not the one written down: the scale in fours with no
+ * pixel written beside it, the five type sizes, the three line heights and
+ * weights, one control height, one corner, 120 and 180ms, and the quiet
+ * grounds a control sits on - which are
  * derived with color-mix, so they are mixed here the way the browser mixes
  * them and held to 4.5:1 for text in every preset.
  *
@@ -66,18 +67,42 @@ describe('the scales are the ones docs/DESIGN.md writes down', () => {
   test('spacing is in steps of four: 4, 8, 12, 16, 24, 32 and 48', () => {
     const steps = ['--s1', '--s2', '--s3', '--s4', '--s6', '--s8', '--s12'].map(t => tokenIn(':root', t))
     expect(steps).toEqual(['4px', '8px', '12px', '16px', '24px', '32px', '48px'])
-    // Density takes the whole scale to three quarters, the new step with it.
-    expect(tokenIn(":root[data-density='compact']", '--s12')).toBe('36px')
+    // Compact is one step tighter on the same grid, never off it.
+    const compact = ['--s1', '--s2', '--s3', '--s4', '--s6', '--s8', '--s12'].map(t => tokenIn(":root[data-density='compact']", t))
+    expect(compact).toEqual(['4px', '4px', '8px', '12px', '16px', '24px', '32px'])
+    // No half step is declared at all.
+    expect(css).not.toMatch(/--s0\s*:/)
   })
 
-  test('type is six sizes, three line heights and three weights', () => {
-    const sizes = ['--t-xs', '--t-sm', '--t-md', '--t-read', '--t-lg', '--t-xl'].map(t => tokenIn(':root', t))
-    expect(sizes).toEqual(['11px', '13px', '15px', '17px', '20px', '34px'])
+  // One look, rule 1 - docs/DESIGN.md: every margin, padding and gap is a
+  // token of the scale, and no spacing declaration writes a number of pixels.
+  test('no margin, padding or gap is written in pixels: every one is a step of the scale', () => {
+    const SPACING = /(?:^|[;{\s])((?:margin|padding)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?|gap|row-gap|column-gap)\s*:\s*([^;}]+)/g
+    const raw: string[] = []
+    for (const rule of ALL) {
+      for (const m of rule.body.matchAll(SPACING)) {
+        if (/(?<![\w-])-?\d*\.?\d+px/.test(m[2])) raw.push(`${rule.selector} { ${m[1]}: ${m[2].trim()} }`)
+      }
+    }
+    expect(raw).toEqual([])
+  })
+
+  // One look, rule 3: five type sizes in the whole app.
+  test('type is five sizes, three line heights and three weights', () => {
+    const sizes = ['--t-xs', '--t-sm', '--t-md', '--t-lg', '--t-xl'].map(t => tokenIn(':root', t))
+    expect(sizes).toEqual(['11px', '13px', '16px', '20px', '40px'])
+    // The reading step is the body step, never under the 16px a field on a finger needs.
+    expect(tokenIn(':root', '--t-read')).toBe('max(16px, var(--t-md))')
+    // And the three that were sizes of their own are steps of the five.
+    expect(['--t-focus', '--t-focus-title', '--t-glyph'].map(t => tokenIn(':root', t))).toEqual(['var(--t-xl)', 'var(--t-lg)', 'var(--t-lg)'])
     expect(['--lh-tight', '--lh-ui', '--lh-read'].map(t => tokenIn(':root', t))).toEqual(['1.25', '1.4', '1.6'])
     expect(['--w-regular', '--w-medium', '--w-strong'].map(t => tokenIn(':root', t))).toEqual(['400', '500', '600'])
-    // The text size setting scales the reading step with the rest.
-    expect(tokenIn(":root[data-text-scale='s']", '--t-read')).toBe('16px')
-    expect(tokenIn(":root[data-text-scale='l']", '--t-read')).toBe('19px')
+    // The text size setting scales the five together.
+    expect(['--t-xs', '--t-sm', '--t-md', '--t-lg', '--t-xl'].map(t => tokenIn(":root[data-text-scale='s']", t))).toEqual(['10px', '12px', '15px', '18px', '36px'])
+    expect(['--t-xs', '--t-sm', '--t-md', '--t-lg', '--t-xl'].map(t => tokenIn(":root[data-text-scale='l']", t))).toEqual(['12px', '14.5px', '18px', '23px', '44px'])
+    // No font size is written as a number outside the tokens.
+    const written = ALL.filter(r => r.inside === '' || !r.selector.startsWith(':root')).flatMap(r => [...r.body.matchAll(/font-size\s*:\s*([^;]+)/g)].map(m => m[1].trim())).filter(v => /\d+(\.\d+)?(px|rem|em)\b/.test(v) && !v.startsWith('max(16px'))
+    expect(written).toEqual([])
   })
 
   test('every control is one height: 36px, 32px at compact density, the touch target on a finger', () => {
@@ -92,16 +117,20 @@ describe('the scales are the ones docs/DESIGN.md writes down', () => {
     expect(tokenIn(':root', '--read-w')).toBe('640px')
   })
 
-  test('two corners and a shape: 6px, and 10px for every control and every card in every preset', () => {
-    expect(tokenIn(':root', '--r-mark')).toBe('6px')
-    expect(tokenIn(':root', '--r-control')).toBe('var(--radius)')
-    expect(tokenIn(':root', '--r-card')).toBe('var(--edge)')
+  // One look, rule 3: one corner for everything, and the circle as a shape.
+  test('one corner: 8px for a mark, a control, a chip and a card, in every preset', () => {
+    expect(tokenIn(':root', '--r')).toBe('8px')
+    for (const name of ['--r-mark', '--r-control', '--r-card', '--r-pill']) expect([name, tokenIn(':root', name)]).toEqual([name, 'var(--r)'])
+    expect(tokenIn(':root', '--r-round')).toBe('50%')
     for (const preset of PRESETS) {
       for (const mode of preset.modes) {
         const tokens = (mode === 'light' ? preset.light : preset.dark)!.tokens
-        expect([preset.id, tokens.radius, tokens.edge]).toEqual([preset.id, '10px', '10px'])
+        expect([preset.id, tokens.radius, tokens.edge]).toEqual([preset.id, '8px', '8px'])
       }
     }
+    // No corner is written as a number of its own.
+    const written = ALL.flatMap(r => [...r.body.matchAll(/border(?:-[a-z]+)*-radius\s*:\s*([^;]+)/g)].map(m => `${r.selector} ${m[1].trim()}`)).filter(v => /(?<![\w-])[1-9]\d*(\.\d+)?px/.test(v))
+    expect(written).toEqual([])
   })
 
   test('motion answers in 120ms and arrives in 180ms, easing out', () => {

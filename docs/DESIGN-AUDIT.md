@@ -53,6 +53,21 @@ the brief's scale and is the most drawn value off it. The app draws six type
 sizes (11, 13, 15, 17, 18 and 20px, and 34 on the timer) and two corners (6px
 and 10px). The title stands in eight places on a desktop and nine on a phone.
 
+**After stage 2 - one grid, five sizes, one corner.** The shared tokens went
+first, since every screen is drawn from them. Spacing is the seven steps and
+nothing else: `--s0` is gone, the 1px and 2px that were lines are
+`--hairline` and `--stroke`, the half-steps 3px and 6px became the next step,
+compact density is one step tighter on the same grid, and the browser's own
+padding on a button and a field is gone. Type is five sizes - body and
+reading, 15 and 17, are one at 16, and the timer's 34 is 40 - and every corner
+is 8px. What looks like room and is not a gap is written down in
+[DESIGN.md](DESIGN.md), "One look, seven rules". Measured again on every
+screen at both sizes: rule 1 finds nothing, one corner is drawn, and the app
+draws 11, 13, 16 and 20 (40 on the timer). Of the 1,088 findings, 608 are
+left, and 12 screens measure nothing. The frame, the scrolling, the rows that
+wrap, the left lines, the stretched fields and the rows' heights are the
+stages after this one.
+
 ### The count
 
 | Screen | Size | 1 | 2 | 3 | 4 | 5 | 6 | Found |

@@ -6,7 +6,32 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. Next: the whole app's UI made one (the owner's seven rules), then the freeze from 2026-09-28. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** one look, stage 2 of the whole app's UI made one: one grid, five type sizes, one corner. Next: Kitchen v2.32, many recipes at once (the owner's newest brief), then the rest of one look - the frame, the scrolling, the rows - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## One look - the whole app made one (in progress)
+
+The owner's brief after v2.31: seven rules for every screen and modal at
+1920x1080 and on a 375x812 phone - one grid, one left line in a card, one
+height in a row with one corner and five type sizes, nothing stretched, a row
+that never wraps, screens that fit, one frame. DESIGN.md "One look, seven
+rules" is the contract; `node scripts/sweep.mjs --unify` measures it and
+docs/DESIGN-AUDIT.md holds the findings, screen by screen.
+
+- **Stage 1 - the audit: done** (2b743e3). 1,088 findings on 103 screens and
+  sizes; pictures in docs/screenshots/unify/before/.
+- **Stage 2 - one grid, five sizes, one corner: done.** The tokens and every
+  rule on them: no spacing written in pixels (`design.test.ts` holds it), no
+  value off the scale drawn anywhere, one 8px corner, 11, 13, 16, 20 and 40.
+  608 findings left, 12 screens closed. Three things moved with it: the rail's
+  North headings are set at a single line's height so eight of them still fit
+  a 1080p window; the journal on a phone is the bottom sheet the task opens in,
+  since as a card its month's days were under a finger's 44px; a roster
+  letter on a phone's month is the interface size, whole at every text size.
+- **Next:** the frame (rule 7) and the scrolling (rule 6), then the rows that
+  wrap (5), the left lines (2), the stretched fields (4) and the rows' heights
+  (3); the after pictures; an e2e per screen at both sizes for the scrolling.
+  After Kitchen v2.32, which came in as a brief of its own and goes first -
+  it is a feature, and features stop at the freeze.
 
 ## Pirmas realus menuo, dry run
 

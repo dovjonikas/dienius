@@ -132,7 +132,8 @@ test('the add line is one joined line: the words, the amount and Add touch', () 
 
   const css = readFileSync(join(__dirname, '../styles.css'), 'utf8').replace(/\r\n/g, '\n')
   const rule = css.match(/\n\.library-add-controls \{([^}]*)\}/)?.[1] ?? ''
-  expect(rule).toMatch(/gap:\s*1px/)
+  // The parts meet at a hairline, the one line a gap draws - one look, rule 1.
+  expect(rule).toMatch(/gap:\s*var\(--hairline\)/)
   const own = css.match(/\n\.library-add \{([^}]*)\}/)?.[1] ?? ''
   expect(own).not.toMatch(/gap:\s*var/)
 })
