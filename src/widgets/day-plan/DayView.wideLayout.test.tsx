@@ -396,7 +396,9 @@ test('tapping a template chip in the rail stamps the day currently open', async 
 // Keyboard tab order must follow the visual order - rail, then header, then
 // whichever pane(s) are showing - docs/LAYOUT-WIDE.md section 6's own
 // verification pass.
-test('the rail sits before the header in the DOM, which sits before the panes', () => {
+// The masthead's first row runs across the rail's column and the rail begins
+// under it, so the day's name is read first and Tab follows the eye.
+test('the header sits before the rail in the DOM, which sits before the panes', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
   actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
@@ -405,8 +407,8 @@ test('the rail sits before the header in the DOM, which sits before the panes', 
   const header = container.querySelector('.day-header')!
   const dayPane = container.querySelector('.day-pane')!
   expect(rail).not.toBeNull()
-  expect(rail.compareDocumentPosition(header) & 4).toBe(4)
-  expect(header.compareDocumentPosition(dayPane) & 4).toBe(4)
+  expect(header.compareDocumentPosition(rail) & 4).toBe(4)
+  expect(rail.compareDocumentPosition(dayPane) & 4).toBe(4)
 })
 
 test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list, rollover, in that order', () => {

@@ -146,7 +146,7 @@ export function TemplateRail({ date }: TemplateRailProps) {
 
   return (
     <div className="template-rail">
-      <h3>Templates</h3>
+      <h3 className="rail-heading">Templates</h3>
       <div className="template-rail-chips">
         {data.templates.map(t => (
           <button

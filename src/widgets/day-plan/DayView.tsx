@@ -235,37 +235,6 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
 
   return (
     <section className={dayViewClassName}>
-      {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted only
-          when useIsWide() is true, regardless of dayLayoutFocus - the rail is
-          not part of what that control redistributes. First in the DOM (not
-          just visually leftmost) so keyboard tab order follows the visual
-          order: rail, then header, then whichever pane(s) are showing - see the
-          wide-layout verification pass in docs/LAYOUT-WIDE.md section 6. */}
-      {isWide && (
-        <div className="rail">
-          <MiniCalendar date={date} onDateChange={onDateChange} />
-          <TemplateRail date={date} />
-          {/* North's headings, between the two things that navigate and what
-              is next - see NorthDay. One line each, folded with one press, and
-              folded from the start where the rail would not fit its window
-              open. Where there is no rail it is one folded line under the
-              day's title. */}
-          <NorthDay date={date} />
-          {/* What is coming and how the day is going - see DayDigest.tsx. Last
-              in the rail, under the two things that navigate, because it is the
-              one part of this column you read rather than act on. */}
-          <DayDigest
-            tasks={day?.tasks ?? []}
-            capacity={capacity}
-            score={score}
-            sleepMinutes={asleepMinutes}
-            nowMinutes={nowMinutes}
-            isToday={isToday}
-            gridBeside={isWide && dayLayoutFocus !== 'tasks'}
-          />
-        </div>
-      )}
-
       <DayHeader
         date={date}
         onDateChange={onDateChange}
@@ -298,6 +267,38 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         }
         lowDay={day?.lowDay}
       />
+
+      {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted only
+          when useIsWide() is true, regardless of dayLayoutFocus - the rail is
+          not part of what that control redistributes. After the masthead in
+          the DOM, the way the one frame stands them since one look's stage 3:
+          the masthead's first row runs across the top, the rail begins under
+          it, so the day's name is the first thing read and Tab goes the way
+          the eye does - the masthead, the rail, then the pane(s) showing. */}
+      {isWide && (
+        <div className="rail">
+          <MiniCalendar date={date} onDateChange={onDateChange} />
+          <TemplateRail date={date} />
+          {/* North's headings, between the two things that navigate and what
+              is next - see NorthDay. One line each, folded with one press, and
+              folded from the start where the rail would not fit its window
+              open. Where there is no rail it is one folded line under the
+              day's title. */}
+          <NorthDay date={date} />
+          {/* What is coming and how the day is going - see DayDigest.tsx. Last
+              in the rail, under the two things that navigate, because it is the
+              one part of this column you read rather than act on. */}
+          <DayDigest
+            tasks={day?.tasks ?? []}
+            capacity={capacity}
+            score={score}
+            sleepMinutes={asleepMinutes}
+            nowMinutes={nowMinutes}
+            isToday={isToday}
+            gridBeside={isWide && dayLayoutFocus !== 'tasks'}
+          />
+        </div>
+      )}
 
       {/* Everything that can appear above the day, in one row.
           ------------------------------------------------------------------

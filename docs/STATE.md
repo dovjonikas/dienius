@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.33 is done - templates and a roster as JSON, imported with a preview and exported the same every time (docs/TEMPLATE-JSON.md). Before it Kitchen v2.32. Next: the rest of one look - its stage 3, one frame, was started and waits in `git stash` "one-frame-wip" - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.33 is done - templates and a roster as JSON, imported with a preview and exported the same every time (docs/TEMPLATE-JSON.md). Before it Kitchen v2.32. One look's stage 3, one frame, is done too. Next: sync, first, because it is data - the owner's report of the phone writing an older copy over the desktop's; then the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.33 - Templates and a roster as JSON
 
@@ -111,10 +111,17 @@ docs/DESIGN-AUDIT.md holds the findings, screen by screen.
   task's three marks lost the pixel above and below that made them 17px, and
   on another system's face they were 15 - they are a line of the interface
   and a hairline now, one height everywhere.
-- **Next:** the frame (rule 7) and the scrolling (rule 6), then the rows that
-  wrap (5), the left lines (2), the stretched fields (4) and the rows' heights
-  (3); the after pictures; an e2e per screen at both sizes for the scrolling.
-  Kitchen's new screens are in the sweep, so they are held to the same.
+- **Stage 3 - one frame: done.** Every page on the shell's whole width, its
+  title at the frame's left edge and its action at the right, the same on
+  every page at 1366, 1920 and on a 375px phone - `npm run precision` holds
+  it now. Today's masthead runs across the rail's column and the rail begins
+  under it, made a row shorter to keep eight North headings open on a 1080p
+  window. The pages of two things stand them two abreast; Settings' rows and
+  the forms keep a page's measure from the left edge; on a phone the day's
+  and the month's arrows moved to the right of their names.
+- **Next:** the scrolling (rule 6), then the rows that wrap (5), the left
+  lines (2), the stretched fields (4) and the rows' heights (3); the after
+  pictures; an e2e per screen at both sizes for the scrolling.
 
 ## Pirmas realus menuo, dry run
 

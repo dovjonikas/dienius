@@ -5,10 +5,12 @@ import { goToDay, openFreshAt, stampWorkingDay, wednesdayAt } from './app'
 /**
  * The day's masthead, measured where it can be: jsdom has no layout.
  *
- * Since v2.25 it is laid on the two columns under it. Over the day: the
- * day's name, its date and the time, on one line. Over the tasks: what the
- * day came from on the column's left edge and its doors on its right, and
- * under them the day's progress starting on the left edge and the view
+ * Since v2.25 it is laid on the columns under it, and since one look's
+ * stage 3 its first row runs across the rail's column too: the day's name,
+ * its date and the time on one line from the frame's left edge, where every
+ * page's title stands, and the rail begins under it. Over the tasks: what
+ * the day came from on the column's left edge and its doors on its right,
+ * and under them the day's progress starting on the left edge and the view
  * toggle ending on the right. Every row is one centre line.
  *
  * What it replaced was a crowd in the page's right-hand corner - the chip,
@@ -30,10 +32,13 @@ async function box(locator: Locator): Promise<Box> {
 const centre = (b: Box) => b.y + b.height / 2
 const right = (b: Box) => b.x + b.width
 
-test("the masthead stands on the day's column and the task column, and nothing on it moves when the day changes", async ({ page }) => {
+test("the masthead stands on the frame's left edge and the task column, and nothing on it moves when the day changes", async ({ page }) => {
   await openFreshAt(page, wednesdayAt(10))
   await stampWorkingDay(page)
 
+  // The rail's first thing rather than the rail: its box reaches a step
+  // out past the frame's edge, so a focus ring on the month is not cut.
+  const rail = await box(page.locator('.rail > .mini-calendar'))
   const day = await box(page.locator('.timeline-grid-wrap'))
   const tasks = await box(page.locator('.task-pane'))
   const title = await box(page.locator('.day-header h2'))
@@ -47,10 +52,12 @@ test("the masthead stands on the day's column and the task column, and nothing o
   await expect(page.getByRole('button', { name: 'Previous day' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Next day' })).toHaveCount(0)
 
-  // The first row. The day's name on the day's left edge, and the time on
-  // the same line inside the day's column; the chip on the task column's
-  // left edge, the doors on its right; one centre line across all of it.
-  expect(Math.abs(title.x - day.x)).toBeLessThanOrEqual(1)
+  // The first row. The day's name on the frame's left edge, over the rail,
+  // and the time on the same line ending inside the day's column; the chip
+  // on the task column's left edge, the doors on its right; one centre line
+  // across all of it. The rail begins under the row.
+  expect(Math.abs(title.x - rail.x)).toBeLessThanOrEqual(1)
+  expect(rail.y).toBeGreaterThan(title.y + title.height - 1)
   expect(Math.abs(centre(time) - centre(title))).toBeLessThanOrEqual(2)
   expect(right(time)).toBeLessThanOrEqual(right(day) + 1)
   expect(Math.abs(chip.x - tasks.x)).toBeLessThanOrEqual(1)

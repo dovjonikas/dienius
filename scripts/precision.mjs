@@ -40,6 +40,10 @@
  * **Every page is framed one way.** Measured across the pages rather than on
  * one, empty and full: every page's title drawn alike and standing at one
  * height, and no page's name or action moving when its first thing arrives.
+ * And since one look's stage 3, the owner's rule 7 - "going from Templates to
+ * Kitchen to the day nothing jumps": every page's title starts at one left,
+ * and every page's action ends at one right, on a laptop, a desktop and a
+ * 375px phone.
  * From the owner going through the pages as somebody new to them - an empty
  * North's name was a caption with its button under its line, and an empty
  * Kitchen stood 160px right of where it stands with a recipe in it.
@@ -690,12 +694,20 @@ const VIEWS = ['Today', 'Calendar', 'Templates', 'Library', 'Review', 'North', '
  * @returns {Promise<string[]>}
  */
 async function frames(browser, width, height) {
+  const phone = width < 600
   const seed = readFileSync(resolve('scripts/sample-day.js'), 'utf8')
   /** @param {boolean} full */
   const read = async full => {
     // Dark on both sides: a first visit follows the system's scheme, and the
     // sample plan carries the dark theme.
-    const ctx = await browser.newContext({ viewport: { width, height }, timezoneId: 'Europe/Vilnius', locale: 'en-GB', colorScheme: 'dark' })
+    const ctx = await browser.newContext({
+      viewport: { width, height },
+      timezoneId: 'Europe/Vilnius',
+      locale: 'en-GB',
+      colorScheme: 'dark',
+      // A phone is a finger's: the touch sizes and the bar along the bottom.
+      ...(phone ? { hasTouch: true, isMobile: true } : {}),
+    })
     await ctx.clock.setFixedTime(FIXED)
     const page = await ctx.newPage()
     await page.goto(BASE)
@@ -719,15 +731,24 @@ async function frames(browser, width, height) {
         const r = range.getBoundingClientRect()
         const cs = getComputedStyle(h)
         // The page's action: the last button in the title's row, by where its
-        // ink ends - a quiet button's word, a filled button's ground.
+        // ink ends - a quiet button's word, a filled button's ground, and a
+        // segment's track, which is where a segmented control's ink ends. A
+        // title with no row of its own - Settings' stands alone in its page -
+        // has no action.
         const row = h.parentElement
-        const buttons = [...(row?.querySelectorAll('button') ?? [])].filter(b => b.getBoundingClientRect().width > 0 && !h.contains(b))
+        const rcs = row ? getComputedStyle(row) : null
+        const isRow = !!row && !!rcs && row.tagName !== 'SECTION' && row.tagName !== 'MAIN' && ((rcs.display.includes('flex') && !rcs.flexDirection.startsWith('column')) || rcs.display.includes('grid'))
+        const buttons = isRow ? [...row.querySelectorAll('button')].filter(b => b.getBoundingClientRect().width > 0 && !h.contains(b)) : []
         const last = buttons.at(-1)
         let action = null
         if (last) {
-          const bg = getComputedStyle(last).backgroundColor
-          const quiet = bg === 'transparent' || /,\s*0\)$/.test(bg)
-          if (quiet) {
+          const track = last.closest('.segmented, [role="group"]')
+          const inked = (/** @type {Element} */ el) => {
+            const bg = getComputedStyle(el).backgroundColor
+            return !(bg === 'transparent' || /,\s*0\)$/.test(bg))
+          }
+          if (track && row && row.contains(track) && inked(track)) action = track.getBoundingClientRect().right
+          else if (!inked(last)) {
             const words = document.createRange()
             words.selectNodeContents(last)
             action = words.getBoundingClientRect().right
@@ -765,6 +786,25 @@ async function frames(browser, width, height) {
     if (Math.abs(a.left - b.left) > 1) found.push(`${v}'s title moves ${round(b.left - a.left)}px when its first thing arrives`)
     if (a.action !== null && b.action !== null && Math.abs(a.action - b.action) > 1) found.push(`${v}'s action moves ${round(b.action - a.action)}px when its first thing arrives`)
   }
+  // One look, rule 7: from one page to the next the title and the action
+  // stand still. The place most pages have is the place; a page elsewhere is
+  // named with how far off it stands.
+  const most = (/** @type {number[]} */ xs) => {
+    const counts = new Map()
+    for (const x of xs) counts.set(Math.round(x), (counts.get(Math.round(x)) ?? 0) + 1)
+    return [...counts].sort((p, q) => q[1] - p[1])[0]?.[0]
+  }
+  const withPlan = VIEWS.map(v => ({ v, t: full[v] })).filter(x => x.t)
+  const lefts = withPlan.map(x => /** @type {NonNullable<typeof x.t>} */ (x.t).left)
+  const left = most(lefts)
+  for (const { v, t } of withPlan) {
+    if (t && left !== undefined && Math.abs(t.left - left) > 1) found.push(`${v}'s title starts at ${round(t.left)}, where every other page's starts at ${left} - it moves when a page is changed`)
+  }
+  const acted = withPlan.filter(x => x.t && x.t.action !== null)
+  const right = most(acted.map(x => /** @type {number} */ (/** @type {NonNullable<typeof x.t>} */ (x.t).action)))
+  for (const { v, t } of acted) {
+    if (t && t.action !== null && right !== undefined && Math.abs(t.action - right) > 1) found.push(`${v}'s action ends at ${round(t.action)}, where every other page's ends at ${right}`)
+  }
   return found
 }
 
@@ -775,7 +815,7 @@ async function main() {
   /** @type {string[]} */
   const findings = []
   try {
-    for (const [width, height] of /** @type {const} */ ([[1366, 820], [1920, 1080]])) {
+    for (const [width, height] of /** @type {const} */ ([[1366, 820], [1920, 1080], [375, 812]])) {
       for (const f of await frames(browser, width, height)) findings.push(`  [${width} the frame] ${f}`)
     }
     // A laptop and a desktop monitor. The rows and the headers lay out

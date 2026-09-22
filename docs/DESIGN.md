@@ -437,25 +437,29 @@ the pages, empty and full.
 
 ## The page
 
-- **The frame.** Every page's title is `--t-lg` at `--w-strong` and
-  `--lh-tight`, at the same distance under the app's header on every page,
-  with the page's action at the right of the same row and the content
-  `--s6` under it. North's is the one exception, asked for: `--t-sm` in the
-  secondary ink, smaller than the words it heads, because on that page the
-  text is the thing - and only over its words. With nothing written there is
-  nothing to be quieter than, and an empty North has a page's title like
-  every other. Every title row is one control tall, whatever stands in it,
-  so every page's title stands at one height: a 44px arrow hangs its extra
-  above and below the row rather than making it taller.
-- **Two widths.** `--page-w` (840px) for the pages that are lists and forms -
-  Templates, Library, Review, Settings - and `--read-w` (640px) for reading
-  and writing - the journal's page. Today, the week and the month use the
-  whole width for their own grids, and North's cards take the page width
-  and half the reading width (1160px), three abreast, so the text stands on
-  one screen. Kitchen's shelf of recipe cards takes the same width, four
-  abreast; a recipe's page and its form keep the page width.
-- **On a phone** the columns become the screen with a 16px gutter, the same
-  title row stands at the top, and the rail is the bar at the bottom.
+One frame for every page - one look, rule 7: going from Templates to Kitchen
+to the day, nothing moves.
+
+- **The frame.** Every page takes the shell's whole width. Its title stands
+  at the frame's left edge and its action at the frame's right, on one row
+  one control tall, at the same height on every page - the day's name
+  included, whose masthead's first row runs across the rail's column so the
+  rail begins under it. The title is `--t-lg` at `--w-strong` and
+  `--lh-tight`; North's is the one drawn quieter, asked for - `--t-sm` in
+  the secondary ink, and only over its words. `npm run precision` holds the
+  titles to one left, one height and one look, and the actions to one right,
+  at 1366, 1920 and a 375px phone.
+- **What is inside keeps its own measure, from the same left edge.** A form
+  and Settings' rows are `--page-w` (840px) wide; what is read is
+  `--read-w` (640px). A page of two things stands them two abreast on a wide
+  screen - the templates and the routines, the Library's lists, the Review's
+  readings - so each keeps a page's measure and the page is half as long. The
+  day, the week and the month use the whole frame for their own grids, and
+  Kitchen's and North's cards lie in grids across it.
+- **On a phone** the columns become the screen with a 16px gutter, every
+  title stands at its left edge, the day's and the month's arrows stand
+  together at the right of the title's row, and the rail is the bar at the
+  bottom.
 
 ---
 

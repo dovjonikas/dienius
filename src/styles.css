@@ -568,32 +568,23 @@ button {
   padding-bottom: calc(var(--s6) + env(safe-area-inset-bottom));
 }
 
-/* Views that are documents rather than a fixed-height day get their own
-   width, centred inside the shell. The shell itself never moves.
-
-   One width for all of them since v2.25 - docs/DESIGN.md, the page. Settings
-   was 1080px, Templates 860, the Library and Review 860 with a padding of
-   their own that put their titles 16 and 20px lower than the others', and
-   North 640: five places a page began. The documents are --page-w now, and
-   what is read or written is --read-w. */
+/* One frame for every page - one look, rule 7, the owner's brief of
+   2026-09-22: "going from Templates to Kitchen to the day, nothing jumps".
+   Every page takes the shell's whole width, its title at the shell's left
+   edge and its action at the right; what is inside keeps its own measure -
+   a form, a list, a text - from the same left edge, so the title, the first
+   card's edge and the page's width stand still from one page to the next.
+   Until this the pages were centred at their own widths, and a title stood
+   at five places on a 1920 screen. */
 .settings,
 .calendar,
-.templates {
+.templates,
+.library,
+.review,
+.north-view {
   width: 100%;
-  max-width: var(--page-w);
-  margin-inline: auto;
-}
-
-/* The calendar is not a document and does not want a reading width. A month
-   is a grid of seven columns and a week is seven days of one timeline: at
-   860px on a 1920 window a third of the screen stood empty while every
-   block title in the week view truncated and every month cell dropped its
-   ratio for want of room. It takes the shell's width now, with a cap that
-   keeps a cell from becoming a poster. */
-.calendar {
-  width: 100%;
-  max-width: 1320px;
-  margin-inline: auto;
+  max-width: none;
+  margin-inline: 0;
 }
 
 /* A tablet in portrait is below the 1024px two-pane breakpoint - splitting
@@ -607,8 +598,6 @@ button {
   .day-view { width: 100%; max-width: 680px; margin-inline: auto; }
 }
 
-/* The Library is a document too, and reads at the same width as Templates. */
-.library { max-width: var(--page-w); }
 
 /* The shell's bottom air, given back on the one view that has to fit. On a
    phone the month came out 23px past the fold with everything else already
@@ -1052,7 +1041,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 @media (min-width: 760px) {
   .settings-layout {
-    grid-template-columns: 168px minmax(0, 1fr);
+    /* The settings at a page's width from the list's edge: across the whole
+       frame a setting's words stood a screen's width from its control. */
+    grid-template-columns: 168px minmax(0, var(--page-w));
     gap: var(--s8);
   }
 
@@ -1645,13 +1636,30 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-size: var(--t-md);
 }
 
+/* The day's name at the page's left edge, where every page's title stands -
+   one look, rule 7 - one control tall with the two arrows together at the
+   row's right, and its date under it. The name stood centred between the
+   arrows, 145px in from where the next page's title stands, and higher than
+   every other title. Only drawn below the wide breakpoint: the wide
+   masthead has no arrows. */
 .day-nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "name prev next"
+    "date date date";
   align-items: center;
-  justify-content: space-between;
-  gap: var(--s3);
+  column-gap: var(--s1);
   margin-bottom: var(--s4);
 }
+
+.day-nav > .day-title,
+.day-nav .day-title-text { display: contents; }
+
+.day-nav h2 { grid-area: name; min-width: 0; }
+.day-nav .day-subtitle { grid-area: date; }
+.day-nav > button:first-of-type { grid-area: prev; }
+.day-nav > button:last-of-type { grid-area: next; }
 
 .day-nav > button {
   /* A basis rather than a width: as a plain width the two arrows gave up a
@@ -1668,7 +1676,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-size: var(--t-glyph);
 }
 
-.day-title { min-width: 0; text-align: center; }
+.day-title { min-width: 0; }
 
 /* The heading and the ghost that measures its box - see DayHeader.tsx - in
    one rule, so the ghost can only ever be in the heading's own type: a
@@ -1703,7 +1711,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .day-tools {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: var(--s2);
   margin: calc(var(--s2) * -1) 0 var(--s4);
@@ -7737,9 +7745,15 @@ button.danger:focus-visible {
        and up nothing changes, the day having reached its 760 first. */
     --tasks-min: clamp(320px, 30vw, 440px);
     grid-template-columns: minmax(200px, var(--rail-max)) minmax(352px, 760px) minmax(var(--tasks-min), 1fr);
+    /* One frame - one look, rule 7: the day's name stands where every page's
+       title stands, at the frame's left edge, so the masthead's first row
+       runs across the rail's column too and the rail begins under it. Its
+       second row - North's line over the day, the progress over the tasks -
+       stays beside the rail, which gives up one row and no more. */
     grid-template-areas:
-      "rail header header"
-      "rail day    tasks";
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     day      tasks";
     /* The header row takes what it needs; the content row takes everything
        left, and no more - minmax(0, 1fr) rather than a plain 1fr for the
        same reason the flex chain above needs min-height: 0. A bare 1fr row
@@ -7747,7 +7761,7 @@ button.danger:focus-visible {
        There was a caption row between them for the capacity sentence until
        v2.6; the rail's card says everything it said, so it is not drawn at
        this width and the row went with it. */
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(var(--control-h), auto) auto minmax(0, 1fr);
     height: 100%;
     gap: var(--s2) var(--s6);
   }
@@ -7766,10 +7780,11 @@ button.danger:focus-visible {
      shell where ten pixels is ten pixels. */
   .day-view:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "rail header   header"
-      "rail notices  notices"
-      "rail day      tasks";
-    grid-template-rows: auto auto minmax(0, 1fr);
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     notices  notices"
+      "rail     day      tasks";
+    grid-template-rows: minmax(var(--control-h), auto) auto auto minmax(0, 1fr);
   }
 
   .day-notices { grid-area: notices; }
@@ -7862,93 +7877,66 @@ button.danger:focus-visible {
      first and the two spacers share what is left, equally, which is what
      centres the block. */
   .day-view.focus-calendar {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) var(--tasks-min);
     grid-template-areas:
-      "rail header"
-      "rail day";
-    max-width: calc(240px + var(--s6) + 1336px);
-    margin-inline: auto;
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     day      day";
   }
 
   .day-view.focus-calendar:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "rail header"
-      "rail notices"
-      "rail day";
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     notices  notices"
+      "rail     day      day";
   }
 
   /* The same columns, and the task column's own name for the one it lands
      in, so the two single-pane rules cannot disagree about which area the
      surviving pane takes - see the note above on the first-run rule. */
   .day-view.focus-tasks {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) var(--tasks-min);
     grid-template-areas:
-      "rail header"
-      "rail tasks";
-    max-width: calc(240px + var(--s6) + 1336px);
-    margin-inline: auto;
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     tasks    tasks";
   }
 
   .day-view.focus-tasks:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "rail header"
-      "rail notices"
-      "rail tasks";
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     notices  notices"
+      "rail     tasks    tasks";
   }
 
 
-  /* The day's masthead, laid on the two columns under it.
+  /* The day's masthead, laid on the day's own grid.
      ---------------------------------------------------------------------
-     A subgrid of the day's column and the task column, so its right half
-     starts on the task column's left edge and ends on its right edge at
-     every width, and the gap between the halves is the gap between the
-     columns. Two rows, each one centre line:
+     Its box is dissolved and its four parts stand in the day's areas, so
+     the first row runs across the whole frame and the second lies beside the
+     rail - one look, rule 7: the day's name stands where every page's title
+     stands, at the frame's left edge. Two rows, each one centre line:
 
-     - over the day, its name, its date and the time, on one line; over the
-       tasks, what the day came from at the left edge and its doors at the
-       right;
+     - across the frame, the day's name, its date and the time on one line;
+       over the tasks, what the day came from at the left edge and its doors
+       at the right;
      - over the day, the goal's line; over the tasks, the day's progress
-       from the left edge - the bar starts where the column does - and which
-       panes are showing, at the right.
+       from the left edge and which panes are showing, at the right.
 
-     What this replaced stood the chip, Replan, Low day and two day arrows
-     in one crowd at the right-hand end of the first row, and the progress
-     and the toggle in another under it, both over the task column without
-     lining up with either of its edges, while the clock stood alone at the
-     start of the second row with nothing beside it. The arrows are gone
-     from this width: the month in the rail is the way to another day, and
-     the left and right keys still take a step. */
-  /* The first row is one control tall even with no control in it, so the
-     day's name stands at the height every page's title stands at. On a
-     first visit there is no chip and no door yet, and the row was the day
-     line's own 28px: "Today" stood 4.5px higher than it does on a planned
-     day and than every other page's title - npm run precision, the frame. */
-  .day-header {
-    grid-area: header;
-    display: grid;
-    grid-template-columns: subgrid;
-    grid-template-rows: minmax(var(--control-h), auto) auto;
-    align-items: center;
-    row-gap: var(--s2);
-    min-width: 0;
-  }
-
-  /* One pane on the screen, and no second column to lie on: the right half
-     is a column of the task column's own floor, so the chip, the doors and
-     the toggle stand about where they stood over two panes. */
-  .day-view.focus-calendar .day-header,
-  .day-view.focus-tasks .day-header,
-  .day-view:has(.first-run) .day-header {
-    grid-template-columns: minmax(0, 1fr) var(--tasks-min);
-    column-gap: var(--s6);
-  }
+     The first row is one control tall even with no control in it, so the
+     day's name stands at the height every page's title stands at. The
+     arrows are not drawn at this width: the month in the rail is the way to
+     another day, and the left and right keys still take a step. */
+  .day-header { display: contents; }
 
   /* The day's line: the name, the date, a dot and the time, and what is
      running after it - one baseline, left to right, giving way from the
      end. */
   .day-masthead-day {
-    grid-row: 1;
-    grid-column: 1;
+    grid-area: masthead;
+    align-self: center;
     display: flex;
     align-items: baseline;
     gap: var(--s3);
@@ -7998,8 +7986,8 @@ button.danger:focus-visible {
   /* Over the tasks: the chip at the column's left edge, the doors at its
      right. */
   .day-header .day-tools {
-    grid-row: 1;
-    grid-column: 2;
+    grid-area: tools;
+    align-self: center;
     justify-content: flex-start;
     flex-wrap: nowrap;
     min-width: 0;
@@ -8018,8 +8006,7 @@ button.danger:focus-visible {
      line of the controls beside it: the row is as tall as the line and the
      signature need, and the controls keep their place at its top. */
   .day-header > .north-line {
-    grid-row: 2;
-    grid-column: 1;
+    grid-area: goal;
     align-self: start;
     margin: 0;
     padding-block: calc((var(--control-h) - var(--t-md) * var(--lh-ui)) / 2);
@@ -8028,8 +8015,7 @@ button.danger:focus-visible {
   /* The progress from the column's left edge - a bar that takes what the
      fraction and the toggle leave - and the toggle at its right edge. */
   .day-masthead-status {
-    grid-row: 2;
-    grid-column: 2;
+    grid-area: status;
     align-self: start;
     display: flex;
     align-items: center;
@@ -8217,10 +8203,19 @@ button.danger:focus-visible {
      invitation gets the width - the same layout the Tasks focus already
      produces, applied automatically for the one state that always needs it. */
   .day-view:has(.first-run) {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) var(--tasks-min);
     grid-template-areas:
-      "rail header"
-      "rail tasks";
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     tasks    tasks";
+  }
+
+  .day-view:has(.first-run):has(.day-notices:not(:empty)) {
+    grid-template-areas:
+      "masthead masthead tools"
+      "rail     goal     status"
+      "rail     notices  notices"
+      "rail     tasks    tasks";
   }
 
 
@@ -8320,8 +8315,8 @@ button.danger:focus-visible {
    in this app uses, so the three read as parts of one thing rather than as a
    pile - which is most of the difference between a sidebar and a leftover. */
 .day-digest {
-  margin-top: var(--s4);
-  padding-top: var(--s4);
+  margin-top: var(--s3);
+  padding-top: var(--s3);
   border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
@@ -8564,8 +8559,13 @@ button.danger:focus-visible {
   .template-rail-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--s2);
+    gap: var(--s1);
   }
+
+  /* On a pointer the month's arrows are one control tall, like every other
+     press beside them: at a finger's 44 they made the month's top row the
+     tallest thing in the rail. */
+  .rail .mini-calendar-nav button { min-height: var(--control-h); }
 }
 
 /* ------------------------------------------------------------------------
@@ -8579,8 +8579,6 @@ button.danger:focus-visible {
   display: flex;
   flex-direction: column;
   gap: var(--s6);
-  max-width: var(--page-w);
-  margin: 0 auto;
   padding: 0 0 var(--s12);
 }
 
@@ -8800,6 +8798,30 @@ button.danger:focus-visible {
 .library-add-many-actions button { flex: 0 0 auto; }
 
 .library-lists { display: flex; flex-direction: column; gap: var(--s4); }
+
+/* On a wide screen, one look's frame: the lists two abreast from the frame's
+   left edge, so a list's rows keep a page's measure and the page is half as
+   long. One list stands in the left column, where the page begins. */
+@media (min-width: 1024px) {
+  .library-lists {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  /* The templates and the routines side by side; the title, the question a
+     new template asks, the first run and the editors across both. */
+  .templates {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--s6);
+    align-items: start;
+  }
+
+  .templates > * { grid-column: 1 / -1; }
+  .templates > .template-list { grid-column: 1; }
+  .templates > .routines { grid-column: 2; margin-top: 0; }
+}
 
 .library-list {
   display: flex;
@@ -10687,10 +10709,25 @@ button.task-recipe:focus-visible {
   display: flex;
   flex-direction: column;
   gap: var(--s6);
-  width: 100%;
-  max-width: var(--page-w);
-  margin: 0 auto;
   padding: 0 0 var(--s12);
+}
+
+/* On a wide screen, one look's frame: the readings two abreast under the
+   title, the period and the figures, from the frame's left edge. From
+   1280px, where half the frame is still a reading's measure: at 1024 a
+   reading's line broke into two under its block's name. */
+@media (min-width: 1280px) {
+  .review {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--s4);
+    align-items: start;
+  }
+
+  .review > .review-header,
+  .review > .review-nav,
+  .review > .review-figures,
+  .review > .review-empty { grid-column: 1 / -1; }
 }
 
 .review-header {
@@ -11205,7 +11242,7 @@ button.task-recipe:focus-visible {
   min-width: 0;
 }
 
-.rail > .north-day { margin-top: var(--s6); }
+.rail > .north-day { margin-top: var(--s4); }
 
 .north-day-label { margin: 0; }
 
@@ -11436,12 +11473,10 @@ button.north-day-line:focus-visible {
    Nothing here fills with the accent but the one primary button in a row,
    and nothing measures anything - ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
-/* Wide enough for three cards abreast, centred the way every page is: the
-   page width and half the reading width, 1160px. A picture and eight
-   headings stand on one 1080p screen at that width. */
+/* The page is the frame's whole width, like every page - one look, rule 7 -
+   and the cards lie in a grid across it, so a picture and eight headings
+   stand on one 1080p screen. */
 .north-view {
-  max-width: calc(var(--page-w) + var(--read-w) / 2);
-  margin: 0 auto;
   padding-bottom: var(--s8);
 }
 
@@ -11990,6 +12025,18 @@ button.north-day-line:focus-visible {
 }
 
 .calendar-bar .calendar-nav { flex: 0 0 auto; margin: 0; }
+
+/* Below the wide breakpoint the name and its arrows are a row of their own:
+   the name at the page's left edge, where every page's title stands, and the
+   two arrows together at the row's right. They bracketed the name, which put
+   it 52px in from every other title. */
+@media (max-width: 1023px) {
+  .calendar-bar .calendar-nav { flex: 1 1 100%; }
+  .calendar-nav > h2,
+  .calendar-nav > .calendar-nav-title { order: 0; margin-right: auto; }
+  .calendar-nav > .calendar-nav-title { justify-items: start; }
+  .calendar-nav > button { order: 1; }
+}
 .calendar-bar .segmented { margin-left: auto; }
 
 /* The bar on a wide screen: the title at the left edge and everything else
@@ -15059,7 +15106,7 @@ main:has(.week) > .calendar {
    cards stand abreast on a laptop and the sections read as a cookbook's
    chapters rather than a long list. A recipe's page and the form keep the
    page's own width. */
-.kitchen-shelf { max-width: calc(var(--page-w) + var(--read-w) / 2); }
+
 
 /* The search across the page, under the chips, and Select at its end - v2.32. */
 .kitchen-find {
@@ -15068,7 +15115,7 @@ main:has(.week) > .calendar {
   gap: var(--s2);
 }
 
-.kitchen-search { flex: 1 1 auto; min-width: 0; width: 100%; }
+.kitchen-search { flex: 1 1 auto; min-width: 0; width: 100%; max-width: calc(var(--read-w) - var(--s12) * 2); }
 
 .kitchen-sections {
   display: flex;
@@ -15766,8 +15813,9 @@ main:has(.week) > .calendar {
   text-align: right;
 }
 
-/* The form: the Library's card, its fields stacked on one gap. */
-.kitchen-form { gap: var(--s4); }
+/* The form: the Library's card, its fields stacked on one gap, at a page's
+   width from the frame's left edge. */
+.kitchen-form { gap: var(--s4); max-width: var(--page-w); }
 
 .kitchen-text {
   width: 100%;
@@ -17265,11 +17313,14 @@ main:has(.week) > .calendar {
      wrapped to a line of their own. */
   flex-wrap: wrap;
   gap: var(--s1);
-  margin-left: calc(var(--field-label-w) + var(--s3));
+  /* The indent inside the row's own width rather than beside it: a margin
+     beside a whole row's width stood 76px past the row, and past the
+     screen's edge once the page took the frame's width. */
+  padding-left: calc(var(--field-label-w) + var(--s3));
 }
 
 @media (max-width: 599px) {
-  .wt-presets { margin-left: 0; }
+  .wt-presets { padding-left: 0; }
 }
 
 .wt-presets .chip { color: var(--muted); }

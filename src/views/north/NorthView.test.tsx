@@ -445,8 +445,10 @@ test("the picture is on a plate, every heading on a card in a grid, and the sign
   expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThan(between)
   expect(cssRule('.north-signature')).not.toMatch(/background|box-shadow/)
 
-  // Wide enough for three cards abreast: the page width and half the reading width.
-  expect(cssRule('.north-view')).toMatch(/max-width:\s*calc\(var\(--page-w\) \+ var\(--read-w\) \/ 2\)/)
+  // The frame's whole width, like every page - one look, rule 7 - with the
+  // cards in a grid across it.
+  expect(cssRule('.north-view')).toMatch(/max-width:\s*none/)
+  expect(cssRule('.north-view')).toMatch(/margin-inline:\s*0/)
 })
 
 // One card per heading, in the order written, and the picture's plate first.
