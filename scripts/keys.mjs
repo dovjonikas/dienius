@@ -45,6 +45,8 @@ const SEGMENTS = 4
 const CLIMB_PX = 40
 
 /** @typedef {import('@playwright/test').Page} Page */
+/** v2.33's Templates as JSON, filled: two invented kinds, a roster with a date nobody's kind. */
+const TEMPLATE_JSON = JSON.stringify({ templates: [{ name: 'Early', kind: 'E', blocks: [{ time: '06:00', title: 'Start', minutes: 60 }] }, { name: 'Late', kind: 'L', blocks: [{ time: '01:00', title: 'Last hour', minutes: 60, afterMidnight: true }] }], roster: { '2030-01-07': 'E', '2030-01-08': 'X' } }, null, 2)
 /** Kitchen v2.32's Paste many, filled: two generic recipes and a piece with no name. */
 const PASTED = ['NAME: Lunch: A bean bowl', '520 kcal, 38 g protein', 'INGREDIENTS', 'beans', 'rice', 'STEPS', 'Cook the rice.', 'NAME: A plain porridge', '380 kcal', '---', '450 kcal', 'INGREDIENTS', 'water'].join('\n')
 
@@ -72,6 +74,7 @@ const SCREENS = [
   { name: 'Kitchen (to a template)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Add to template', exact: true }).click() } },
   { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
+  { name: 'Settings (templates as JSON)', go: async p => { await tab(p, 'Settings'); await p.getByRole('textbox', { name: 'Templates and roster as JSON' }).fill(TEMPLATE_JSON); await p.getByRole('button', { name: 'Preview', exact: true }).click() } },
 ]
 
 /** @param {Page} p @param {string} name */

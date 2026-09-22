@@ -204,9 +204,26 @@ into the drive home, 07:00 to 07:30.
 - **A kind stamped by hand** from the month or the day.
 - **The weekday map** - which template each weekday starts from - on the
   first open of a date.
+- **A file of templates and a roster** - Settings, Templates as JSON, since
+  v2.33 - in the format [TEMPLATE-JSON.md](TEMPLATE-JSON.md) writes down, for
+  templates and a rota written somewhere else. Its roster goes through the
+  Roster's own Apply.
 
 Every one of them composes a date the same way, through one function
 (`composeDay` in [`src/lib/shiftDay.ts`](../src/lib/shiftDay.ts)).
+
+### 4.10 Writing templates and a rota for the person
+
+To hand the person a set of templates and a rota, write them in the format
+of [TEMPLATE-JSON.md](TEMPLATE-JSON.md) - a template by its name, a block by
+its time, title and length, a recipe by its name, and the roster as dates to
+kinds' letters. The person pastes the text into Settings, Templates as JSON,
+reads the preview and presses Apply; a template of the same name is updated,
+never copied, and one wrong field is left out with a note rather than
+stopping the rest. Export in the same place gives back what the app has, in
+the same format, to start from. Write only what the person asked for: their
+own templates live in their browser and their backup, never in this
+repository.
 
 ### 4.8 What is never done without the person
 
@@ -272,6 +289,7 @@ the file even where the weekday map will fill it.
 
 - [RESEARCH-SHIFTS.md](RESEARCH-SHIFTS.md) - the rota, every rule and why.
 - [BACKUP-FORMAT.md](BACKUP-FORMAT.md) - the backup's format, field by field, and what a reader can rely on.
+- [TEMPLATE-JSON.md](TEMPLATE-JSON.md) - templates and a roster as one text: what to write for the person to import.
 - [DAILY.md](DAILY.md) - how the app is used, day to day.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - where the code lives.
 - [DECISIONS.md](DECISIONS.md) - why things are the way they are.

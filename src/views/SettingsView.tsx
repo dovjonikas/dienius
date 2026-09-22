@@ -16,11 +16,12 @@ import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { CategorySettings } from './CategorySettings'
 import { MealWordSettings } from './MealWordSettings'
+import { TemplateJsonSettings } from './TemplateJsonSettings'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
 
-type SectionId = 'general' | 'sleep' | 'week' | 'categories' | 'kitchen' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
+type SectionId = 'general' | 'sleep' | 'week' | 'json' | 'categories' | 'kitchen' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -60,6 +61,8 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   // day and after sleep - are nudges and sit there.
   { id: 'sleep', label: 'Sleep' },
   { id: 'week', label: 'Week' },
+  // After Week: the templates a week is made of, written or read as text.
+  { id: 'json', label: 'Templates as JSON' },
   // After Week and before Nudges: it is about what a day is made of, which
   // belongs with the things that shape a day rather than with the things
   // that interrupt one.
@@ -547,6 +550,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               )}
             </div>
           </div>
+
+          <TemplateJsonSettings />
 
           <CategorySettings />
 

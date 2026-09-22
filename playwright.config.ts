@@ -39,7 +39,7 @@ export default defineConfig({
     // recipe is cooked from whatever screen is propped up on the counter.
     // Shifts because a rota arrives on a phone, a photograph from the
     // employer, and is laid out there - docs/RESEARCH-SHIFTS.md section 8.4.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|shifts|night-hours)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

@@ -5,6 +5,7 @@ import { applyStamps } from '../stamping'
 import { applyRoster, followNeighbours } from '../shiftDay'
 import { isDayKind } from '../dayKinds'
 import { todayKey } from '../dates'
+import { readTemplatesJson, type TemplatesImport } from '../templateJson'
 
 /** Templates: making them, stamping them onto dates, and the weekday map. */
 export const templateActions = {
@@ -73,6 +74,20 @@ export const templateActions = {
     }
     commit({ ...data, templates: [...data.templates, template] })
     return template
+  },
+
+  /**
+   * Templates and a roster from JSON - v2.33, lib/templateJson.ts and
+   * docs/TEMPLATE-JSON.md. Read against the plan as it is now, and written in
+   * one commit - the templates, any sleep schedule they name, and the roster
+   * through the Roster's own path - so one undo puts it all back. A text that
+   * cannot be read, or that changes nothing, writes nothing.
+   */
+  importTemplatesJson(text: string): { read: TemplatesImport; undo: () => void } {
+    const previous = getData()
+    const read = readTemplatesJson(text, previous, todayKey())
+    if (!read.error && read.data !== previous) commit(read.data)
+    return { read, undo: () => commit(previous) }
   },
 
   updateTemplate(template: Template): void {

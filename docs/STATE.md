@@ -6,7 +6,40 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** Kitchen v2.32 is done - many recipes pasted at once, a name that says its meals, meals changed on a card and for many at once, and a meal block that follows its meal. Before it, one look's stage 2: one grid, five type sizes, one corner. Next: the rest of one look - the frame, the scrolling, the rows - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.33 is done - templates and a roster as JSON, imported with a preview and exported the same every time (docs/TEMPLATE-JSON.md). Before it Kitchen v2.32. Next: the rest of one look - its stage 3, one frame, was started and waits in `git stash` "one-frame-wip" - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.33 - Templates and a roster as JSON
+
+The owner's brief of 2026-09-22: templates and the rota written by another
+agent, and pasted in by the owner. docs/TEMPLATE-JSON.md is the contract -
+every field, whether it is needed, its bounds, and what happens when it is
+missing or wrong, with one whole invented example: a day shift, a rest day, a
+night shift with its meal and journey home after midnight, and six dates.
+DECISIONS "Templates and a roster as JSON, by names" has why.
+
+- **Import** - Settings, Templates as JSON (`TemplateJsonSettings`,
+  `lib/templateJson.ts`): paste, Preview, Apply. The preview lists every
+  template new, updated, unchanged or skipped, every date, and every note; a
+  template of the same name is updated, never copied, and a block of the same
+  title keeps its id and what the format does not carry. A recipe is named,
+  and one Kitchen does not have is said, the block keeping its meal type. One
+  wrong entry or field is left out with its note and stops nothing else. The
+  roster goes through `rosterApplied`, the Roster's own Apply, neighbours and
+  all. One commit, one undo.
+- **Export** - the day templates and the roster from today on, one block to a
+  line, the same text every time: exported, imported and exported again it is
+  equal character for character, and the contract's example exports as
+  itself (`templateJson.test.ts` reads it out of the document).
+- **Tests**: the contract's example with no notes, the round trip into the
+  same app and a fresh one, a recipe not found, a night's block landing on
+  the next morning after the import, wrong fields left out with their notes,
+  a letter already taken, the roster's skips, a text that cannot be read, an
+  update keeping ids; the Settings section; e2e on a 375px phone and the
+  desktop (`e2e/template-json.e2e.ts`). The sweep, keys, precision and
+  text-size gates walk the section with a preview open.
+
+**What the owner does:** give the other agent docs/TEMPLATE-JSON.md; paste
+what it writes into Settings, Templates as JSON; Preview; Apply.
 
 ## v2.32 - Kitchen: many recipes at once
 

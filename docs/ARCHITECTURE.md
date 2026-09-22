@@ -288,6 +288,7 @@ src/
     recipeNumbers.ts   kcal, protein, carbs, fat, servings and minutes read from a recipe's text, and written back
     recipeImport.ts    many recipes pasted at once: the text in pieces by NAME: and ---, each a row of what saving it will do
     mealWords.ts       the meals a recipe's name says by its first word, from the list Settings keeps
+    templateJson.ts    templates and a roster as JSON: read against the plan into a preview and the plan it makes, and written back the same every time
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
@@ -344,7 +345,7 @@ src/
     ColorSwatchPicker  one colour from eight, without eight of them on screen
     WeekTemplateEditor seven columns of one template, and the card's preview of it
     TimeColumns        the two scrolling columns inside the time picker
-    BackupSettings, SyncSettings, CalendarSettings, CategorySettings, MealWordSettings   Settings sections
+    BackupSettings, SyncSettings, CalendarSettings, CategorySettings, MealWordSettings, TemplateJsonSettings   Settings sections
     week/              the week view - see section 11
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app

@@ -4454,3 +4454,29 @@ long, since the app updates itself.
 Kitchen went before the rest of the one-look pass. It came in as a brief of its
 own, with thirty recipes waiting, and it is a feature - features stop at the
 freeze on 2026-09-28, where the look can still be finished as the pass it is.
+
+## Templates and a roster as JSON, by names
+
+v2.33, docs/TEMPLATE-JSON.md. The owner's other agent writes templates and a
+rota; the owner pastes them into Settings. Three choices look unusual.
+
+**Names, not ids.** A template is found by its name, a recipe by its name, a
+category by its name, a kind by its letter, a sleep by its hours. An id is
+the app's own bookkeeping - a string nobody can type, that differs on every
+device - and a file written by somebody else cannot know it. The cost: a name
+is the key, so two templates of one name cannot both be in a file, and a
+renamed template is a new one to the file.
+
+**The roster goes through the Roster's own Apply.** A file's dates are laid
+on the plan by `rosterApplied`, the function behind the Roster's Apply and
+its preview, so an imported date is composed exactly as a tapped one is - its
+routines, its sleep, its night's hours on the morning after, the dates around
+it following. A second way onto the dates would be a second set of rules to
+drift apart from the first.
+
+**The export is written by hand, not by JSON.stringify.** One block to a
+line and a fixed order of fields, so the text reads like the contract's own
+example and a person or an agent can change it by eye; and the same plan is
+the same text every time, so exported, imported and exported again it is
+equal character for character - which the contract's example itself is held
+to by a test.

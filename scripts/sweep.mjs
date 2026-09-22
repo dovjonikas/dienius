@@ -148,6 +148,8 @@ async function press(page, name) {
 /** `pointerOnly`: the surface only exists where there is a pointer to rest on it, so the phone run skips it. */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown>, pointerOnly?: boolean }} Screen */
 
+/** v2.33's Templates as JSON, filled: two invented kinds, a roster with a date nobody's kind. */
+const TEMPLATE_JSON = JSON.stringify({ templates: [{ name: 'Early', kind: 'E', blocks: [{ time: '06:00', title: 'Start', minutes: 60 }] }, { name: 'Late', kind: 'L', blocks: [{ time: '01:00', title: 'Last hour', minutes: 60, afterMidnight: true }] }], roster: { '2030-01-07': 'E', '2030-01-08': 'X' } }, null, 2)
 /** Kitchen v2.32's Paste many, filled: two generic recipes and a piece with no name. */
 const PASTED = ['NAME: Lunch: A bean bowl', '520 kcal, 38 g protein', 'INGREDIENTS', 'beans', 'rice', 'STEPS', 'Cook the rice.', 'NAME: A plain porridge', '380 kcal', '---', '450 kcal', 'INGREDIENTS', 'water'].join('\n')
 
@@ -479,6 +481,15 @@ const SCREENS = [
     },
   },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
+  {
+    name: 'Settings (templates as JSON)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Settings')
+      await p.getByRole('textbox', { name: 'Templates and roster as JSON' }).fill(TEMPLATE_JSON)
+      await press(p, 'Preview')
+      await p.waitForTimeout(200)
+    },
+  },
   {
     name: 'Task detail',
     go: async /** @param {Page} p */ p => {
