@@ -1,4 +1,1555 @@
-# Design audit: what is uneven before the design pass
+# Design audit
+
+Two audits, the newer first: **one look, seven rules** (2026-09-22), which the
+owner's UI brief asked for across the whole app, and the design pass's audit
+(2026-09-16, v2.24), kept below as it was written.
+
+---
+
+## One look, seven rules - 2026-09-22
+
+The owner, after v2.31: the elements share no grid - in the template editor
+the day type, the kind of day and the sleep rows start at three distances
+from the left edge, the name field is stretched across the whole width with
+its colour dot left outside it, and the add row breaks onto two lines - and
+it is like that everywhere. The rules, for every screen, checked for every
+screen:
+
+1. **One grid.** Every gap is a step of the scale - 4, 8, 12, 16, 24, 32, 48 -
+   written as its token, and no number written straight into the stylesheet.
+2. **One left line in a card.** In a card or a form every label, field and
+   row starts at the same x.
+3. **One control height.** The fields, selects, buttons and chips in a row are
+   one height on one centre line. One corner for everything; no more than five
+   type sizes in the whole app.
+4. **Nothing stretched.** A field is as wide as what goes in it, with a
+   max-width; an accessory like a colour dot stands in the field's row.
+5. **One row stays one row.** A row of controls that does not fit is made
+   again - smaller, a menu for a row of chips, or a second row with its own
+   label - and never wraps a button onto a line of its own.
+6. **It fits.** At 1920x1080 no screen scrolls the page; what scrolls is a
+   container with a clear edge. On a 375x812 phone the page scrolls only where
+   the content is long by nature, and nothing ever scrolls sideways.
+7. **One frame.** The title, the page's width, a card's edge and the main
+   button stand in the same place on every screen.
+
+**How it is measured.** `node scripts/sweep.mjs --unify` walks every screen
+and dialog the sweep walks - 51 of them, the journal's page and the agenda
+added for this - at 1920x1080 and on a 375x812 phone, and `scripts/unify.js`
+reads each rule off the page: every margin, padding and gap; the first word
+or control of every row of a surface; the heights in every row of controls;
+every corner and every type size drawn; the width of every field; every
+wrapped row of controls; the page's scroll both ways; and where the title,
+the main button and the first surface stand. `scripts/unify-report.mjs`
+writes what follows from it. A value off the four-pixel grid counts for rule
+1 at runtime; a raw number in a spacing declaration is held by
+`design.test.ts`, which reads the stylesheet. The pictures, one per screen and
+size, are in [`screenshots/unify/before/`](screenshots/unify/before/), the
+sample day's demo content only.
+
+**App-wide, before.** Of 1,255 spacing declarations in the stylesheet, 59
+write raw pixels (1px 29 times, 3px 15, 6px 13); `--s0` (2px) is a token off
+the brief's scale and is the most drawn value off it. The app draws six type
+sizes (11, 13, 15, 17, 18 and 20px, and 34 on the timer) and two corners (6px
+and 10px). The title stands in eight places on a desktop and nine on a phone.
+
+### The count
+
+| Screen | Size | 1 | 2 | 3 | 4 | 5 | 6 | Found |
+|---|---|---|---|---|---|---|---|---|
+| Day: Today | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Today (notice dismissed) | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Today (North open) | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Today (North after sleep) | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Gap offers | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Focus | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Day: Timer | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Day: Replan: something came up | 1920x1080 | 6 |  | 5 | 1 | 3 |  | 15 |
+| Day: Replan: shift the rest | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Day: Replan: i was away | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Day: Low day | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Day: Today (after a night shift) | 1920x1080 | 6 |  | 4 |  | 1 |  | 11 |
+| Day: Today | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Day: Today (notice dismissed) | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Day: Today (North open) | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Day: Today (North after sleep) | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Day: Gap offers | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Day: Focus | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Day: Timer | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Day: Replan: something came up | 375x812 | 4 | 1 | 5 |  | 4 |  | 14 |
+| Day: Replan: shift the rest | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Day: Replan: i was away | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Day: Low day | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Day: Today (after a night shift) | 375x812 | 4 |  | 4 |  | 2 |  | 10 |
+| Week: Calendar week | 1920x1080 | 4 |  | 1 |  |  |  | 5 |
+| Week: Calendar week (a focus running) | 1920x1080 | 4 |  | 2 |  |  |  | 6 |
+| Week: Calendar agenda | 1920x1080 | 3 |  | 2 |  |  | 1 | 6 |
+| Week: Calendar week (after a night shift) | 1920x1080 | 5 |  | 1 |  |  |  | 6 |
+| Week: Calendar week | 375x812 | 4 |  | 4 |  | 1 |  | 9 |
+| Week: Calendar week (a focus running) | 375x812 | 4 | 1 | 5 |  | 1 |  | 11 |
+| Week: Calendar agenda | 375x812 | 3 | 1 | 2 |  | 1 |  | 7 |
+| Week: Calendar week (after a night shift) | 375x812 | 5 |  | 4 |  | 1 |  | 10 |
+| Month: Calendar month | 1920x1080 | 3 |  | 1 |  |  |  | 4 |
+| Month: Calendar month (day peek) | 1920x1080 | 3 |  | 1 |  |  |  | 4 |
+| Month: Calendar month | 375x812 | 3 |  | 1 |  | 2 |  | 6 |
+| Templates and the editor: Templates | 1920x1080 | 1 |  | 1 |  |  |  | 2 |
+| Templates and the editor: Templates (routines) | 1920x1080 | 1 |  | 1 |  |  |  | 2 |
+| Templates and the editor: Templates (a routine) | 1920x1080 | 2 | 1 | 1 | 1 |  |  | 5 |
+| Templates and the editor: Template editor | 1920x1080 | 6 | 1 | 2 | 2 | 2 | 1 | 14 |
+| Templates and the editor: Template colour | 1920x1080 | 6 | 2 | 2 | 2 | 3 | 1 | 16 |
+| Templates and the editor: Week template editor | 1920x1080 | 5 | 1 | 2 | 2 | 1 | 1 | 12 |
+| Templates and the editor: Week template editor (block open) | 1920x1080 | 4 | 1 | 2 | 1 |  | 1 | 9 |
+| Templates and the editor: Template editor (a meal's recipes) | 1920x1080 | 6 | 1 | 2 | 3 | 2 | 1 | 15 |
+| Templates and the editor: Template editor (a night shift) | 1920x1080 | 6 | 1 | 2 | 2 | 1 | 1 | 13 |
+| Templates and the editor: Templates | 375x812 |  | 2 | 1 |  | 2 |  | 5 |
+| Templates and the editor: Templates (routines) | 375x812 |  | 2 | 1 |  | 2 |  | 5 |
+| Templates and the editor: Templates (a routine) | 375x812 | 2 | 3 | 1 |  | 3 |  | 9 |
+| Templates and the editor: Template editor | 375x812 | 5 | 3 | 3 |  | 12 |  | 23 |
+| Templates and the editor: Template colour | 375x812 | 5 | 4 | 3 |  | 13 | 1 | 26 |
+| Templates and the editor: Week template editor | 375x812 | 4 | 3 | 2 |  | 4 |  | 13 |
+| Templates and the editor: Week template editor (block open) | 375x812 | 4 | 3 | 2 |  | 2 |  | 11 |
+| Templates and the editor: Template editor (a meal's recipes) | 375x812 | 5 | 3 | 3 |  | 13 |  | 24 |
+| Templates and the editor: Template editor (a night shift) | 375x812 | 5 | 3 | 3 |  | 7 |  | 18 |
+| Roster: Calendar (the roster) | 1920x1080 | 3 |  | 1 |  |  |  | 4 |
+| Roster: Calendar (what Apply will do) | 1920x1080 | 3 | 1 | 1 |  |  |  | 5 |
+| Roster: Calendar (a cycle) | 1920x1080 | 3 |  | 1 |  |  |  | 4 |
+| Roster: Calendar (the roster) | 375x812 | 3 |  | 1 |  | 2 |  | 6 |
+| Roster: Calendar (what Apply will do) | 375x812 | 3 | 1 | 1 |  | 2 | 1 | 8 |
+| Roster: Calendar (a cycle) | 375x812 | 3 |  | 1 |  | 3 | 1 | 8 |
+| Kitchen and a recipe: Kitchen | 1920x1080 | 2 |  |  | 1 |  | 1 | 4 |
+| Kitchen and a recipe: Kitchen (a meal chosen) | 1920x1080 | 2 |  |  | 1 |  |  | 3 |
+| Kitchen and a recipe: Kitchen (a recipe) | 1920x1080 | 2 |  |  |  |  |  | 2 |
+| Kitchen and a recipe: Kitchen (writing) | 1920x1080 | 1 | 1 |  | 1 |  |  | 3 |
+| Kitchen and a recipe: Kitchen (to a template) | 1920x1080 | 3 | 1 |  |  |  |  | 4 |
+| Kitchen and a recipe: Kitchen | 375x812 | 1 |  |  |  | 1 |  | 2 |
+| Kitchen and a recipe: Kitchen (a meal chosen) | 375x812 | 1 |  |  |  | 1 |  | 2 |
+| Kitchen and a recipe: Kitchen (a recipe) | 375x812 | 1 |  |  |  |  |  | 1 |
+| Kitchen and a recipe: Kitchen (writing) | 375x812 |  | 1 |  |  | 1 |  | 2 |
+| Kitchen and a recipe: Kitchen (to a template) | 375x812 | 2 | 1 |  |  |  |  | 3 |
+| Books: Library | 1920x1080 | 4 | 1 | 17 | 2 |  | 1 | 25 |
+| Books: Library (item panel) | 1920x1080 | 4 | 1 | 19 | 4 | 1 | 1 | 30 |
+| Books: Library (a new list) | 1920x1080 | 4 | 2 | 17 | 4 |  | 1 | 28 |
+| Books: Library (list settings) | 1920x1080 | 4 | 1 | 17 | 2 |  | 1 | 25 |
+| Books: Library | 375x812 | 3 | 2 | 15 |  | 2 |  | 22 |
+| Books: Library (item panel) | 375x812 | 3 | 2 | 17 |  | 5 |  | 27 |
+| Books: Library (a new list) | 375x812 | 3 | 3 | 15 |  | 4 |  | 25 |
+| Books: Library (list settings) | 375x812 | 3 | 2 | 15 |  | 3 |  | 23 |
+| Picture: North | 1920x1080 | 1 |  |  |  |  |  | 1 |
+| Picture: North (writing) | 1920x1080 | 1 | 1 |  |  |  |  | 2 |
+| Picture: North | 375x812 |  |  |  |  |  |  | 0 |
+| Picture: North (writing) | 375x812 |  | 1 |  |  |  |  | 1 |
+| Review: Review week | 1920x1080 | 2 |  | 1 |  |  | 1 | 4 |
+| Review: Review month | 1920x1080 | 2 |  | 1 |  |  | 1 | 4 |
+| Review: Review week | 375x812 | 2 | 1 | 1 |  | 1 |  | 5 |
+| Review: Review month | 375x812 | 2 | 1 | 1 |  | 1 |  | 5 |
+| Search: Command palette | 1920x1080 | 6 |  | 5 | 1 | 1 |  | 13 |
+| Search: Command palette | 375x812 | 5 | 1 | 5 |  | 2 |  | 13 |
+| Notes: Header: notes | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Notes: Scratch | 1920x1080 | 7 |  | 6 |  | 1 |  | 14 |
+| Notes: Header: notes | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Notes: Scratch | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Journal: Header: journal | 1920x1080 | 6 |  | 5 |  | 1 |  | 12 |
+| Journal: Journal (open full) | 1920x1080 | 7 |  | 5 | 1 | 1 |  | 14 |
+| Journal: Header: journal | 375x812 | 4 | 1 | 5 |  | 2 |  | 12 |
+| Journal: Journal (open full) | 375x812 | 5 | 1 | 5 |  | 4 |  | 15 |
+| Settings: Settings | 1920x1080 | 4 |  | 1 |  |  | 1 | 6 |
+| Settings: Settings | 375x812 | 4 |  | 1 |  | 2 |  | 7 |
+| Dialogs: Task detail (a meal's recipe) | 1920x1080 | 8 |  | 5 | 2 | 1 |  | 16 |
+| Dialogs: Task detail | 1920x1080 | 8 |  | 5 | 1 | 1 |  | 15 |
+| Dialogs: Shortcut card | 1920x1080 | 6 | 1 | 5 |  | 1 |  | 13 |
+| Dialogs: Task detail (a meal's recipe) | 375x812 | 6 |  | 5 |  | 4 |  | 15 |
+| Dialogs: Task detail | 375x812 | 6 |  | 6 |  | 3 |  | 15 |
+| Dialogs: Shortcut card | 375x812 | 4 | 2 | 5 |  | 2 |  | 13 |
+
+**1088 found**, and rule 7 below, which is one finding for the app.
+
+### Rule 7, the frame
+
+- **1920x1080**: the page title stands at 8 places - 463,69 (Today); 323,68 (Calendar month); 323,69 (Calendar week); 563,69 (Templates, Template editor, Template colour, Week template editor, Library, Review week, Review month); 403,73 (North); 403,69 (Kitchen); 563,63 (Settings); 323,133 (Calendar agenda).
+- **375x812**: the page title stands at 9 places - 111,80 (Today); 68,88 (Calendar month); 68,89 (Calendar week); 16,89 (Templates, Library, Review week, Review month, Kitchen); 16,51 (Template editor, Template colour); 16,-603 (Week template editor); 16,93 (North); 16,-946 (Settings); 68,199 (Calendar agenda).
+
+### Screen by screen
+
+#### Day
+
+**Today**
+
+Before: [1920x1080](screenshots/unify/before/1920-today.jpg) | [375x812](screenshots/unify/before/375-today.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Today (notice dismissed)**
+
+Before: [1920x1080](screenshots/unify/before/1920-today-notice-dismissed.jpg) | [375x812](screenshots/unify/before/375-today-notice-dismissed.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Today (North open)**
+
+Before: [1920x1080](screenshots/unify/before/1920-today-north-open.jpg) | [375x812](screenshots/unify/before/375-today-north-open.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (button.north-day-heading)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Today (North after sleep)**
+
+Before: [1920x1080](screenshots/unify/before/1920-today-north-after-sleep.jpg) | [375x812](screenshots/unify/before/375-today-north-after-sleep.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Gap offers**
+
+Before: [1920x1080](screenshots/unify/before/1920-gap-offers.jpg) | [375x812](screenshots/unify/before/375-gap-offers.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 6 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, button.task-gap-offers-row
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Focus**
+
+Before: [1920x1080](screenshots/unify/before/1920-focus.jpg) | [375x812](screenshots/unify/before/375-focus.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Timer**
+
+Before: [1920x1080](screenshots/unify/before/1920-timer.jpg) | [375x812](screenshots/unify/before/375-timer.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.clock-tabs, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading and 6 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (button.clock-button.active), 6px (button.active)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 2px in div.segmented.clock-tabs, button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.clock-button.active), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Replan: something came up**
+
+Before: [1920x1080](screenshots/unify/before/1920-replan-something-came-up.jpg) | [375x812](screenshots/unify/before/375-replan-something-came-up.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 4: input "Something came up" is 528px wide
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 1920x1080, rule 5: div.replan-chips "TodayTomorrowFri 18Sat 19Sun 2" wraps onto 2 lines
+- 1920x1080, rule 5: div.replan-chips "Morning goneAfternoon goneEven" wraps onto 2 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+- 375x812, rule 5: div.replan-chips "TodayTomorrowFri 18Sat 19Sun 2" wraps onto 2 lines
+- 375x812, rule 5: div.replan-chips "Morning goneAfternoon goneEven" wraps onto 2 lines
+
+**Replan: shift the rest**
+
+Before: [1920x1080](screenshots/unify/before/1920-replan-shift-the-rest.jpg) | [375x812](screenshots/unify/before/375-replan-shift-the-rest.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Replan: i was away**
+
+Before: [1920x1080](screenshots/unify/before/1920-replan-i-was-away.jpg) | [375x812](screenshots/unify/before/375-replan-i-was-away.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 6 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, button.replan-choice
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Low day**
+
+Before: [1920x1080](screenshots/unify/before/1920-low-day.jpg) | [375x812](screenshots/unify/before/375-low-day.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Today (after a night shift)**
+
+Before: [1920x1080](screenshots/unify/before/1920-today-after-a-night-shift.jpg) | [375x812](screenshots/unify/before/375-today-after-a-night-shift.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 1 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-menu-button, button.task-note-mark and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+#### Week
+
+**Calendar week**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-week.jpg) | [375x812](screenshots/unify/before/375-calendar-week.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.segmented, div.week-col-head
+- 1920x1080, rule 1: 1px in button, button.week-col-template, button.week-block.is-done, button.week-block, button.week-block.is-key, button.week-col-template.is-offer
+- 1920x1080, rule 1: 6px in button
+- 1920x1080, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, button.week-block.is-key
+- 1920x1080, rule 3: 2 corners: 10px (button.btn-secondary.calendar-today), 6px (button.active)
+- 375x812, rule 1: 1px in button, button.week-col-template, button.week-block.is-done, button.week-block, button.week-block.is-key
+- 375x812, rule 1: 6px in button
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.segmented
+- 375x812, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, button.week-block.is-key
+- 375x812, rule 3: div.week-col-head: Tue15 17 / Working day 22
+- 375x812, rule 3: div.week-col-head: Wed16 17 / Working day 22
+- 375x812, rule 3: div.week-col-head: Thu17 17 / Working day 22
+- 375x812, rule 3: 2 corners: 10px (button.btn-secondary.calendar-today), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←15 - 17 Sep 2026→TodaySomethi" wraps onto 3 lines
+
+**Calendar week (a focus running)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-week-a-focus-running.jpg) | [375x812](screenshots/unify/before/375-calendar-week-a-focus-running.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.segmented, div.week-col-head
+- 1920x1080, rule 1: 1px in span.focus-bar-left, button, button.week-col-template, button.week-block.is-done, button.week-block, button.week-block.is-key and 1 more
+- 1920x1080, rule 1: 6px in button
+- 1920x1080, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, button.week-block.is-key
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.week-col-template, button.week-block.is-done, button.week-block, button.week-block.is-key
+- 375x812, rule 1: 6px in button
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.segmented
+- 375x812, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, button.week-block.is-key
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.week-col-head: Tue15 17 / Working day 22
+- 375x812, rule 3: div.week-col-head: Wed16 17 / Working day 22
+- 375x812, rule 3: div.week-col-head: Thu17 17 / Working day 22
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←15 - 17 Sep 2026→TodaySomethi" wraps onto 3 lines
+
+**Calendar agenda**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-agenda.jpg) | [375x812](screenshots/unify/before/375-calendar-agenda.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.segmented, button.agenda-date-button
+- 1920x1080, rule 1: 1px in span.focus-bar-left, button, ul.agenda-list
+- 1920x1080, rule 1: 6px in button
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 1920x1080, rule 6: the page scrolls 445px
+- 375x812, rule 1: 1px in span.focus-bar-left, button, ul.agenda-list
+- 375x812, rule 1: 6px in button
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.segmented, button.agenda-date-button
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←15 - 17 Sep 2026→TodaySomethi" wraps onto 3 lines
+
+**Calendar week (after a night shift)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-week-after-a-night-shift.jpg) | [375x812](screenshots/unify/before/375-calendar-week-after-a-night-shift.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.segmented, div.week-col-head
+- 1920x1080, rule 1: 1px in button, button.week-col-template, button.week-block.is-done, button.week-block, div.week-carried, button.week-block.is-key and 1 more
+- 1920x1080, rule 1: 6px in button
+- 1920x1080, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, div.week-carried, button.week-block.is-key
+- 1920x1080, rule 1: 5px in div.week-carried
+- 1920x1080, rule 3: 2 corners: 10px (button.btn-secondary.calendar-today), 6px (button.active)
+- 375x812, rule 1: 1px in button, button.week-col-template, button.week-block.is-done, button.week-block, div.week-carried, button.week-block.is-key
+- 375x812, rule 1: 6px in button
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.segmented
+- 375x812, rule 1: 3px in button.week-block.is-done, button.week-block, div.week-col-foot, div.week-carried, button.week-block.is-key
+- 375x812, rule 1: 5px in div.week-carried
+- 375x812, rule 3: div.week-col-head: Tue15 17 / NNight shift 22
+- 375x812, rule 3: div.week-col-head: Wed16 17 / Working day 22
+- 375x812, rule 3: div.week-col-head: Thu17 17 / Working day 22
+- 375x812, rule 3: 2 corners: 10px (button.btn-secondary.calendar-today), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←15 - 17 Sep 2026→TodaySomethi" wraps onto 3 lines
+
+#### Month
+
+**Calendar month**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-month.jpg) | [375x812](screenshots/unify/before/375-calendar-month.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 1px in button, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 1: 1px in button
+- 375x812, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 375x812, rule 1: 2px in div.segmented, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←September 2026September 2026→" wraps onto 2 lines
+- 375x812, rule 5: div.stamp-bar "StampCopies a template onto a " wraps onto 2 lines
+
+**Calendar month (day peek)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-month-day-peek.jpg) | [375x812](screenshots/unify/before/375-calendar-month-day-peek.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 1px in button, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+
+#### Templates and the editor
+
+**Templates**
+
+Before: [1920x1080](screenshots/unify/before/1920-templates.jpg) | [375x812](screenshots/unify/before/375-templates.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Templates (routines)**
+
+Before: [1920x1080](screenshots/unify/before/1920-templates-routines.jpg) | [375x812](screenshots/unify/before/375-templates-routines.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Templates (a routine)**
+
+Before: [1920x1080](screenshots/unify/before/1920-templates-a-routine.jpg) | [375x812](screenshots/unify/before/375-templates-a-routine.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, span.duration-unit, input.time-input
+- 1920x1080, rule 1: 1px in input.time-input
+- 1920x1080, rule 2: div.routines-form "NameFor30minOn these daysMonTu" rows start at 16, 636px in
+- 1920x1080, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 1920x1080, rule 4: input "What you do" is 740px wide
+- 375x812, rule 1: 2px in span.duration-unit, input.time-input
+- 375x812, rule 1: 1px in input.time-input
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 2: div.routines-form "NameFor30minOn these daysMonTu" rows start at 16, 139px in
+- 375x812, rule 3: 2 corners: 10px (button.primary), 6px (span.kind-mark)
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+- 375x812, rule 5: div.duration-chips.routines-days "MonTueWedThuFriSatSun" wraps onto 2 lines
+
+**Template editor**
+
+Before: [1920x1080](screenshots/unify/before/1920-template-editor.jpg) | [375x812](screenshots/unify/before/375-template-editor.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, input.time-input, span.duration-unit
+- 1920x1080, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, span.task-size
+- 1920x1080, rule 1: -6px in span.task-size
+- 1920x1080, rule 1: 30px in select.block-library, select.block-library.is-set
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 1920x1080, rule 4: input "Template name" is 778px wide
+- 1920x1080, rule 4: input.has-return "What happens" is 636px wide
+- 1920x1080, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 2 lines
+- 1920x1080, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 686px
+- 375x812, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 375x812, rule 1: 2px in input.time-input, span.duration-unit
+- 375x812, rule 1: 6px in button.timeline-gap, span.task-size
+- 375x812, rule 1: -6px in span.task-size
+- 375x812, rule 1: 30px in select.block-library, select.block-library.is-set
+- 375x812, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.library-binding: NothingFrom BooksFrom Watching 44 / + 20
+- 375x812, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 375x812, rule 5: div.template-sleep "SleeptoAlso used by Twelve-hou" wraps onto 2 lines
+- 375x812, rule 5: li "07:00Get up, shower, coffee45 " wraps onto 3 lines
+- 375x812, rule 5: li "08:00Plan the day15 minKeyOngo" wraps onto 3 lines
+- 375x812, rule 5: li "09:00Deep work block2hKeyOngoi" wraps onto 3 lines
+- 375x812, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 4 lines
+- 375x812, rule 5: li "13:30Email and admin45 minKeyO" wraps onto 3 lines
+- 375x812, rule 5: li "17:30Walk40 minKeyOngoingNext " wraps onto 3 lines
+- 375x812, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 4 lines
+- 375x812, rule 5: div.block-add-marks "+OngoingA block that is simply" wraps onto 4 lines
+- 375x812, rule 5: div.template-editor-actions "Delete templateCancelSave temp" wraps onto 2 lines
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Template colour**
+
+Before: [1920x1080](screenshots/unify/before/1920-template-colour.jpg) | [375x812](screenshots/unify/before/375-template-colour.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, input.time-input, span.duration-unit
+- 1920x1080, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, span.task-size
+- 1920x1080, rule 1: -6px in span.task-size
+- 1920x1080, rule 1: 30px in select.block-library, select.block-library.is-set
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 1920x1080, rule 2: div.swatch-picker-panel.color-palette "Template colour" rows start at 8, 60, 112, 164, 216px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 1920x1080, rule 4: input "Template name" is 778px wide
+- 1920x1080, rule 4: input.has-return "What happens" is 636px wide
+- 1920x1080, rule 5: div.swatch-picker-panel.color-palette "Template colour" wraps onto 2 lines
+- 1920x1080, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 2 lines
+- 1920x1080, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 686px
+- 375x812, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 375x812, rule 1: 2px in input.time-input, span.duration-unit
+- 375x812, rule 1: 6px in button.timeline-gap, span.task-size
+- 375x812, rule 1: -6px in span.task-size
+- 375x812, rule 1: 30px in select.block-library, select.block-library.is-set
+- 375x812, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 375x812, rule 2: div.swatch-picker-panel.color-palette "Template colour" rows start at 8, 60, 112, 164, 216px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.library-binding: NothingFrom BooksFrom Watching 44 / + 20
+- 375x812, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 375x812, rule 5: div.swatch-picker-panel.color-palette "Template colour" wraps onto 2 lines
+- 375x812, rule 5: div.template-sleep "SleeptoAlso used by Twelve-hou" wraps onto 2 lines
+- 375x812, rule 5: li "07:00Get up, shower, coffee45 " wraps onto 3 lines
+- 375x812, rule 5: li "08:00Plan the day15 minKeyOngo" wraps onto 3 lines
+- 375x812, rule 5: li "09:00Deep work block2hKeyOngoi" wraps onto 3 lines
+- 375x812, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 4 lines
+- 375x812, rule 5: li "13:30Email and admin45 minKeyO" wraps onto 3 lines
+- 375x812, rule 5: li "17:30Walk40 minKeyOngoingNext " wraps onto 3 lines
+- 375x812, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 4 lines
+- 375x812, rule 5: div.block-add-marks "+OngoingA block that is simply" wraps onto 4 lines
+- 375x812, rule 5: div.template-editor-actions "Delete templateCancelSave temp" wraps onto 2 lines
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+- 375x812, rule 6: the page scrolls 2237px
+
+**Week template editor**
+
+Before: [1920x1080](screenshots/unify/before/1920-week-template-editor.jpg) | [375x812](screenshots/unify/before/375-week-template-editor.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.week-col-head, div.week-col-foot.wt-col-foot, input.time-input and 1 more
+- 1920x1080, rule 1: 3px in div.week-col-foot.wt-col-foot
+- 1920x1080, rule 1: 1px in div.wt-untimed, button.wt-untimed-block, div.block-add-line.joined-line, input.time-input
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 1: 30px in select.block-library
+- 1920x1080, rule 2: div.template-editor.week-template-editor "Every day it is onJust this da" rows start at 16, 64, 626px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor.week-template-editor), 6px (button.active)
+- 1920x1080, rule 4: input "Week name" is 778px wide
+- 1920x1080, rule 4: input.has-return "What happens" is 636px wide
+- 1920x1080, rule 5: div.wt-add-to "Add toWhich days one press put" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 461px
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.week-col-foot.wt-col-foot, input.time-input, span.duration-unit
+- 375x812, rule 1: 3px in div.week-col-foot.wt-col-foot
+- 375x812, rule 1: 1px in div.wt-untimed, button.wt-untimed-block, div.block-add-line.joined-line, input.time-input
+- 375x812, rule 1: 30px in select.block-library
+- 375x812, rule 2: div.template-editor.week-template-editor "Every day it is onJust this da" rows start at 16, 56, 129px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: 2 corners: 10px (div.template-editor.week-template-editor), 6px (button.active)
+- 375x812, rule 5: div.wt-add-to "Add toWhich days one press put" wraps onto 3 lines
+- 375x812, rule 5: div.wt-presets "Just one dayWeekdaysWeekendAll" wraps onto 2 lines
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Week template editor (block open)**
+
+Before: [1920x1080](screenshots/unify/before/1920-week-template-editor-block-open.jpg) | [375x812](screenshots/unify/before/375-week-template-editor-block-open.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented.segmented-quiet, div.week-col-head, div.week-col-foot.wt-col-foot
+- 1920x1080, rule 1: 3px in div.week-col-foot.wt-col-foot
+- 1920x1080, rule 1: 1px in div.wt-untimed, button.wt-untimed-block.is-open, button.wt-untimed-block
+- 1920x1080, rule 1: 30px in select.block-library
+- 1920x1080, rule 2: div.template-editor.week-template-editor "Every day it is onJust this da" rows start at 16, 64, 626px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor.week-template-editor), 6px (button.active)
+- 1920x1080, rule 4: input "Week name" is 778px wide
+- 1920x1080, rule 6: the page scrolls 618px
+- 375x812, rule 1: 2px in div.segmented.segmented-quiet, div.week-col-foot.wt-col-foot
+- 375x812, rule 1: 3px in div.week-col-foot.wt-col-foot
+- 375x812, rule 1: 1px in div.wt-untimed, button.wt-untimed-block.is-open, button.wt-untimed-block
+- 375x812, rule 1: 30px in select.block-library
+- 375x812, rule 2: div.template-editor.week-template-editor "Every day it is onJust this da" rows start at 16, 56, 129px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.library-binding: NothingFrom BooksFrom Watching 44 / + 20
+- 375x812, rule 3: 2 corners: 10px (div.template-editor.week-template-editor), 6px (button.active)
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Template editor (a meal's recipes)**
+
+Before: [1920x1080](screenshots/unify/before/1920-template-editor-a-meal-s-recipes.jpg) | [375x812](screenshots/unify/before/375-template-editor-a-meal-s-recipes.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, input.time-input, span.duration-unit
+- 1920x1080, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, span.task-size
+- 1920x1080, rule 1: -6px in span.task-size
+- 1920x1080, rule 1: 30px in select.block-library, select.block-library.is-set
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 1920x1080, rule 4: input "Template name" is 778px wide
+- 1920x1080, rule 4: input.recipes-field-search "Find a recipe" is 796px wide
+- 1920x1080, rule 4: input.has-return "What happens" is 636px wide
+- 1920x1080, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 2 lines
+- 1920x1080, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 1076px
+- 375x812, rule 1: 1px in input.time-input, button.timeline-gap, div.block-add-line.joined-line
+- 375x812, rule 1: 2px in input.time-input, span.duration-unit
+- 375x812, rule 1: 6px in button.timeline-gap, span.task-size
+- 375x812, rule 1: -6px in span.task-size
+- 375x812, rule 1: 30px in select.block-library, select.block-library.is-set
+- 375x812, rule 2: div.template-editor "Full daychangeA kind of dayA d" rows start at 0, 16, 28px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.library-binding: NothingFrom BooksFrom Watching 44 / + 20
+- 375x812, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 375x812, rule 5: div.template-sleep "SleeptoAlso used by Twelve-hou" wraps onto 2 lines
+- 375x812, rule 5: li "07:00Get up, shower, coffee45 " wraps onto 3 lines
+- 375x812, rule 5: li "08:00Plan the day15 minKeyOngo" wraps onto 3 lines
+- 375x812, rule 5: li "09:00Deep work block2hKeyOngoi" wraps onto 3 lines
+- 375x812, rule 5: li "12:30Lunch45 minKeyOngoingNext" wraps onto 4 lines
+- 375x812, rule 5: div.duration-chips.recipes-field-options "BreakfastLunchDinnerPre-gymPos" wraps onto 2 lines
+- 375x812, rule 5: li "13:30Email and admin45 minKeyO" wraps onto 3 lines
+- 375x812, rule 5: li "17:30Walk40 minKeyOngoingNext " wraps onto 3 lines
+- 375x812, rule 5: li "21:00Reading30 minKeyOngoingNe" wraps onto 4 lines
+- 375x812, rule 5: div.block-add-marks "+OngoingA block that is simply" wraps onto 4 lines
+- 375x812, rule 5: div.template-editor-actions "Delete templateCancelSave temp" wraps onto 2 lines
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+**Template editor (a night shift)**
+
+Before: [1920x1080](screenshots/unify/before/1920-template-editor-a-night-shift.jpg) | [375x812](screenshots/unify/before/375-template-editor-a-night-shift.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, input.time-input, span.duration-unit
+- 1920x1080, rule 1: 1px in input.time-input, div.block-add-line.joined-line
+- 1920x1080, rule 1: -6px in span.task-size
+- 1920x1080, rule 1: 6px in span.task-size
+- 1920x1080, rule 1: 30px in select.block-library
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 2: div.template-editor "OvernightchangeA kind of dayA " rows start at 0, 16, 28px in
+- 1920x1080, rule 3: div.library-binding: NothingFrom BooksFrom Watching 36 / + 20
+- 1920x1080, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 1920x1080, rule 4: input "Template name" is 778px wide
+- 1920x1080, rule 4: input.has-return "What happens" is 636px wide
+- 1920x1080, rule 5: li "01:00Night meal30 minCoreKeyOn" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 549px
+- 375x812, rule 1: 1px in input.time-input, div.block-add-line.joined-line
+- 375x812, rule 1: 2px in input.time-input, span.duration-unit
+- 375x812, rule 1: -6px in span.task-size
+- 375x812, rule 1: 6px in span.task-size
+- 375x812, rule 1: 30px in select.block-library
+- 375x812, rule 2: div.template-editor "OvernightchangeA kind of dayA " rows start at 0, 16, 28px in
+- 375x812, rule 2: li.routines-row "TrainingMon, Wed, Fri · 60 min" rows start at 16, 181, 246px in
+- 375x812, rule 2: li.routines-row "Language practiceMon, Tue, Wed" rows start at 16, 181, 246px in
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.library-binding: NothingFrom BooksFrom Watching 44 / + 20
+- 375x812, rule 3: 2 corners: 10px (div.template-editor), 6px (span.kind-mark)
+- 375x812, rule 5: div.template-sleep "SleeptoAlso used by Working da" wraps onto 2 lines
+- 375x812, rule 5: li "22:00Night shift8hCoreKeyOngoi" wraps onto 3 lines
+- 375x812, rule 5: li "01:00Night meal30 minCoreKeyOn" wraps onto 4 lines
+- 375x812, rule 5: div.block-add-marks "+CoreOngoingA block that is si" wraps onto 4 lines
+- 375x812, rule 5: div.template-editor-actions "Delete templateCancelSave temp" wraps onto 2 lines
+- 375x812, rule 5: li.routines-row "TrainingMon, Wed, Fri · 60 min" wraps onto 3 lines
+- 375x812, rule 5: li.routines-row "Language practiceMon, Tue, Wed" wraps onto 3 lines
+
+#### Roster
+
+**Calendar (the roster)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-the-roster.jpg) | [375x812](screenshots/unify/before/375-calendar-the-roster.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 1px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 1: 1px in button
+- 375x812, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today
+- 375x812, rule 1: 2px in div.segmented, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←September 2026September 2026→" wraps onto 2 lines
+- 375x812, rule 5: div.roster-bar-row "RosterDTwelve-hour shiftRSlow " wraps onto 2 lines
+
+**Calendar (what Apply will do)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-what-apply-will-do.jpg) | [375x812](screenshots/unify/before/375-calendar-what-apply-will-do.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 1px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 1920x1080, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 1920x1080, rule 2: div.roster-preview "21 - 27 Sep 20266 run into som" rows start at 16, 1101px in
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 1: 1px in button
+- 375x812, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 375x812, rule 1: 2px in div.segmented, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 375x812, rule 2: div.roster-preview "21 - 27 Sep 20266 run into som" rows start at 16, 124px in
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←September 2026September 2026→" wraps onto 2 lines
+- 375x812, rule 5: div.roster-bar-row "RosterDTwelve-hour shiftRSlow " wraps onto 2 lines
+- 375x812, rule 6: the page scrolls 282px
+
+**Calendar (a cycle)**
+
+Before: [1920x1080](screenshots/unify/before/1920-calendar-a-cycle.jpg) | [375x812](screenshots/unify/before/375-calendar-a-cycle.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 1px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 1920x1080, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 1: 1px in button
+- 375x812, rule 1: 6px in button, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 375x812, rule 1: 2px in div.segmented, button.cell.outside, button.cell.cell-has-tasks, button.cell.cell-has-template, button.cell, button.cell.today and 1 more
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.calendar-bar "←September 2026September 2026→" wraps onto 2 lines
+- 375x812, rule 5: div.roster-bar-row "RosterDTwelve-hour shiftRSlow " wraps onto 2 lines
+- 375x812, rule 5: div.roster-cycle-row "Starting onFill to the end of " wraps onto 2 lines
+- 375x812, rule 6: the page scrolls 265px
+
+#### Kitchen and a recipe
+
+**Kitchen**
+
+Before: [1920x1080](screenshots/unify/before/1920-kitchen.jpg) | [375x812](screenshots/unify/before/375-kitchen.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 1: 19px in button.kitchen-card
+- 1920x1080, rule 4: input.kitchen-search "Search recipes" is 1160px wide
+- 1920x1080, rule 6: the page scrolls 261px
+- 375x812, rule 1: 19px in button.kitchen-card
+- 375x812, rule 5: div.library-chips.kitchen-chips "AllBreakfastLunchDinnerPre-gym" wraps onto 2 lines
+
+**Kitchen (a meal chosen)**
+
+Before: [1920x1080](screenshots/unify/before/1920-kitchen-a-meal-chosen.jpg) | [375x812](screenshots/unify/before/375-kitchen-a-meal-chosen.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 1: 19px in button.kitchen-card
+- 1920x1080, rule 4: input.kitchen-search "Search recipes" is 1160px wide
+- 375x812, rule 1: 19px in button.kitchen-card
+- 375x812, rule 5: div.library-chips.kitchen-chips "AllBreakfastLunchDinnerPre-gym" wraps onto 2 lines
+
+**Kitchen (a recipe)**
+
+Before: [1920x1080](screenshots/unify/before/1920-kitchen-a-recipe.jpg) | [375x812](screenshots/unify/before/375-kitchen-a-recipe.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 1: 28.2px in li
+- 375x812, rule 1: 28.2px in li
+
+**Kitchen (writing)**
+
+Before: [1920x1080](screenshots/unify/before/1920-kitchen-writing.jpg) | [375x812](screenshots/unify/before/375-kitchen-writing.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 2: form.library-list.kitchen-form "NameRecipeMade the night befor" rows start at 0, 16px in
+- 1920x1080, rule 4: input "" is 808px wide
+- 375x812, rule 2: form.library-list.kitchen-form "NameRecipeMade the night befor" rows start at 0, 16px in
+- 375x812, rule 5: div.duration-chips.kitchen-meal-chips "BreakfastLunchDinnerPre-gymPos" wraps onto 2 lines
+
+**Kitchen (to a template)**
+
+Before: [1920x1080](screenshots/unify/before/1920-kitchen-to-a-template.jpg) | [375x812](screenshots/unify/before/375-kitchen-to-a-template.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 1: 30px in select
+- 1920x1080, rule 1: 28.2px in li
+- 1920x1080, rule 2: div.library-list.kitchen-template-form "TemplateWorking dayTwelve-hour" rows start at 16, 685px in
+- 375x812, rule 1: 30px in select
+- 375x812, rule 1: 28.2px in li
+- 375x812, rule 2: div.library-list.kitchen-template-form "TemplateWorking dayTwelve-hour" rows start at 16, 188px in
+
+#### Books
+
+**Library**
+
+Before: [1920x1080](screenshots/unify/before/1920-library.jpg) | [375x812](screenshots/unify/before/375-library.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, span.library-item-move
+- 1920x1080, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 1: 3px in span.library-item-main
+- 1920x1080, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 48px in
+- 1920x1080, rule 3: div.library-list-head: Books8 going, counted in chapt 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 36 / Deep Workone chapter an evenin 69
+- 1920x1080, rule 3: li.library-item: Reorder Atomic Habits, positio 36 / Atomic Habitsp. 0/306 20
+- 1920x1080, rule 3: li.library-item: Reorder The Body Keeps the Sco 36 / The Body Keeps the Scorech 0/2 20
+- 1920x1080, rule 3: li.library-item: Reorder Thinking, Fast and Slo 36 / Thinking, Fast and Slowch 0/38 20
+- 1920x1080, rule 3: li.library-item: Reorder Range, position 5 36 / Rangech 0/15 20
+- 1920x1080, rule 3: li.library-item: Reorder Four Thousand Weeks, p 36 / Four Thousand Weeksch 0/14 20
+- 1920x1080, rule 3: li.library-item: Reorder Why We Sleep, position 36 / Why We Sleepch 0/16 20
+- 1920x1080, rule 3: li.library-item: Reorder The Creative Act, posi 36 / The Creative Actch 0/78 20
+- 1920x1080, rule 3: div.library-list-head: Watching7 going, counted in ep 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Severance, position 1 36 / SeveranceS1 E2/10 33
+- 1920x1080, rule 3: li.library-item: Reorder Andor, position 2 36 / AndorS1 E2/12 20
+- 1920x1080, rule 3: li.library-item: Reorder The Bear, position 3 36 / The BearS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Shogun, position 4 36 / ShogunS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Slow Horses, position  36 / Slow HorsesS1 E2/6 20
+- 1920x1080, rule 3: li.library-item: Reorder Dune: Part Two, positi 36 / Dune: Part Twonot yet 20
+- 1920x1080, rule 3: li.library-item: Reorder Arrival, position 7 36 / Arrivalnot yet 20
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 chapters"" is 587px wide
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 episodes"" is 585px wide
+- 1920x1080, rule 6: the page scrolls 515px
+- 375x812, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 375x812, rule 1: 3px in span.library-item-main
+- 375x812, rule 1: 2px in span.library-item-move
+- 375x812, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 24, 48px in
+- 375x812, rule 2: div.library-list.is-open "Watching7 going, counted in ep" rows start at 16, 24px in
+- 375x812, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 44 / Deep Workone chapter an evenin 98
+- 375x812, rule 3: li.library-item: Reorder Atomic Habits, positio 44 / Atomic Habitsp. 0/306 49
+- 375x812, rule 3: li.library-item: Reorder The Body Keeps the Sco 44 / The Body Keeps the Scorech 0/2 49
+- 375x812, rule 3: li.library-item: Reorder Thinking, Fast and Slo 44 / Thinking, Fast and Slowch 0/38 49
+- 375x812, rule 3: li.library-item: Reorder Range, position 5 44 / Rangech 0/15 49
+- 375x812, rule 3: li.library-item: Reorder Four Thousand Weeks, p 44 / Four Thousand Weeksch 0/14 49
+- 375x812, rule 3: li.library-item: Reorder Why We Sleep, position 44 / Why We Sleepch 0/16 49
+- 375x812, rule 3: li.library-item: Reorder The Creative Act, posi 44 / The Creative Actch 0/78 49
+- 375x812, rule 3: li.library-item.is-active: Reorder Severance, position 1 44 / SeveranceS1 E2/10 62
+- 375x812, rule 3: li.library-item: Reorder Andor, position 2 44 / AndorS1 E2/12 49
+- 375x812, rule 3: li.library-item: Reorder The Bear, position 3 44 / The BearS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Shogun, position 4 44 / ShogunS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Slow Horses, position  44 / Slow HorsesS1 E2/6 49
+- 375x812, rule 3: li.library-item: Reorder Dune: Part Two, positi 44 / Dune: Part Twonot yet 49
+- 375x812, rule 3: li.library-item: Reorder Arrival, position 7 44 / Arrivalnot yet 49
+- 375x812, rule 5: div.library-add.joined-line "ReturnchaptersWhat one sitting" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnepisodesWhat one sitting" wraps onto 2 lines
+
+**Library (item panel)**
+
+Before: [1920x1080](screenshots/unify/before/1920-library-item-panel.jpg) | [375x812](screenshots/unify/before/375-library-item-panel.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, span.library-item-move, div.segmented
+- 1920x1080, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 1: 3px in span.library-item-main
+- 1920x1080, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 0, 16, 48px in
+- 1920x1080, rule 3: div.library-list-head: Books8 going, counted in chapt 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 36 / Deep Workone chapter an evenin 69
+- 1920x1080, rule 3: div.library-item-progress: − 24 / How far through Deep Work 36 / + 24
+- 1920x1080, rule 3: li.library-item: Reorder Atomic Habits, positio 36 / Atomic Habitsp. 0/306 20
+- 1920x1080, rule 3: li.library-item: Reorder The Body Keeps the Sco 36 / The Body Keeps the Scorech 0/2 20
+- 1920x1080, rule 3: li.library-item: Reorder Thinking, Fast and Slo 36 / Thinking, Fast and Slowch 0/38 20
+- 1920x1080, rule 3: li.library-item: Reorder Range, position 5 36 / Rangech 0/15 20
+- 1920x1080, rule 3: li.library-item: Reorder Four Thousand Weeks, p 36 / Four Thousand Weeksch 0/14 20
+- 1920x1080, rule 3: li.library-item: Reorder Why We Sleep, position 36 / Why We Sleepch 0/16 20
+- 1920x1080, rule 3: li.library-item: Reorder The Creative Act, posi 36 / The Creative Actch 0/78 20
+- 1920x1080, rule 3: div.library-list-head: Watching7 going, counted in ep 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Severance, position 1 36 / SeveranceS1 E2/10 33
+- 1920x1080, rule 3: li.library-item: Reorder Andor, position 2 36 / AndorS1 E2/12 20
+- 1920x1080, rule 3: li.library-item: Reorder The Bear, position 3 36 / The BearS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Shogun, position 4 36 / ShogunS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Slow Horses, position  36 / Slow HorsesS1 E2/6 20
+- 1920x1080, rule 3: li.library-item: Reorder Dune: Part Two, positi 36 / Dune: Part Twonot yet 20
+- 1920x1080, rule 3: li.library-item: Reorder Arrival, position 7 36 / Arrivalnot yet 20
+- 1920x1080, rule 3: 2 corners: 10px (button.btn-primary), 6px (button.active)
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 chapters"" is 587px wide
+- 1920x1080, rule 4: input "one chapter a day" is 704px wide
+- 1920x1080, rule 4: input "www.example.com/spanish" is 704px wide
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 episodes"" is 585px wide
+- 1920x1080, rule 5: li.library-item.is-active "Deep Workone chapter an evenin" wraps onto 2 lines
+- 1920x1080, rule 6: the page scrolls 851px
+- 375x812, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 375x812, rule 1: 3px in span.library-item-main
+- 375x812, rule 1: 2px in span.library-item-move, div.segmented
+- 375x812, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 0, 16, 24, 48px in
+- 375x812, rule 2: div.library-list.is-open "Watching7 going, counted in ep" rows start at 16, 24px in
+- 375x812, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 44 / Deep Workone chapter an evenin 98
+- 375x812, rule 3: div.library-item-progress: − 24 / How far through Deep Work 44 / + 24
+- 375x812, rule 3: li.library-item: Reorder Atomic Habits, positio 44 / Atomic Habitsp. 0/306 49
+- 375x812, rule 3: li.library-item: Reorder The Body Keeps the Sco 44 / The Body Keeps the Scorech 0/2 49
+- 375x812, rule 3: li.library-item: Reorder Thinking, Fast and Slo 44 / Thinking, Fast and Slowch 0/38 49
+- 375x812, rule 3: li.library-item: Reorder Range, position 5 44 / Rangech 0/15 49
+- 375x812, rule 3: li.library-item: Reorder Four Thousand Weeks, p 44 / Four Thousand Weeksch 0/14 49
+- 375x812, rule 3: li.library-item: Reorder Why We Sleep, position 44 / Why We Sleepch 0/16 49
+- 375x812, rule 3: li.library-item: Reorder The Creative Act, posi 44 / The Creative Actch 0/78 49
+- 375x812, rule 3: li.library-item.is-active: Reorder Severance, position 1 44 / SeveranceS1 E2/10 62
+- 375x812, rule 3: li.library-item: Reorder Andor, position 2 44 / AndorS1 E2/12 49
+- 375x812, rule 3: li.library-item: Reorder The Bear, position 3 44 / The BearS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Shogun, position 4 44 / ShogunS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Slow Horses, position  44 / Slow HorsesS1 E2/6 49
+- 375x812, rule 3: li.library-item: Reorder Dune: Part Two, positi 44 / Dune: Part Twonot yet 49
+- 375x812, rule 3: li.library-item: Reorder Arrival, position 7 44 / Arrivalnot yet 49
+- 375x812, rule 3: 2 corners: 10px (button.btn-primary), 6px (button.active)
+- 375x812, rule 5: div.library-add.joined-line "ReturnchaptersWhat one sitting" wraps onto 2 lines
+- 375x812, rule 5: li.library-item.is-active "Deep Workone chapter an evenin" wraps onto 2 lines
+- 375x812, rule 5: div.segmented "chapterspage numbersseasons an" wraps onto 2 lines
+- 375x812, rule 5: div.library-detail-actions "DeleteOnto todayOnto tomorrowA" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnepisodesWhat one sitting" wraps onto 2 lines
+
+**Library (a new list)**
+
+Before: [1920x1080](screenshots/unify/before/1920-library-a-new-list.jpg) | [375x812](screenshots/unify/before/375-library-a-new-list.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, span.library-item-move
+- 1920x1080, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 1: 3px in span.library-item-main
+- 1920x1080, rule 2: div.library-new "Quick startCourseslessonsGuita" rows start at 16, 682px in
+- 1920x1080, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 48px in
+- 1920x1080, rule 3: div.library-list-head: Books8 going, counted in chapt 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 36 / Deep Workone chapter an evenin 69
+- 1920x1080, rule 3: li.library-item: Reorder Atomic Habits, positio 36 / Atomic Habitsp. 0/306 20
+- 1920x1080, rule 3: li.library-item: Reorder The Body Keeps the Sco 36 / The Body Keeps the Scorech 0/2 20
+- 1920x1080, rule 3: li.library-item: Reorder Thinking, Fast and Slo 36 / Thinking, Fast and Slowch 0/38 20
+- 1920x1080, rule 3: li.library-item: Reorder Range, position 5 36 / Rangech 0/15 20
+- 1920x1080, rule 3: li.library-item: Reorder Four Thousand Weeks, p 36 / Four Thousand Weeksch 0/14 20
+- 1920x1080, rule 3: li.library-item: Reorder Why We Sleep, position 36 / Why We Sleepch 0/16 20
+- 1920x1080, rule 3: li.library-item: Reorder The Creative Act, posi 36 / The Creative Actch 0/78 20
+- 1920x1080, rule 3: div.library-list-head: Watching7 going, counted in ep 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Severance, position 1 36 / SeveranceS1 E2/10 33
+- 1920x1080, rule 3: li.library-item: Reorder Andor, position 2 36 / AndorS1 E2/12 20
+- 1920x1080, rule 3: li.library-item: Reorder The Bear, position 3 36 / The BearS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Shogun, position 4 36 / ShogunS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Slow Horses, position  36 / Slow HorsesS1 E2/6 20
+- 1920x1080, rule 3: li.library-item: Reorder Dune: Part Two, positi 36 / Dune: Part Twonot yet 20
+- 1920x1080, rule 3: li.library-item: Reorder Arrival, position 7 36 / Arrivalnot yet 20
+- 1920x1080, rule 4: input "Courses" is 712px wide
+- 1920x1080, rule 4: input "or type one" is 712px wide
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 chapters"" is 587px wide
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 episodes"" is 585px wide
+- 1920x1080, rule 6: the page scrolls 843px
+- 375x812, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 375x812, rule 1: 3px in span.library-item-main
+- 375x812, rule 1: 2px in span.library-item-move
+- 375x812, rule 2: div.library-new "Quick startCourseslessonsGuita" rows start at 16, 185px in
+- 375x812, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 24, 48px in
+- 375x812, rule 2: div.library-list.is-open "Watching7 going, counted in ep" rows start at 16, 24px in
+- 375x812, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 44 / Deep Workone chapter an evenin 98
+- 375x812, rule 3: li.library-item: Reorder Atomic Habits, positio 44 / Atomic Habitsp. 0/306 49
+- 375x812, rule 3: li.library-item: Reorder The Body Keeps the Sco 44 / The Body Keeps the Scorech 0/2 49
+- 375x812, rule 3: li.library-item: Reorder Thinking, Fast and Slo 44 / Thinking, Fast and Slowch 0/38 49
+- 375x812, rule 3: li.library-item: Reorder Range, position 5 44 / Rangech 0/15 49
+- 375x812, rule 3: li.library-item: Reorder Four Thousand Weeks, p 44 / Four Thousand Weeksch 0/14 49
+- 375x812, rule 3: li.library-item: Reorder Why We Sleep, position 44 / Why We Sleepch 0/16 49
+- 375x812, rule 3: li.library-item: Reorder The Creative Act, posi 44 / The Creative Actch 0/78 49
+- 375x812, rule 3: li.library-item.is-active: Reorder Severance, position 1 44 / SeveranceS1 E2/10 62
+- 375x812, rule 3: li.library-item: Reorder Andor, position 2 44 / AndorS1 E2/12 49
+- 375x812, rule 3: li.library-item: Reorder The Bear, position 3 44 / The BearS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Shogun, position 4 44 / ShogunS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Slow Horses, position  44 / Slow HorsesS1 E2/6 49
+- 375x812, rule 3: li.library-item: Reorder Dune: Part Two, positi 44 / Dune: Part Twonot yet 49
+- 375x812, rule 3: li.library-item: Reorder Arrival, position 7 44 / Arrivalnot yet 49
+- 375x812, rule 5: div.library-presets "CourseslessonsGuitarsongsRecip" wraps onto 2 lines
+- 375x812, rule 5: div.duration-chips.library-unit-chips "lessonsongepisodesessiontrycha" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnchaptersWhat one sitting" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnepisodesWhat one sitting" wraps onto 2 lines
+
+**Library (list settings)**
+
+Before: [1920x1080](screenshots/unify/before/1920-library-list-settings.jpg) | [375x812](screenshots/unify/before/375-library-list-settings.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, span.library-item-move
+- 1920x1080, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 1920x1080, rule 1: 53.4px in input.has-return
+- 1920x1080, rule 1: 3px in span.library-item-main
+- 1920x1080, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 48px in
+- 1920x1080, rule 3: div.library-list-head: Books8 going, counted in chapt 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 36 / Deep Workone chapter an evenin 69
+- 1920x1080, rule 3: li.library-item: Reorder Atomic Habits, positio 36 / Atomic Habitsp. 0/306 20
+- 1920x1080, rule 3: li.library-item: Reorder The Body Keeps the Sco 36 / The Body Keeps the Scorech 0/2 20
+- 1920x1080, rule 3: li.library-item: Reorder Thinking, Fast and Slo 36 / Thinking, Fast and Slowch 0/38 20
+- 1920x1080, rule 3: li.library-item: Reorder Range, position 5 36 / Rangech 0/15 20
+- 1920x1080, rule 3: li.library-item: Reorder Four Thousand Weeks, p 36 / Four Thousand Weeksch 0/14 20
+- 1920x1080, rule 3: li.library-item: Reorder Why We Sleep, position 36 / Why We Sleepch 0/16 20
+- 1920x1080, rule 3: li.library-item: Reorder The Creative Act, posi 36 / The Creative Actch 0/78 20
+- 1920x1080, rule 3: div.library-list-head: Watching7 going, counted in ep 20 / Edit 36
+- 1920x1080, rule 3: li.library-item.is-active: Reorder Severance, position 1 36 / SeveranceS1 E2/10 33
+- 1920x1080, rule 3: li.library-item: Reorder Andor, position 2 36 / AndorS1 E2/12 20
+- 1920x1080, rule 3: li.library-item: Reorder The Bear, position 3 36 / The BearS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Shogun, position 4 36 / ShogunS1 E2/10 20
+- 1920x1080, rule 3: li.library-item: Reorder Slow Horses, position  36 / Slow HorsesS1 E2/6 20
+- 1920x1080, rule 3: li.library-item: Reorder Dune: Part Two, positi 36 / Dune: Part Twonot yet 20
+- 1920x1080, rule 3: li.library-item: Reorder Arrival, position 7 36 / Arrivalnot yet 20
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 chapters"" is 587px wide
+- 1920x1080, rule 4: input.has-return "Add - try "Something good, 12 episodes"" is 585px wide
+- 1920x1080, rule 6: the page scrolls 691px
+- 375x812, rule 1: 1px in div.library-add.joined-line, div.library-add-controls
+- 375x812, rule 1: 3px in span.library-item-main
+- 375x812, rule 1: 2px in span.library-item-move
+- 375x812, rule 2: div.library-list.is-open "Books8 going, counted in chapt" rows start at 16, 24, 48px in
+- 375x812, rule 2: div.library-list.is-open "Watching7 going, counted in ep" rows start at 16, 24px in
+- 375x812, rule 3: li.library-item.is-active: Reorder Deep Work, position 1 44 / Deep Workone chapter an evenin 98
+- 375x812, rule 3: li.library-item: Reorder Atomic Habits, positio 44 / Atomic Habitsp. 0/306 49
+- 375x812, rule 3: li.library-item: Reorder The Body Keeps the Sco 44 / The Body Keeps the Scorech 0/2 49
+- 375x812, rule 3: li.library-item: Reorder Thinking, Fast and Slo 44 / Thinking, Fast and Slowch 0/38 49
+- 375x812, rule 3: li.library-item: Reorder Range, position 5 44 / Rangech 0/15 49
+- 375x812, rule 3: li.library-item: Reorder Four Thousand Weeks, p 44 / Four Thousand Weeksch 0/14 49
+- 375x812, rule 3: li.library-item: Reorder Why We Sleep, position 44 / Why We Sleepch 0/16 49
+- 375x812, rule 3: li.library-item: Reorder The Creative Act, posi 44 / The Creative Actch 0/78 49
+- 375x812, rule 3: li.library-item.is-active: Reorder Severance, position 1 44 / SeveranceS1 E2/10 62
+- 375x812, rule 3: li.library-item: Reorder Andor, position 2 44 / AndorS1 E2/12 49
+- 375x812, rule 3: li.library-item: Reorder The Bear, position 3 44 / The BearS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Shogun, position 4 44 / ShogunS1 E2/10 49
+- 375x812, rule 3: li.library-item: Reorder Slow Horses, position  44 / Slow HorsesS1 E2/6 49
+- 375x812, rule 3: li.library-item: Reorder Dune: Part Two, positi 44 / Dune: Part Twonot yet 49
+- 375x812, rule 3: li.library-item: Reorder Arrival, position 7 44 / Arrivalnot yet 49
+- 375x812, rule 5: div.library-colors "Colour for Books" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnchaptersWhat one sitting" wraps onto 2 lines
+- 375x812, rule 5: div.library-add.joined-line "ReturnepisodesWhat one sitting" wraps onto 2 lines
+
+#### Picture
+
+**North**
+
+Before: [1920x1080](screenshots/unify/before/1920-north.jpg) | [375x812](screenshots/unify/before/375-north.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+
+**North (writing)**
+
+Before: [1920x1080](screenshots/unify/before/1920-north-writing.jpg) | [375x812](screenshots/unify/before/375-north-writing.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot
+- 1920x1080, rule 2: div.north-editor "I wake before the house does, " rows start at 32, 666px in
+- 375x812, rule 2: div.north-editor "I wake before the house does, " rows start at 24, 177px in
+
+#### Review
+
+**Review week**
+
+Before: [1920x1080](screenshots/unify/before/1920-review-week.jpg) | [375x812](screenshots/unify/before/375-review-week.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 3px in div.review-chart
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 1920x1080, rule 6: the page scrolls 368px
+- 375x812, rule 1: 2px in div.segmented
+- 375x812, rule 1: 3px in div.review-chart
+- 375x812, rule 2: dl.review-figures "Done8 of 23Deep work3hKey task" rows start at 16, 180px in
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.review-nav "14 - 20 September 2026Copy wee" wraps onto 2 lines
+
+**Review month**
+
+Before: [1920x1080](screenshots/unify/before/1920-review-month.jpg) | [375x812](screenshots/unify/before/375-review-month.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.segmented
+- 1920x1080, rule 1: 3px in div.review-chart
+- 1920x1080, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 1920x1080, rule 6: the page scrolls 89px
+- 375x812, rule 1: 2px in div.segmented
+- 375x812, rule 1: 3px in div.review-chart
+- 375x812, rule 2: dl.review-figures "Done57 of 101Deep work21hKey t" rows start at 16, 180px in
+- 375x812, rule 3: 2 corners: 10px (div.segmented), 6px (button.active)
+- 375x812, rule 5: div.review-nav "September 2026Copy month journ" wraps onto 2 lines
+
+#### Search
+
+**Command palette**
+
+Before: [1920x1080](screenshots/unify/before/1920-command-palette.jpg) | [375x812](screenshots/unify/before/375-command-palette.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.mini-cell.outside)
+- 1920x1080, rule 4: input.palette-input "Search tasks and lists, or type a command" is 560px wide
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 1: 48.7px in div.palette-scrim
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+#### Notes
+
+**Header: notes**
+
+Before: [1920x1080](screenshots/unify/before/1920-header-notes.jpg) | [375x812](screenshots/unify/before/375-header-notes.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Scratch**
+
+Before: [1920x1080](screenshots/unify/before/1920-scratch.jpg) | [375x812](screenshots/unify/before/375-scratch.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 1: 86.4px in div.scratch-scrim
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: div.scratch-field: Note 62 / Note 36 / + 36 / × 36
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+#### Journal
+
+**Header: journal**
+
+Before: [1920x1080](screenshots/unify/before/1920-header-journal.jpg) | [375x812](screenshots/unify/before/375-header-journal.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (button.header-tool.active), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+**Journal (open full)**
+
+Before: [1920x1080](screenshots/unify/before/1920-journal-open-full.jpg) | [375x812](screenshots/unify/before/375-journal-open-full.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 5 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 1: 86.4px in div.journal-scrim
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 4: input.journal-search "Search" is 488px wide
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, div.mini-calendar-grid and 1 more
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 1: 65px in div.journal-scrim
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+- 375x812, rule 5: div.journal-view-head "JournalCopy this dayCopy this " wraps onto 2 lines
+- 375x812, rule 5: div.journal-view-body "←September 2026→MTWTFSS3112345" wraps onto 2 lines
+
+#### Settings
+
+**Settings**
+
+Before: [1920x1080](screenshots/unify/before/1920-settings.jpg) | [375x812](screenshots/unify/before/375-settings.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, nav.settings-nav, input.time-input, div.segmented.sync-via, div.segmented
+- 1920x1080, rule 1: 1px in input.time-input
+- 1920x1080, rule 1: 30px in select
+- 1920x1080, rule 1: 13px in p.setting-desc
+- 1920x1080, rule 3: 2 corners: 10px (button.settings-nav-item.active), 6px (button.active)
+- 1920x1080, rule 6: the page scrolls 3037px
+- 375x812, rule 1: 1px in input.time-input
+- 375x812, rule 1: 2px in input.time-input, div.segmented.sync-via, div.segmented
+- 375x812, rule 1: 30px in select
+- 375x812, rule 1: 13px in p.setting-desc
+- 375x812, rule 3: 2 corners: 10px (button.primary), 6px (button.active)
+- 375x812, rule 5: div.sync-fields "RepoToken" wraps onto 2 lines
+- 375x812, rule 5: div.sync-fields "Server addressToken" wraps onto 2 lines
+
+#### Dialogs
+
+**Task detail (a meal's recipe)**
+
+Before: [1920x1080](screenshots/unify/before/1920-task-detail-a-meal-s-recipe.jpg) | [375x812](screenshots/unify/before/375-task-detail-a-meal-s-recipe.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 7 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 1: -9px in input.task-detail-title
+- 1920x1080, rule 1: 30px in select
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: div.task-detail-head: Task title 46 / × 36
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 4: input.recipes-field-search "Find a recipe" is 428px wide
+- 1920x1080, rule 4: input.task-detail-link "www.example.com/spanish" is 428px wide
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 3 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, input.time-input and 1 more
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 1: -9px in input.task-detail-title
+- 375x812, rule 1: 30px in select
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: div.task-detail-head: Task title 46 / × 44
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+- 375x812, rule 5: div.duration-chips.recipes-field-options "BreakfastLunchDinnerPre-gymPos" wraps onto 2 lines
+- 375x812, rule 5: div.segmented "OnceEvery dayWeekdaysEvery wee" wraps onto 2 lines
+
+**Task detail**
+
+Before: [1920x1080](screenshots/unify/before/1920-task-detail.jpg) | [375x812](screenshots/unify/before/375-task-detail.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 7 more
+- 1920x1080, rule 1: 1px in span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button, button.task-recipe and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 1: -9px in input.task-detail-title
+- 1920x1080, rule 1: 30px in select
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: div.task-detail-head: Task title 46 / × 36
+- 1920x1080, rule 3: 2 corners: 6px (button.mini-cell.outside), 10px (div.up-next)
+- 1920x1080, rule 4: input.task-detail-link "www.example.com/spanish" is 428px wide
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in button, span.day-now-left, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 3 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, input.time-input and 1 more
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 1: -9px in input.task-detail-title
+- 375x812, rule 1: 30px in select
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: div.task-detail-head: Task title 46 / × 44
+- 375x812, rule 3: 2 corners: 10px (button.day-replan-button), 6px (button.active)
+- 375x812, rule 3: 6 type sizes: 11px (button.task-note-mark "note"), 13px (button.header-tool "Search"), 15px (span.day-now-task "Review the quart"), 17px (textarea.note-editor-text "The pricing page"), 18px (button "←"), 20px (span.brand "Dienius")
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+- 375x812, rule 5: div.segmented "OnceEvery dayWeekdaysEvery wee" wraps onto 2 lines
+
+**Shortcut card**
+
+Before: [1920x1080](screenshots/unify/before/1920-shortcut-card.jpg) | [375x812](screenshots/unify/before/375-shortcut-card.jpg)
+
+- 1920x1080, rule 1: 2px in ul.nav-rail-list, ul.nav-rail-list.nav-rail-foot, div.mini-calendar-grid, span.mini-weekday, button.north-day-heading, div.up-next and 6 more
+- 1920x1080, rule 1: 1px in span.focus-bar-left, span.up-next-time, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 1920x1080, rule 1: 7.5px in div.north-line
+- 1920x1080, rule 1: 6px in button.timeline-gap, button.task-size, button.task-menu-button, kbd
+- 1920x1080, rule 1: 53.4px in input.quick-add.has-return
+- 1920x1080, rule 1: -6px in button.task-size
+- 1920x1080, rule 2: div.shortcuts "Keyboard×NAdd a task - jumps t" rows start at 16, 22px in
+- 1920x1080, rule 3: div.focus-bar-actions: Expand 36 / Done 36 / × 30
+- 1920x1080, rule 3: div.task-meta: note 19 / 2h 25
+- 1920x1080, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 1920x1080, rule 3: div.task-meta: ch 5/12 17 / 30 min 25
+- 1920x1080, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.mini-cell.outside)
+- 1920x1080, rule 5: div.template-rail-chips "Working dayTwelve-hour shiftSl" wraps onto 3 lines
+- 375x812, rule 1: 1px in span.focus-bar-left, button, button.timeline-gap, div.quick-add-row.joined-line, button.task-note-mark, button.task-menu-button and 2 more
+- 375x812, rule 1: 6px in button, button.timeline-gap, button.task-size, button.task-menu-button, kbd
+- 375x812, rule 1: 2px in button.north-line-text, button.north-day-heading, div.capture-mode.segmented, span.duration-unit, div.task-meta, kbd
+- 375x812, rule 1: -6px in button.task-size
+- 375x812, rule 2: div.focus-bar "FocusReview the quarter number" rows start at 54, 94, 142, 287px in
+- 375x812, rule 2: div.shortcuts "Keyboard×NAdd a task - jumps t" rows start at 16, 22px in
+- 375x812, rule 3: div.focus-bar-actions: Expand 44 / Done 44 / × 30
+- 375x812, rule 3: div.category-picker: Deep work 20 / Routine 20 / Health 20 / Meals 20 / Commute 20 / Personal 20 / Edit Deep work 28 / + 28
+- 375x812, rule 3: div.task-meta: note 19 / 2h 25
+- 375x812, rule 3: div.task-meta: Lentil soup 17 / 40 min 25
+- 375x812, rule 3: 2 corners: 10px (div.focus-bar), 6px (button.active)
+- 375x812, rule 5: div.quick-add-row.joined-line "16:00Return30min" wraps onto 2 lines
+- 375x812, rule 5: div.task-meta "21:00Personalch 5/12one chapte" wraps onto 2 lines
+
+
+---
+
+## The design pass - what was uneven before it (2026-09-16)
 
 Written 2026-09-16 at `03c2408`, the close of v2.24, as the first stage of
 the design pass. It says what makes Dienius look put together a screen at a
@@ -25,7 +1576,7 @@ nothing. The pass's last stage added what is left undone, in section 14.
 
 ---
 
-## The short version
+### The short version
 
 1. **Every screen places its own title.** The seven views' titles start at
    seven heights between 63 and 93px from the top and at six left edges,
@@ -60,7 +1611,7 @@ nothing. The pass's last stage added what is left undone, in section 14.
 
 ---
 
-## 1. Type
+### 1. Type
 
 **Sizes.** The scale is `--t-2xs` 10, `--t-xs` 11, `--t-sm` 13, `--t-md`
 15, `--t-lg` 20 and `--t-xl` 34, with `--t-input` 16 for fields, `--t-glyph`
@@ -108,7 +1659,7 @@ case. North's editor rule is a whole sentence in capitals (11233).
 **A font written by hand.** `.note-line.is-fixed` names its own monospace
 stack (9339) where `--font-mono` exists.
 
-## 2. Spacing
+### 2. Spacing
 
 **The scale.** `--s0` 2, `--s1` 4, `--s2` 8, `--s3` 12, `--s4` 16, `--s5`
 20, `--s6` 24, `--s7` 28, `--s8` 32 (`src/styles.css` 125-138), with larger
@@ -146,7 +1697,7 @@ point of use.
 | Library | 89 | 292 | 828 |
 | Review | 93 | 292 | 828 |
 
-## 3. Corners
+### 3. Corners
 
 Five tokens - `--r-mark` 6, `--r-control` 10, `--r-card` 12, `--r-pill` and
 `--r-round` - used 41, 84, 51, 52 and 37 times, plus 11 x `0`, nine composed
@@ -161,7 +1712,7 @@ and the two shapes on top make five.
   `var(--r-chip)` (13282), renamed to `--r-mark` in the night pass; with no
   fallback the declaration is invalid and the menu's buttons are square.
 
-## 4. Colour
+### 4. Colour
 
 **Tokens.** `--bg`, `--surface`, `--surface-raised`, `--border`, `--text`,
 `--muted`, `--faint`, `--accent`, `--accent-dim`, `--mark`, `--danger`,
@@ -191,7 +1742,7 @@ sheet's Delete, the library's Delete list), plain grey text (the library
 item's Delete), and a red text link (a goal rule's Delete). The ink is one
 idea; the control is three.
 
-## 5. Lines
+### 5. Lines
 
 327 border declarations, 183 of them drawn - 107 x `1px solid var(--border)`,
 20 top rules, 12 dashed, the rest tinted mixes.
@@ -212,7 +1763,7 @@ idea; the control is three.
 - **Settings is ruled row by row**, and so are the gap offers sheet and the
   replan sheet's rows.
 
-## 6. Shadows
+### 6. Shadows
 
 46 shadows, and 16 rings drawn as shadows (selection, focus, the tour),
 which are rings and stay rings. The brief allows shadows on layers; 14 sit
@@ -230,7 +1781,7 @@ on things that are not:
   `.wt-block.is-dragging .wt-block-body` (15608) - a lift doing a job, and
   the one kind off a layer this pass keeps.
 
-## 7. Motion
+### 7. Motion
 
 `--dur-fast` 150ms, `--dur` 200ms, `--dur-sweep` 1s (the clock's ring, not
 interface motion), one curve, `cubic-bezier(0.2, 0, 0, 1)`: 117 uses of the
@@ -242,7 +1793,7 @@ curve, 5 `linear`, 2 `ease`, no literal durations, and 40 lines naming
   every press, in dense rows too.
 - Two keyword easings where the token exists.
 
-## 8. Fields
+### 8. Fields
 
 The base rule (`src/styles.css` 2938-2946): `1px solid var(--border)`, the
 page's darkest ground `var(--bg)`, `var(--r-control)` corners; on hover a
@@ -267,7 +1818,7 @@ change of ground (3034-3040). A select repeats it with a drawn caret (3369).
   (`.block-library` 8845) is 28px with 11px text, and Note is 44px with
   15px text.
 
-## 9. Buttons
+### 9. Buttons
 
 `btn-primary` (28 uses), `btn-secondary` (81) and `btn-danger` (21), 38px
 tall with `var(--s2) var(--s4)` padding (6764-6860). Then 180 buttons with
@@ -313,7 +1864,7 @@ grows to 44px through an overlay, which is right and stays.
 - The template editor puts Add a block on the right and Save template on the
   left, one above the other.
 
-## 10. Empty states
+### 10. Empty states
 
 Sixteen places draw an empty state, each with its own class and its own
 type and spacing - `empty-state` in the task pane, `library-empty`,
@@ -332,7 +1883,7 @@ plain `empty`.
 | North | One line and Write - the shape the brief asks for |
 | Notes | A field, Nothing written down yet., Open notes |
 
-## 11. Screen by screen
+### 11. Screen by screen
 
 - **Today.** The header row mixes a pill with a dot (the day's template),
   two bordered buttons and bare arrows; the status row adds a segmented
@@ -382,7 +1933,7 @@ plain `empty`.
   and a cross; a back arrow, a title and a cross; a field in place of a
   title); the gap offers sheet spans the whole window on a desktop.
 
-## 12. Found on the way
+### 12. Found on the way
 
 1. **The Notes popover leaves the screen on a phone.** It is 300px wide and
    anchored to the right edge of the launcher around its button
@@ -404,7 +1955,7 @@ plain `empty`.
    time (240, 257, 274).
 5. **`--r-chip`** is used and not defined (13282, section 3).
 
-## 13. What the pass does with this
+### 13. What the pass does with this
 
 - **Stage 2, the system.** One type scale with a reading size and a 1.6
   reading line height; spacing 4, 8, 12, 16, 24, 32, 48; two rounded
@@ -426,7 +1977,7 @@ plain `empty`.
 
 ---
 
-## 14. What is left, at the end of the pass
+### 14. What is left, at the end of the pass
 
 Written 2026-09-17 at the pass's last stage, after `e758285`. The inventory
 again and the 45 screens again, at 1366x768 and on an iPhone 13, dark and
@@ -435,7 +1986,7 @@ light - one sheet per screen in
 ones in `before/`. Every count below is held by `design.test.ts`, or named
 as not held.
 
-### The counts, then and now
+#### The counts, then and now
 
 | | At `03c2408` | Now |
 |---|---|---|
@@ -451,7 +2002,7 @@ as not held.
 | Buttons with a class of their own | 180 | 166 |
 | Heights written in pixels | - | 20 |
 
-### Found at the end, and fixed in the stage
+#### Found at the end, and fixed in the stage
 
 1. **In the dark themes a layer's controls had no shape.** The fills were
    5% and 10% of the text over the card's ground, and every sheet, popover
@@ -507,7 +2058,7 @@ as not held.
    line, and the quick add's three controls as one line - DECISIONS.md,
    "The day's masthead lies on its columns".
 
-### What is kept, and why
+#### What is kept, and why
 
 - **Five line heights written as numbers**, 1.1 to 1.2, in the smallest
   boxes the app draws: a squeezed block on the timeline, a month cell's
@@ -566,7 +2117,7 @@ as not held.
   with an action each. The empty-state rule is one line and one action; a
   first run is its one exception, and says what it has to say once.
 
-### Not measured
+#### Not measured
 
 The sweep measures four widths and the phone, the precision pass 1366 and
 1920 in the dark and 1366 in the light, and the text-size pass every screen

@@ -27,6 +27,10 @@
  * that reaches every screen can leave one of each behind - the same seed,
  * the same minute, the same route as the measuring.
  *   npm run sweep -- --self-check  plant defects and prove the audit sees them
+ *   npm run sweep -- --unify [--unify-out=FILE]
+ *                                  the seven rules of one look (unify.js), on
+ *                                  every screen at 1920x1080 and on a 375x812
+ *                                  phone, with a report per screen and rule
  *
  * Needs the production build: `npm run build`. It serves `dist` itself, or
  * pass PORT for a server already up.
@@ -74,6 +78,11 @@ const FIXED_TIME = new Date(Date.UTC(2026, 8, 16, HOUR - 3, 0))
 
 const SEED = readFileSync(join(here, 'sample-day.js'), 'utf8')
 const AUDIT = readFileSync(join(here, 'audit.js'), 'utf8')
+const UNIFY = process.argv.includes('--unify')
+const UNIFY_JS = readFileSync(join(here, 'unify.js'), 'utf8')
+const UNIFY_OUT = process.argv.find(a => a.startsWith('--unify-out='))?.slice(12)
+/** @type {{ size: string, screen: string, report: any }[]} */
+const unified = []
 
 /**
  * The sizes the project promises, plus the phone when asked for.
@@ -502,6 +511,26 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   }))),
+  // The journal's whole page, which the header's panel opens, and the
+  // calendar's agenda: two screens a person reaches every week that the list
+  // did not walk until the one-look audit asked for every screen.
+  {
+    name: 'Journal (open full)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await p.locator('.header-tools').getByRole('button', { name: 'Journal', exact: true }).click()
+      await p.getByRole('button', { name: 'Open full', exact: true }).click()
+      await p.waitForTimeout(300)
+    },
+  },
+  {
+    name: 'Calendar agenda',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Calendar')
+      await press(p, 'Week')
+      await press(p, 'Agenda')
+    },
+  },
   .../** @type {Screen[]} */ (['Something came up', 'Shift the rest', 'I was away'].map(door => ({
     name: `Replan: ${door.toLowerCase()}`,
     go: async /** @param {Page} p */ p => {
@@ -768,15 +797,21 @@ if (SELF_CHECK) {
   process.exit(blind ? 1 : 0)
 }
 
-const runs = [
-  ...DESKTOP.filter(size => !WIDTH || size.w === WIDTH).flatMap(size => ['dark', 'light'].map(theme => ({ size, theme, phone: false }))),
-  ...(PHONE ? ['dark', 'light'].map(theme => ({ size: { w: 390, h: 844 }, theme, phone: true })) : []),
-]
+const runs = UNIFY
+  ? // The two sizes the owner's rules name, in the dark theme the app opens in.
+    [
+      { size: { w: 1920, h: 1080 }, theme: 'dark', phone: false },
+      { size: { w: 375, h: 812 }, theme: 'dark', phone: true },
+    ]
+  : [
+      ...DESKTOP.filter(size => !WIDTH || size.w === WIDTH).flatMap(size => ['dark', 'light'].map(theme => ({ size, theme, phone: false }))),
+      ...(PHONE ? ['dark', 'light'].map(theme => ({ size: { w: 390, h: 844 }, theme, phone: true })) : []),
+    ]
 
 for (const run of runs) {
   const ctx = await browser.newContext(
     run.phone
-      ? { ...devices['iPhone 13'], isMobile: true, hasTouch: true }
+      ? { ...devices['iPhone 13'], isMobile: true, hasTouch: true, ...(UNIFY ? { viewport: { width: run.size.w, height: run.size.h } } : {}) }
       : { viewport: { width: run.size.w, height: run.size.h } },
   )
   await ctx.clock.setFixedTime(FIXED_TIME)
@@ -806,13 +841,21 @@ for (const run of runs) {
       await screen.go(page)
       if (SHOTS) {
         const slug = screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-        await page.screenshot({ path: join(SHOTS, `${run.size.w}-${run.theme}-${slug}.png`) })
+        // The one-look audit's pictures go into the repo beside its report, so
+        // they are JPEGs: a hundred PNGs of every screen is a repo's worth.
+        await page.screenshot(UNIFY ? { path: join(SHOTS, `${run.size.w}-${slug}.jpg`), type: 'jpeg', quality: 60 } : { path: join(SHOTS, `${run.size.w}-${run.theme}-${slug}.png`) })
       }
     } catch (err) {
       found(where, 'could not reach', String(err).split('\n')[0].slice(0, 120))
       continue
     }
 
+    if (UNIFY) {
+      await page.addScriptTag({ content: UNIFY_JS })
+      const report = await page.evaluate(name => /** @type {any} */ (window).__unify(name), screen.name)
+      unified.push({ size: `${run.size.w}x${run.size.h}`, screen: screen.name, report })
+      continue
+    }
     const a = await page.evaluate(name => /** @type {AuditWindow} */ (/** @type {unknown} */ (window)).__audit(name), screen.name)
     if (a.hScroll > 0) found(where, 'scrolls sideways', `${a.hScroll}px`)
     for (const c of a.clipped) found(where, 'text cut off', `${c.sel} +${c.overX}x${c.overY} "${c.text}"`)
@@ -870,6 +913,18 @@ for (const run of runs) {
 
 await browser.close()
 await served?.close()
+
+if (UNIFY) {
+  const { writeFileSync } = await import('node:fs')
+  if (UNIFY_OUT) writeFileSync(UNIFY_OUT, JSON.stringify(unified, null, 2))
+  // Per screen and size, how many of each rule it breaks.
+  for (const u of unified) {
+    const r = u.report
+    const counts = [r.r1.length, r.r2.length, r.r3.length, r.r4.length, r.r5.length, r.r6.down > 0 ? 1 : 0, r.r6.sideways > 0 ? 1 : 0]
+    console.log(`[${u.size}] ${u.screen}: grid ${counts[0]}, left ${counts[1]}, heights ${counts[2]}, stretched ${counts[3]}, wraps ${counts[4]}, scroll ${r.r6.down}px, sideways ${r.r6.sideways}px, corners ${r.corners.length}, sizes ${r.sizes.length}`)
+  }
+  process.exit(0)
+}
 
 /** @type {Record<string, typeof findings>} */
 const byKind = {}
