@@ -45,8 +45,16 @@ test.beforeEach(async () => {
   token = readFileSync(join(dataDir, 'token.txt'), 'utf8').trim()
 })
 
-test.afterEach(() => {
-  server?.kill()
+// The server is waited out, not only told to stop: the next test starts
+// another on the same port at once, and on Windows a process asked to end
+// can still hold its port a moment later - "EADDRINUSE :8791" twice on
+// 2026-09-23, each time on whichever test came second.
+test.afterEach(async () => {
+  if (server && server.exitCode === null && server.signalCode === null) {
+    const exited = new Promise<void>(resolve => server.once('exit', () => resolve()))
+    server.kill()
+    await Promise.race([exited, new Promise(resolve => setTimeout(resolve, 5_000))])
+  }
   rmSync(dataDir, { recursive: true, force: true })
 })
 

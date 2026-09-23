@@ -87,7 +87,9 @@ function frames(/** @type {typeof before} */ runs, /** @type {string} */ size) {
   for (const u of main) {
     const h = u.report.r7.heading
     if (!h) continue
-    const key = `${h.left},${h.top}`
+    // Where the title stands: its left, and its centre line down the page
+    // from main's top (a measure from before the centre was kept has its top).
+    const key = `${h.left},${h.centre ?? h.top}`
     heads.set(key, [...(heads.get(key) ?? []), u.screen])
   }
   return heads

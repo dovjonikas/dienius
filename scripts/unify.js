@@ -127,6 +127,14 @@
     const r = el.getBoundingClientRect()
     return (ground || el.tagName === 'FORM' || el.getAttribute('role') === 'dialog') && radius && room && r.width >= 240 && r.height >= 80
   }
+  /** Whether the eye sees an element, whether or not a reader is told of it. */
+  const seen = (/** @type {Element} */ el) => {
+    if (!(el instanceof HTMLElement) || el.closest('.visually-hidden')) return false
+    const r = el.getBoundingClientRect()
+    if (r.width < 1 || r.height < 1) return false
+    const cs = getComputedStyle(el)
+    return cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0
+  }
   /** Whether an element paints something of its own: a ground, or a left edge. */
   const paints = (/** @type {Element} */ el) => {
     const cs = getComputedStyle(el)
@@ -156,8 +164,9 @@
    *   One that does not - a quiet word, whose ground under the pointer
    *   reaches out past the edge its words stand on (an edge taken back) - is
    *   its words; one with neither words nor ground is its box.
-   * - A box to tick, and a mark - a category's edge, a colour's dot - start
-   *   a row to the eye as well, though a reader is told nothing by them.
+   * - A box to tick, and anything painted with no words in it - a
+   *   category's edge, a colour's dot, a chart's bar - start a row to the
+   *   eye as well, though a reader is told nothing by them.
    */
   function cornersOf(/** @type {HTMLElement} */ row) {
     /** @type {number[]} */
@@ -166,7 +175,9 @@
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
       if (!node.textContent?.trim()) continue
       const parent = node.parentElement
-      if (!parent || !shown(parent)) continue
+      // Words the eye sees, whatever a reader is told: an hour's label kept
+      // from a screen reader is still where a picture of the day starts.
+      if (!parent || !seen(parent)) continue
       const range = document.createRange()
       range.selectNodeContents(node)
       const r = range.getBoundingClientRect()
@@ -187,10 +198,21 @@
       if (paints(c) || !(c.textContent || '').trim()) xs.push(seenX(c, c.getBoundingClientRect().left, row))
     }
     for (const c of row.querySelectorAll('input[type="checkbox"], input[type="radio"], .check')) if (shown(c)) xs.push(seenX(c, c.getBoundingClientRect().left, row))
+    // A field's words - what is typed, or its placeholder - are a corner
+    // too: they start past its edge and its inner room, and a line under a
+    // field may stand on them, the way a quiet press's words stand under a
+    // name typed above (the template editor's day type under its name).
+    for (const c of [row, ...row.querySelectorAll('input, textarea, select')]) {
+      if (!c.matches('input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea, select') || !shown(c)) continue
+      const f = /** @type {HTMLInputElement} */ (c)
+      if (!(f.value || f.getAttribute('placeholder') || c.tagName === 'SELECT')) continue
+      const cs = getComputedStyle(c)
+      xs.push(seenX(c, c.getBoundingClientRect().left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), row))
+    }
     for (const m of row.querySelectorAll('*')) {
       if (m.children.length || (m.textContent || '').trim()) continue
       const r = m.getBoundingClientRect()
-      if (r.width < 2 || r.width > 24 || r.height < 8) continue
+      if (r.width < 2 || r.height < 4) continue
       const cs = getComputedStyle(m)
       if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0 || !paints(m)) continue
       xs.push(seenX(m, r.left, row))
@@ -222,7 +244,18 @@
       const cardBox = card.getBoundingClientRect()
       const cardCs = getComputedStyle(card)
       const rightEdge = cardBox.right - parseFloat(cardCs.paddingRight) - parseFloat(cardCs.borderRightWidth)
-      /** @type {{ mid: number, start: number, end: number, onlyControls: boolean, corners: number[] }[]} */
+      /** Whether a row is laid out to stand at the right: justified to the end, or its first press pushed there by an auto margin or set there by justify-self. */
+      const standsRight = (/** @type {Element} */ el) => {
+        const cs = getComputedStyle(el)
+        if (/(^|\s)(flex-end|end|right)$/.test(cs.justifyContent)) return true
+        const first = [...el.children].find(c => shown(c))
+        if (!first) return false
+        const fcs = getComputedStyle(first)
+        if (/(^|\s)(end|flex-end|right)$/.test(fcs.justifySelf)) return true
+        const left = /** @type {any} */ (first).computedStyleMap?.().get('margin-left')
+        return !!left && String(left) === 'auto'
+      }
+      /** @type {{ mid: number, start: number, end: number, onlyControls: boolean, right: boolean, corners: number[] }[]} */
       const byLine = []
       for (const r of rows) {
         const box = r.getBoundingClientRect()
@@ -234,23 +267,32 @@
         // only presses in it (a row of Cancel and Save).
         const shownKids = [...r.querySelectorAll('*')].filter(k => shown(k) && !k.children.length && (k.textContent || '').trim())
         const onlyControls = r.matches(CONTROLS) || (shownKids.length > 0 && shownKids.every(k => k.closest(CONTROLS)))
+        const right = standsRight(r)
         const line = byLine.find(l => Math.abs(l.mid - mid) < Math.max(8, box.height / 2))
         if (line) {
           line.start = Math.min(line.start, start)
           line.end = Math.max(line.end, box.right)
           line.onlyControls = line.onlyControls && onlyControls
+          line.right = line.right && right
           line.corners.push(...corners)
-        } else byLine.push({ mid, start, end: box.right, onlyControls, corners })
+        } else byLine.push({ mid, start, end: box.right, onlyControls, right, corners })
       }
       byLine.sort((a, b) => a.mid - b.mid)
-      // A row of presses whose end is on the card's right edge is on an
-      // edge, the right one: it is not asked for the left.
-      const leftRows = byLine.filter(l => !(l.onlyControls && Math.abs(l.end - rightEdge) <= 2))
+      // The card's left line is its leftmost start. A row of presses laid
+      // out to stand at the right - Cancel and Save, Apply, Done - its end on
+      // the card's right edge, is on an edge, the right one: it is not asked
+      // for the left. Laid out so: justified to the end, pushed there, or
+      // clear of the left line by at least its own width. A row whose words
+      // are all inside one wide press - a list's head, a book's row - is
+      // asked like any other.
+      const line0 = Math.min(...byLine.map(l => l.start))
+      const atRight = (/** @type {typeof byLine[number]} */ l) =>
+        l.onlyControls && Math.abs(l.end - rightEdge) <= 2 && l.start > line0 + 2 && (l.right || l.start - line0 >= l.end - l.start)
+      const leftRows = byLine.filter(l => !atRight(l))
       if (leftRows.length < 2) continue
-      // The card's left line is its leftmost start. A row off it that
-      // starts on a corner of the row above - the meta under its title -
-      // stands on an edge as well, and is not asked for the left line.
-      const line0 = Math.min(...leftRows.map(l => l.start))
+      // A row off the left line that starts on a corner of the row above -
+      // the meta under its title - stands on an edge as well, and is not
+      // asked for the left line.
       const onCorner = leftRows.filter(l => {
         if (Math.abs(l.start - line0) <= 2) return false
         const above = byLine[byLine.indexOf(l) - 1]
@@ -272,7 +314,10 @@
       const cs = getComputedStyle(row)
       if (cs.display !== 'flex' && cs.display !== 'inline-flex') continue
       if (cs.flexDirection.startsWith('column')) continue
-      const kids = [...row.children].filter(c => shown(c) && c.matches(CONTROLS))
+      // A writing area is as tall as what is written in it, and grows with
+      // it; the presses beside it stand on its first line (precision holds
+      // the centre line). It is not a control of the row's height.
+      const kids = [...row.children].filter(c => shown(c) && c.matches(CONTROLS) && c.tagName !== 'TEXTAREA')
       if (kids.length < 2) continue
       // One line of them: the ones whose tops sit together.
       /** @type {Map<number, Element[]>} */
@@ -366,10 +411,23 @@
     const heading = [...main.querySelectorAll('h1, h2')].find(shown)
     const primary = [...main.querySelectorAll('.btn-primary, button.primary')].find(shown)
     const surface = [...main.querySelectorAll('*')].find(el => el instanceof HTMLElement && shown(el) && isSurface(el))
+    // Down the page from main's own top, not the window's: a focus session's
+    // bar over every page, or a phone's page scrolled along, moves main and
+    // everything in it together, and is not the frame moving. And the title
+    // by its centre line as well as its top: a quieter name (North's) is
+    // smaller on the same line, which is not a jump.
+    const origin = main.getBoundingClientRect().top
     const box = (/** @type {Element | undefined} */ el) => {
       if (!el) return null
       const r = el.getBoundingClientRect()
-      return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), width: Math.round(r.width), text: words(el) }
+      return {
+        left: Math.round(r.left),
+        top: Math.round(r.top - origin),
+        centre: Math.round(r.top - origin + r.height / 2),
+        right: Math.round(r.right),
+        width: Math.round(r.width),
+        text: words(el),
+      }
     }
     return { heading: box(heading), primary: box(primary), surface: box(surface) }
   }

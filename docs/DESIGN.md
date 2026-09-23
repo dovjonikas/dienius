@@ -61,7 +61,13 @@ from Templates to Kitchen to the day, nothing may jump.
    a corner of the row above stands on that corner.
 3. **One height in a row, one corner, five sizes.** The controls in a row
    are one height and stand on one centre line; everything that has a
-   corner has the one corner; the app has five type sizes.
+   corner has the one corner; the app has five type sizes. Since stage 8 a
+   small press beside a field is the field's height (a book's steps, a
+   list's round "new list", the cross by a sheet's title), a row's quiet
+   presses are one control tall, and the presses in a task's meta line are
+   one small box each. A writing area is as tall as what is written in it,
+   and the presses beside it stand on its first line: it is not a control
+   of the row's height.
 4. **Nothing stretched.** A field is as wide as what goes in it, up to a
    limit, and what belongs to a field stands in the field's row. The limit
    is `--field-w`, 24rem, since stage 6; a joined line (a block's time, its

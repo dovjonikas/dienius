@@ -9582,7 +9582,10 @@ button.danger:focus-visible {
    the row becomes two: the title and its bar, then everything that acts on
    it. Nothing is hidden - a phone gets the same list, in two lines. */
 @media (max-width: 599px) {
-  .library-item { flex-wrap: wrap; row-gap: var(--s2); padding-left: var(--s2); }
+  /* No indent of its own: the grip stands on the list's left line, where
+     the open book's does and where every row's does on a desktop. It was
+     8px in on a phone, so the book being read stood 8px left of the rest. */
+  .library-item { flex-wrap: wrap; row-gap: var(--s2); padding-left: 0; }
   /* The grip stays on the title line rather than taking a 44px row of its
      own: a basis just short of the full width fills line one with the grip
      and the title, and pushes the count and the actions onto line two. */
@@ -12530,6 +12533,15 @@ main:has(.week) > .calendar {
   white-space: nowrap;
 }
 
+/* In the week template's card the hours stand on the card's left line with
+   every other row of the form (one look, rule 2), rather than against the
+   first day's line 6px in from it. The calendar's week, a page and not a
+   card, keeps them against the grid. */
+.wt-grid .week-hour {
+  right: auto;
+  left: 0;
+}
+
 /* No box of its own - its three parts are placed straight into the grid's
    three rows above. The element stays in the DOM, so data-week-date is still
    what a drop finds with closest(), and .week-col.is-today still reaches its
@@ -15232,10 +15244,11 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .library-chip,
   .library-preset { min-height: var(--touch); }
-  /* Two more targets on a row of dots that already meets 44px through its
-     ::after - these get theirs the same way. */
-  .category-swatch.is-add,
-  .category-edit { width: 28px; height: 28px; }
+  /* The add and the edit at the end of a row of dots are the dots' size on
+     a finger too, 20px: their 44px targets are the same ring past them the
+     dots have (the targets' rule above), so the row stays one height and
+     quiet. They were 28 on a phone, a row of two heights that no longer
+     fitted its strip once one look measured it. */
   /* A week of switches a finger has to hit one of without hitting its
      neighbour. */
   /* The fold is the whole width of the head, so the target is the
@@ -18836,5 +18849,91 @@ button.link-out {
   .library-add > .return-field {
     flex: 0 1 auto;
     width: var(--field-w);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   One look, rule 3 - one height in a row (the owner's brief of 2026-09-22;
+   docs/DESIGN.md, docs/DESIGN-AUDIT.md, stage 8). The controls in a row
+   are one height and stand on one centre line. Every rule here brings a
+   control the measure found shorter or taller than the one beside it to
+   the row's height, and says which.
+   ------------------------------------------------------------------------ */
+
+/* The task's meta line: the length chip, the note, the list's count and
+   the recipe are one small box each, a line of the interface size with a
+   step of room above and below it. */
+.task-meta > .task-size,
+.task-meta > .task-size-input,
+.task-meta > button,
+.task-meta .task-note-mark,
+.task-meta > .task-recipe,
+.task-meta > .task-library {
+  box-sizing: border-box;
+  min-height: calc(var(--s4) + var(--s2));
+  line-height: var(--lh-tight);
+}
+
+/* A book's row: the grip takes the row's height, whatever the row holds -
+   one line, or a title with its pace under it - and the row is one control
+   tall at least, so a quiet row's two presses are one height. */
+.library-item-grip {
+  align-self: stretch;
+  height: auto;
+  min-height: var(--control-h);
+}
+.library-item-open { min-height: var(--control-h); }
+.library-list-head > button { min-height: var(--control-h); }
+
+/* Small presses beside a control: a word's height is the control's. */
+.meal-words-row > button,
+.library-binding > button,
+.focus-bar-actions > button {
+  min-height: var(--control-h);
+}
+/* The round "new list" press beside a block's list: a circle of the
+   select's height, not a 20px dot stretched into a pill. */
+.library-binding > .library-quick-round {
+  width: var(--control-h);
+  height: var(--control-h);
+}
+.focus-bar-actions > button { min-width: var(--control-h); }
+
+/* The week's column heads: the day and its template one height. */
+.week-col-day,
+.week-col-template { min-height: calc(var(--s4) + var(--s2)); }
+
+/* The sheet's title field, one control tall like the cross beside it - the
+   field's own height, its line centred in it, rather than a padding worked
+   out from a line height the field does not use. */
+.task-detail-title {
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding-block: 0;
+}
+
+/* A book's progress: the step either side of the page field is the field's
+   height, not a 24px dot beside a 36px field. */
+.library-item-progress > .library-step {
+  width: var(--control-h);
+  height: var(--control-h);
+}
+
+@media (pointer: coarse) {
+  .library-item-grip,
+  .library-item-open,
+  .library-list-head > button,
+  .meal-words-row > button,
+  .library-binding > button,
+  .focus-bar-actions > button {
+    min-height: var(--touch);
+  }
+  .library-item-grip { height: auto; }
+  .focus-bar-actions > button { min-width: var(--touch); }
+  .task-detail-title { height: var(--touch); }
+  .library-item-progress > .library-step,
+  .library-binding > .library-quick-round {
+    width: var(--touch);
+    height: var(--touch);
   }
 }

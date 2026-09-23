@@ -118,8 +118,26 @@ by" line - two pixels past the name it stands under, and under the list's
 settings form whenever it was open - and a routine's row on a phone, three
 rows with its presses alone on the last. Rule 2 finds nothing now. 366
 findings are left on 111 screens and sizes, 41 of them clean: rule 2 0,
-rule 3 366, rules 1, 4, 5 and 6 0. The table under "The count, after stage
-7" is the whole measure as it stands.
+rule 3 366, rules 1, 4, 5 and 6 0. The whole measure of that tree is in git, with its commit.
+
+**After stage 8 - one height in a row, and one look done.** Every control
+in a row is one height (DESIGN.md, rule 3; DECISIONS "One height in a row,
+and a measure that was proved before it was believed"): a press beside a
+field is the field's height, a row's quiet presses are one control tall,
+the presses in a task's meta line are one small box each, and a writing
+area, which grows with what is written, is not a control of the row's
+height. Before it was believed, the measure was proved: an 8px indent
+planted on a phone's library rows was not found, the two blind spots
+behind that were fixed, and with them the measure found the phone's books
+8px right of the one being read and the week template's hours 6px in from
+the card's line - both fixed. The measure finds nothing on any of the 111
+screens and sizes: rules 1 to 6 are 0, from 1,088 at the audit. The
+title's frame, compared by its centre line down from main's top, stands in
+one place per size. The pictures of every screen at both sizes after it
+are in [`screenshots/unify/after/`](screenshots/unify/after/), beside the
+ones before it in [`screenshots/unify/before/`](screenshots/unify/before/).
+The table under "The count, after stage 8" is the whole measure as it
+stands.
 
 ### The count
 
@@ -231,65 +249,65 @@ rule 3 366, rules 1, 4, 5 and 6 0. The table under "The count, after stage
 
 **1088 found**, and rule 7 below, which is one finding for the app.
 
-### The count, after stage 7
+### The count, after stage 8
 
-Measured on 2026-09-23 with the stage 7 tree, the sample day's demo content only. A screen with nothing in its row is closed.
+Measured on 2026-09-23 with the stage 8 tree, the sample day's demo content only. A screen with nothing in its row is closed.
 
 | Screen | Size | 1 | 2 | 3 | 4 | 5 | 6 | Found |
 |---|---|---|---|---|---|---|---|---|
-| Day: Today | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Today (notice dismissed) | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Today (North open) | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Today (North after sleep) | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Gap offers | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Focus | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Timer | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Replan: something came up | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Replan: shift the rest | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Replan: i was away | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Low day | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Day: Today (after a night shift) | 1920x1080 |  |  | 3 |  |  |  | 3 |
-| Day: Today | 375x812 |  |  | 4 |  |  |  | 4 |
-| Day: Today (notice dismissed) | 375x812 |  |  | 4 |  |  |  | 4 |
-| Day: Today (North open) | 375x812 |  |  | 4 |  |  |  | 4 |
-| Day: Today (North after sleep) | 375x812 |  |  | 4 |  |  |  | 4 |
-| Day: Gap offers | 375x812 |  |  | 4 |  |  |  | 4 |
-| Day: Focus | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Timer | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Replan: something came up | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Replan: shift the rest | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Replan: i was away | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Low day | 375x812 |  |  | 5 |  |  |  | 5 |
-| Day: Today (after a night shift) | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Today | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Today (notice dismissed) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Today (North open) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Today (North after sleep) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Gap offers | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Focus | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Timer | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Replan: something came up | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Replan: shift the rest | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Replan: i was away | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Low day | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Today (after a night shift) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Day: Today | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Today (notice dismissed) | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Today (North open) | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Today (North after sleep) | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Gap offers | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Focus | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Timer | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Replan: something came up | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Replan: shift the rest | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Replan: i was away | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Low day | 375x812 |  |  |  |  |  |  | 0 |
+| Day: Today (after a night shift) | 375x812 |  |  |  |  |  |  | 0 |
 | Week: Calendar week | 1920x1080 |  |  |  |  |  |  | 0 |
-| Week: Calendar week (a focus running) | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Week: Calendar agenda | 1920x1080 |  |  | 1 |  |  |  | 1 |
+| Week: Calendar week (a focus running) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Week: Calendar agenda | 1920x1080 |  |  |  |  |  |  | 0 |
 | Week: Calendar week (after a night shift) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Week: Calendar week | 375x812 |  |  | 3 |  |  |  | 3 |
-| Week: Calendar week (a focus running) | 375x812 |  |  | 4 |  |  |  | 4 |
-| Week: Calendar agenda | 375x812 |  |  | 1 |  |  |  | 1 |
-| Week: Calendar week (after a night shift) | 375x812 |  |  | 3 |  |  |  | 3 |
+| Week: Calendar week | 375x812 |  |  |  |  |  |  | 0 |
+| Week: Calendar week (a focus running) | 375x812 |  |  |  |  |  |  | 0 |
+| Week: Calendar agenda | 375x812 |  |  |  |  |  |  | 0 |
+| Week: Calendar week (after a night shift) | 375x812 |  |  |  |  |  |  | 0 |
 | Month: Calendar month | 1920x1080 |  |  |  |  |  |  | 0 |
 | Month: Calendar month (day peek) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Month: Calendar month | 375x812 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates | 1920x1080 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (routines) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (a routine) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Templates and the editor: Template editor | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Template colour | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Week template editor | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Week template editor (block open) | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Template editor (a meal's recipes) | 1920x1080 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Template editor (a night shift) | 1920x1080 |  |  | 1 |  |  |  | 1 |
+| Templates and the editor: Template editor | 1920x1080 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template colour | 1920x1080 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Week template editor | 1920x1080 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Week template editor (block open) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template editor (a meal's recipes) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template editor (a night shift) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates | 375x812 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (routines) | 375x812 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (a routine) | 375x812 |  |  |  |  |  |  | 0 |
-| Templates and the editor: Template editor | 375x812 |  |  | 2 |  |  |  | 2 |
-| Templates and the editor: Template colour | 375x812 |  |  | 2 |  |  |  | 2 |
-| Templates and the editor: Week template editor | 375x812 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Week template editor (block open) | 375x812 |  |  | 1 |  |  |  | 1 |
-| Templates and the editor: Template editor (a meal's recipes) | 375x812 |  |  | 2 |  |  |  | 2 |
-| Templates and the editor: Template editor (a night shift) | 375x812 |  |  | 2 |  |  |  | 2 |
+| Templates and the editor: Template editor | 375x812 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template colour | 375x812 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Week template editor | 375x812 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Week template editor (block open) | 375x812 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template editor (a meal's recipes) | 375x812 |  |  |  |  |  |  | 0 |
+| Templates and the editor: Template editor (a night shift) | 375x812 |  |  |  |  |  |  | 0 |
 | Roster: Calendar (the roster) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Roster: Calendar (what Apply will do) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Roster: Calendar (a cycle) | 1920x1080 |  |  |  |  |  |  | 0 |
@@ -312,14 +330,14 @@ Measured on 2026-09-23 with the stage 7 tree, the sample day's demo content only
 | Kitchen and a recipe: Kitchen (paste many) | 375x812 |  |  |  |  |  |  | 0 |
 | Kitchen and a recipe: Kitchen (a card's meals) | 375x812 |  |  |  |  |  |  | 0 |
 | Kitchen and a recipe: Kitchen (select) | 375x812 |  |  |  |  |  |  | 0 |
-| Books: Library | 1920x1080 |  |  | 17 |  |  |  | 17 |
-| Books: Library (item panel) | 1920x1080 |  |  | 17 |  |  |  | 17 |
-| Books: Library (a new list) | 1920x1080 |  |  | 17 |  |  |  | 17 |
-| Books: Library (list settings) | 1920x1080 |  |  | 17 |  |  |  | 17 |
-| Books: Library | 375x812 |  |  | 15 |  |  |  | 15 |
-| Books: Library (item panel) | 375x812 |  |  | 15 |  |  |  | 15 |
-| Books: Library (a new list) | 375x812 |  |  | 15 |  |  |  | 15 |
-| Books: Library (list settings) | 375x812 |  |  | 15 |  |  |  | 15 |
+| Books: Library | 1920x1080 |  |  |  |  |  |  | 0 |
+| Books: Library (item panel) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Books: Library (a new list) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Books: Library (list settings) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Books: Library | 375x812 |  |  |  |  |  |  | 0 |
+| Books: Library (item panel) | 375x812 |  |  |  |  |  |  | 0 |
+| Books: Library (a new list) | 375x812 |  |  |  |  |  |  | 0 |
+| Books: Library (list settings) | 375x812 |  |  |  |  |  |  | 0 |
 | Picture: North | 1920x1080 |  |  |  |  |  |  | 0 |
 | Picture: North (writing) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Picture: North | 375x812 |  |  |  |  |  |  | 0 |
@@ -328,33 +346,40 @@ Measured on 2026-09-23 with the stage 7 tree, the sample day's demo content only
 | Review: Review month | 1920x1080 |  |  |  |  |  |  | 0 |
 | Review: Review week | 375x812 |  |  |  |  |  |  | 0 |
 | Review: Review month | 375x812 |  |  |  |  |  |  | 0 |
-| Search: Command palette | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Search: Command palette | 375x812 |  |  | 5 |  |  |  | 5 |
-| Notes: Header: notes | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Notes: Scratch | 1920x1080 |  |  | 5 |  |  |  | 5 |
-| Notes: Header: notes | 375x812 |  |  | 5 |  |  |  | 5 |
-| Notes: Scratch | 375x812 |  |  | 5 |  |  |  | 5 |
-| Journal: Header: journal | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Journal: Journal (open full) | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Journal: Header: journal | 375x812 |  |  | 5 |  |  |  | 5 |
-| Journal: Journal (open full) | 375x812 |  |  | 5 |  |  |  | 5 |
-| Settings: Settings | 1920x1080 |  |  | 10 |  |  |  | 10 |
-| Settings: Settings (templates as JSON) | 1920x1080 |  |  | 10 |  |  |  | 10 |
-| Settings: Settings | 375x812 |  |  | 10 |  |  |  | 10 |
-| Settings: Settings (templates as JSON) | 375x812 |  |  | 10 |  |  |  | 10 |
-| Dialogs: Task detail (a meal's recipe) | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Dialogs: Task detail | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Dialogs: Shortcut card | 1920x1080 |  |  | 4 |  |  |  | 4 |
-| Dialogs: Task detail (a meal's recipe) | 375x812 |  |  | 5 |  |  |  | 5 |
-| Dialogs: Task detail | 375x812 |  |  | 5 |  |  |  | 5 |
-| Dialogs: Shortcut card | 375x812 |  |  | 5 |  |  |  | 5 |
+| Search: Command palette | 1920x1080 |  |  |  |  |  |  | 0 |
+| Search: Command palette | 375x812 |  |  |  |  |  |  | 0 |
+| Notes: Header: notes | 1920x1080 |  |  |  |  |  |  | 0 |
+| Notes: Scratch | 1920x1080 |  |  |  |  |  |  | 0 |
+| Notes: Header: notes | 375x812 |  |  |  |  |  |  | 0 |
+| Notes: Scratch | 375x812 |  |  |  |  |  |  | 0 |
+| Journal: Header: journal | 1920x1080 |  |  |  |  |  |  | 0 |
+| Journal: Journal (open full) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Journal: Header: journal | 375x812 |  |  |  |  |  |  | 0 |
+| Journal: Journal (open full) | 375x812 |  |  |  |  |  |  | 0 |
+| Settings: Settings | 1920x1080 |  |  |  |  |  |  | 0 |
+| Settings: Settings (templates as JSON) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Settings: Settings | 375x812 |  |  |  |  |  |  | 0 |
+| Settings: Settings (templates as JSON) | 375x812 |  |  |  |  |  |  | 0 |
+| Dialogs: Task detail (a meal's recipe) | 1920x1080 |  |  |  |  |  |  | 0 |
+| Dialogs: Task detail | 1920x1080 |  |  |  |  |  |  | 0 |
+| Dialogs: Shortcut card | 1920x1080 |  |  |  |  |  |  | 0 |
+| Dialogs: Task detail (a meal's recipe) | 375x812 |  |  |  |  |  |  | 0 |
+| Dialogs: Task detail | 375x812 |  |  |  |  |  |  | 0 |
+| Dialogs: Shortcut card | 375x812 |  |  |  |  |  |  | 0 |
 
-**366 found**, and rule 7 below, which is one finding for the app.
+**0 found**, and rule 7 below, which is one finding for the app.
 
 ### Rule 7, the frame
 
+At the audit, by the top of the title's box in the window:
+
 - **1920x1080**: the page title stands at 8 places - 463,69 (Today); 323,68 (Calendar month); 323,69 (Calendar week); 563,69 (Templates, Template editor, Template colour, Week template editor, Library, Review week, Review month); 403,73 (North); 403,69 (Kitchen); 563,63 (Settings); 323,133 (Calendar agenda).
 - **375x812**: the page title stands at 9 places - 111,80 (Today); 68,88 (Calendar month); 68,89 (Calendar week); 16,89 (Templates, Library, Review week, Review month, Kitchen); 16,51 (Template editor, Template colour); 16,-603 (Week template editor); 16,93 (North); 16,-946 (Settings); 68,199 (Calendar agenda).
+
+After stage 8, by the title's centre line down from main's top (a quieter name, a taller heading, a focus bar left running or a phone's page scrolled along no longer read as a move - see DECISIONS "One height in a row, and a measure that was proved before it was believed"):
+
+- **1920x1080**: the page title stands at 1 place - 199,18 (Today, Calendar month, Calendar week, Calendar agenda, Templates, Template editor, Template colour, Week template editor, Library, Review week, Review month, North, Kitchen, Settings).
+- **375x812**: the page title stands at 1 place - 16,22 (the same fourteen).
 
 ### Screen by screen
 

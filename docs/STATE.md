@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** one look's stage 7, one left line, is done - rows read the way the eye reads them, and a line under a title exactly under it; stage 6 before it, nothing stretched - one limit for a field and a joined line as wide as its parts; stage 5 before it, a row stays a row - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** one look is done - stage 8, one height in a row, closed it: the measure finds nothing on 111 screens and sizes, and the frame stands in one place per size; stage 7 before it, one left line - rows read the way the eye reads them, and a line under a title exactly under it; stage 6 before it, nothing stretched - one limit for a field and a joined line as wide as its parts; stage 5 before it, a row stays a row - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.40 - A kind after a night
 
@@ -290,7 +290,7 @@ both screens looked at.
 first words and the meals each says (a word for two meals, a word that says
 none). Then Kitchen, Paste many - paste the recipes, look down the list, Save.
 
-## One look - the whole app made one (in progress)
+## One look - the whole app made one (done, 2026-09-23)
 
 The owner's brief after v2.31: seven rules for every screen and modal at
 1920x1080 and on a 375x812 phone - one grid, one left line in a card, one
@@ -359,7 +359,21 @@ docs/DESIGN-AUDIT.md holds the findings, screen by screen.
   under the name now, above the form; and a routine's row on a phone, three
   rows with its two presses alone on the last, is its name and presses on
   one row with what it is under them.
-- **Next:** the rows' heights (3); the after pictures.
+- **Stage 8 - one height in a row: done, and one look with it.** Every
+  control in a row is one height: a book's steps and its grip, a list's
+  head, the words' Delete, the focus bar's cross, a list's round "new list",
+  a task sheet's title, the presses in a task's meta line, and on a phone
+  the add and the edit beside a block's category dots (DECISIONS "One
+  height in a row"). Planting a defect showed the rule 2 measure blind to a
+  row made of one wide press and to what a reader is not told; with that
+  fixed it found two more real things, both fixed - the phone's books 8px
+  right of the one being read, and the week template's hours 6px in from
+  the card's line. The sync walk now waits for its server to end before
+  the next test starts one on the same port. The measure finds nothing on
+  any of the 111 screens and sizes, and the title's frame compared by its
+  centre line stands in one place per size.
+- **Next:** freeze preparation, the owner's seven points, before Sunday
+  2026-09-28.
 
 ## Pirmas realus menuo, dry run
 

@@ -4896,3 +4896,59 @@ is above the settings now, under the name whatever is open. A routine's
 row on a phone was three rows, its two presses alone on the last; it is
 its name and its presses on one row, the way a status and its actions
 stand, and what it is on the row under them.
+
+## One height in a row, and a measure that was proved before it was believed
+
+One look, stage 8 - rule 3 of the owner's brief of 2026-09-22: the
+controls in a row are one height and stand on one centre line. The measure
+found 366 rows whose controls differed, almost all of them one of a dozen
+shapes repeated down a list.
+
+**A press beside a field is the field's height.** A book's minus and plus
+were 24px dots either side of a 36px page field; a list's round "new list"
+a 20px dot beside a 36px select; the cross by a task sheet's title 36 beside
+a 41px title (a padding worked out from a line height the field does not
+use). Each is the field's height now - 36 on a mouse, 44 on a finger - and
+the round one a circle of that height rather than a dot stretched into a
+pill.
+
+**A row's quiet presses are one control tall.** A book's grip was 36 and
+the book's own press 21; a list's head 21 beside its Edit at 36; the words'
+Delete 24 beside its field; the focus bar's cross 30 beside Expand and
+Done. The grip takes the row's height, and each quiet press is a control
+tall at least. The presses in a task's meta line - the note, the length,
+the book's count, the recipe - are one small box each.
+
+**On a finger the add and the edit are a block's category dots' size**,
+20px as on a mouse, each with the 44px ring past it the dots have. They
+were 28 on a phone. The other way round - dots of 28 - was tried and
+undone: "six enormous dots" is what the targets' rule was written to
+avoid, and the row, 28 a dot, no longer fitted its strip on a 390px
+phone.
+
+**A writing area is not a control of the row's height.** Scratch's note
+field is as tall as what is written in it and grows with it; the presses
+beside it stand on its first line, which precision holds. The measure
+leaves a textarea out of a row's heights.
+
+**The measure was proved before it was believed.** With rule 2 at nothing,
+an 8px indent was planted on a phone's library rows - and not found. Two
+blind spots: a row whose every word is inside one wide press (a list's
+head, a book's row) was taken for "a row of presses on the right edge" and
+left out, and a fold's 6px caret was too small to count as a start. The
+exemption is now for a row laid out to stand at the right (justified to
+the end, pushed there, or clear of the left line by its own width), and
+what the eye sees is read whatever a reader is told (an hour's label kept
+from a screen reader still starts the week's picture), a painted shape of
+any width starts a row (a chart's first bar), and a field's words are a
+corner (the day type's words stand under the name typed above). Fixed, the
+measure found the phone's books 8px right of the one being read (a phone's
+own indent, gone) and the week template's hours 6px in from the card's line
+(they stand on it now), and the plant is found.
+
+**The frame is compared by its centre line, down from main.** Every page's
+title stood at one centre line all along; the report grouped by the top of
+the title's box, so North's quieter name and Settings' taller heading read
+as five places, and a focus session's bar left over from one screen to the
+next moved the agenda's by 64px. Measured from main's top and by its centre
+line, the title stands in one place per size.
