@@ -689,6 +689,12 @@ export type LibraryTrack = 'pages' | 'movie' | 'series'
 export interface LibraryItem extends Timestamped {
   id: string
   title: string
+  /**
+   * Who wrote it, where somebody said so - a shelf pasted at once writes it
+   * from the line's "A title - An author", and the item's own field changes
+   * it. Absent: nothing was said, and the row is the title alone.
+   */
+  author?: string
   /** Units in the whole thing. Absent means open-ended, not zero. */
   total?: number
   /** Units finished. Absent means none. Never exceeds `total` when there is one. */

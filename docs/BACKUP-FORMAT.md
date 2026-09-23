@@ -321,3 +321,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.35 | `missed` on a task, `endsItself` on a category: an ongoing block, and a block of a category that ends by itself, is marked done by the app once its end has passed, unless it was said not to have happened. |
 | v2.36 | `waitingRecipes` on a block: a recipe named by a templates file before Kitchen had it, taken when a recipe of that name arrives. |
 | v2.37 | `kindMinutes` and `core` on a routine, and `core` on what its rule gave a task: a routine may be a different length on each kind of day, and may count on a day that is not a full one. |
+| v2.39 | `author` on a library item: who wrote it, where somebody said so - a shelf pasted at once writes it from "A title - An author". |

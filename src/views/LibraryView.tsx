@@ -26,6 +26,7 @@ import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/ty
 import { useListReorder } from './useListReorder'
 import { LibraryAddLine } from './LibraryAddLine'
 import { LibraryAddMany } from './LibraryAddMany'
+import { LibraryPasteMany } from './LibraryPasteMany'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { suggestShortForm, UNIT_SUGGESTIONS } from '../lib/library'
@@ -59,6 +60,10 @@ import { offerUndo } from '../lib/undo'
 export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void }) {
   const data = useAppData()
   const [newListOpen, setNewListOpen] = useState(false)
+  // A whole shelf pasted at once takes the page, the way Kitchen's paste
+  // takes its own: thirty rows under a field is a page, not a panel on top
+  // of the lists - see LibraryPasteMany.
+  const [pasting, setPasting] = useState(false)
   // Which lists are open, held here rather than in each section so the chip
   // row above can open one. Seeded from what this device last did - see
   // lib/libraryPrefs.ts - and written back on every change, so the fold
@@ -73,6 +78,14 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
     setOpenIds(current => ({ ...current, [listId]: open }))
   }
 
+  if (pasting) {
+    return (
+      <section className="library">
+        <LibraryPasteMany onDone={() => setPasting(false)} onCancel={() => setPasting(false)} />
+      </section>
+    )
+  }
+
   if (lists.length === 0) {
     return (
       <section className="library">
@@ -84,10 +97,19 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
             is this button and has gone with its move. */}
         <div className="library-header">
           <h2>Library</h2>
+          {/* Paste many on the empty page too: a whole shelf written
+              elsewhere is the likeliest first thing on a fresh device, and
+              the paste makes the lists it names. The two together at the
+              right, the primary last, as Kitchen keeps its own pair. */}
           {!newListOpen && (
-            <button type="button" className="btn-primary" data-tour="library-new" onClick={() => setNewListOpen(true)}>
-              New list
-            </button>
+            <div className="library-header-actions">
+              <button type="button" className="btn-secondary" onClick={() => setPasting(true)}>
+                Paste many
+              </button>
+              <button type="button" className="btn-primary" data-tour="library-new" onClick={() => setNewListOpen(true)}>
+                New list
+              </button>
+            </div>
           )}
         </div>
         {newListOpen ? (
@@ -121,17 +143,22 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
       <div className="library-header">
         <h2>Library</h2>
         {!newListOpen && (
-          <button
-            type="button"
-            className="btn-primary"
-            /* The tour's fallback target: the starter offers only exist while
-               the library is empty, and somebody with one list already has
-               none to point at. See lib/tour.ts. */
-            data-tour="library-new"
-            onClick={() => setNewListOpen(true)}
-          >
-            New list
-          </button>
+          <div className="library-header-actions">
+            <button type="button" className="btn-secondary" onClick={() => setPasting(true)}>
+              Paste many
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              /* The tour's fallback target: the starter offers only exist while
+                 the library is empty, and somebody with one list already has
+                 none to point at. See lib/tour.ts. */
+              data-tour="library-new"
+              onClick={() => setNewListOpen(true)}
+            >
+              New list
+            </button>
+          </div>
         )}
       </div>
       {newListOpen && <NewListForm onDone={() => setNewListOpen(false)} />}
@@ -687,6 +714,9 @@ function ItemRow({
       >
         <span className="library-item-main">
           <span className="library-item-title">{item.title}</span>
+          {/* Who wrote it, where somebody said so: on the row, quietly, after
+              the title - a shelf is read by title first and by author second. */}
+          {item.author && <span className="library-item-author">{item.author}</span>}
           {active && percent !== undefined && (
             <span className="library-item-bar" aria-hidden="true">
               <span className="library-item-bar-fill" style={{ width: `${percent}%` }} />
@@ -792,6 +822,7 @@ interface ItemDetailProps {
  */
 function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   const [pace, setPace] = useState(item.pace ?? '')
+  const [author, setAuthor] = useState(item.author ?? '')
   const [link, setLink] = useState(item.link ?? '')
   /** The one refusal worth a sentence - see linkRefusal. Cleared on the next keystroke. */
   const [linkSaid, setLinkSaid] = useState<string | undefined>(undefined)
@@ -965,6 +996,17 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
           )}
         </div>
       )}
+
+      <label className="library-detail-row library-detail-author">
+        <span className="field-label">Author</span>
+        <input
+          value={author}
+          maxLength={200}
+          placeholder="who wrote it"
+          onChange={e => setAuthor(e.target.value)}
+          onBlur={() => actions.updateLibraryItem(list.id, item.id, { author: author.trim() === '' ? null : author })}
+        />
+      </label>
 
       <label className="library-detail-row library-detail-pace">
         <span className="field-label">Pace or note</span>

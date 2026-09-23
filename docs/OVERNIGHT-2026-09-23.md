@@ -77,6 +77,7 @@ says, write down what actually happened beside the line.
 | Stage 4 | Two devices on the real clock. |
 | Stage 5 | Every gate from zero on the final tree. The result: tsc clean; vitest 222 files, 3414 tests, all passed, the real-file tests among them; Playwright 134 passed on a desktop and a phone, 16 skipped by design (the ones that need a real GitHub); the sweep 0 findings on a desktop and 0 with the phone; keys, precision, text scale and the privacy guard 0 findings. The first desktop sweep of the run had one timeout while the machine slept and was run again alone, clean. |
 | Stage 6 | This document, STATE.md, OPEN-QUESTIONS.md, and the runner's fix below. The version stays v2.38: stages 2 to 5 added proof, not behaviour, and the next number is part 4's. |
+| v2.39 | Part 4 of the four-part brief, landed after stage 6 with every gate green: the Library's Paste many and North's Replace text. STATE.md has it. |
 
 One message of the night - stage 2 - carries an apostrophe the brief asked
 to leave out; it was noticed after the push, and history was not rewritten

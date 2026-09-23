@@ -522,6 +522,8 @@ const RECIPE = record({
 const LIBRARY_ITEM = record({
   id: string,
   title: string,
+  // v2.39: who wrote it, where somebody said so.
+  author: optional(text(1, 200)),
   total: optional(count),
   progress: optional(count),
   track: optional(oneOf(LIBRARY_TRACKS)),

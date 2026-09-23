@@ -3,6 +3,7 @@ import { seedLibrary as librarySeed } from '../librarySeed'
 import type { PastedItem } from '../library'
 import type { AppData, LibraryItem, LibraryList, LibraryTrack, Task, TemplateBlock } from '../types'
 import { hasAnotherSeason, isItemFinished, itemProgress, nextSeason, parseLibraryItemInput } from '../library'
+import { sameTitle, type PastedRow } from '../libraryPaste'
 
 function withLibrary(library: LibraryList[]): AppData {
   return { ...getData(), library }
@@ -195,6 +196,47 @@ export const libraryActions = {
     return items.length
   },
 
+  /**
+   * A whole shelf pasted at once - lib/libraryPaste.ts, and the owner's brief
+   * of 2026-09-22, part 4. A list the text names and this library does not
+   * have is made, in the order the text first names it; a book whose title a
+   * list already has takes the author it was given and keeps everything else
+   * - its place, its progress, its id, which every block bound to it holds.
+   * One commit, so one undo puts the whole shelf back.
+   */
+  importLibrary(rows: readonly PastedRow[]): { lists: number; added: number; updated: number; undo: () => void } {
+    const previous = getData()
+    let library = previous.library
+    let lists = 0
+    let added = 0
+    let updated = 0
+    for (const row of rows) {
+      let list = library.find(l => sameTitle(l.name, row.list))
+      if (!list) {
+        // A list a paste makes counts in chapters until it is told otherwise:
+        // the list's own editor is one press from it.
+        list = { id: crypto.randomUUID(), name: row.list, unit: 'chapter', items: [] }
+        library = [...library, list]
+        lists++
+      }
+      const at = list.items.findIndex(item => sameTitle(item.title, row.title))
+      const had = at >= 0 ? list.items[at] : undefined
+      const next: LibraryItem = {
+        ...(had ?? { id: crypto.randomUUID() }),
+        title: row.title.trim(),
+        ...(row.author ? { author: row.author } : {}),
+      }
+      const items = had ? list.items.map((item, n) => (n === at ? next : item)) : [...list.items, next]
+      const id = list.id
+      list = { ...list, items }
+      library = library.map(l => (l.id === id ? list! : l))
+      if (had) updated++
+      else added++
+    }
+    if (added + updated > 0) commit({ ...previous, library })
+    return { lists, added, updated, undo: () => commit(previous) }
+  },
+
   addLibraryItem(listId: string, input: string): LibraryItem | undefined {
     const parsed = parseLibraryItemInput(input)
     if (!parsed) return undefined
@@ -255,6 +297,7 @@ export const libraryActions = {
     itemId: string,
     patch: {
       title?: string
+      author?: string | null
       pace?: string | null
       track?: LibraryTrack | null
       total?: number | null
@@ -268,6 +311,8 @@ export const libraryActions = {
       mapItem(list, itemId, item => {
         const next: LibraryItem = { ...item }
         if (patch.title !== undefined && patch.title.trim()) next.title = patch.title.trim()
+        if (patch.author === null) delete next.author
+        else if (patch.author !== undefined && patch.author.trim()) next.author = patch.author.trim()
         if (patch.pace === null) delete next.pace
         else if (patch.pace !== undefined && patch.pace.trim()) next.pace = patch.pace.trim()
         // Cleared or set, and nothing in between: a string that did not parse

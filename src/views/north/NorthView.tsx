@@ -3,6 +3,7 @@ import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
 import { northLineKinds, northPicture, northTagAt, parseNorth } from '../../lib/northSections'
 import { NorthSection } from './NorthSection'
+import { NorthReplace } from './NorthReplace'
 
 /**
  * North: one page, on one screen - the person's own text, on cards.
@@ -47,6 +48,8 @@ import { NorthSection } from './NorthSection'
 export function NorthView() {
   const data = useAppData()
   const [editing, setEditing] = useState(false)
+  // A whole text put in the place of this one - see NorthReplace.
+  const [replacing, setReplacing] = useState(false)
   // Focus goes back to the button that opened the text's field when the
   // field closes: Edit, or Write where the text was emptied or never kept.
   // Only one of the two is ever drawn, so one ref serves both.
@@ -75,7 +78,16 @@ export function NorthView() {
           <h2>
             <Explain id="north">North</Explain>
           </h2>
+          {/* A text written somewhere else, put in the place of this one -
+              see NorthReplace. Quiet, and only where there is a text to
+              replace: with none, Write is the same press. */}
+          {!editing && !replacing && text !== '' && (
+            <button type="button" className="btn-quiet north-replace-open" onClick={() => setReplacing(true)}>
+              Replace text
+            </button>
+          )}
           {!editing &&
+            !replacing &&
             (text !== '' ? (
               <button
                 ref={openerRef}
@@ -102,6 +114,8 @@ export function NorthView() {
 
       {editing ? (
         <NorthEditor text={text} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />
+      ) : replacing ? (
+        <NorthReplace onDone={() => setReplacing(false)} onCancel={() => setReplacing(false)} />
       ) : text === '' ? (
         <NorthInvite />
       ) : (

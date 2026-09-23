@@ -8804,6 +8804,26 @@ button.danger:focus-visible {
   .library-add-many-text { font-size: var(--t-read); }
 }
 
+/* Who wrote it, after the title on the row: the quiet ink, and the row's
+   own size, so a shelf reads by title first. */
+.library-item-author {
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+/* A pasted shelf's rows: the same rows Kitchen's paste draws, with the list
+   each book goes into at the row's end. */
+.library-paste-list {
+  /* The cell a recipe's meals take: after the author on the desktop, and
+     beside it on the author's line on a phone, never under the box. */
+  grid-area: meals;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.library-paste-into { max-width: 24rem; }
+
 .library-add-many-rule { margin: 0; color: var(--muted); font-size: var(--t-xs); }
 
 /* What the press will do, before it is pressed. A count that only appears
@@ -11526,6 +11546,14 @@ button.north-day-line:focus-visible {
    word in - the way a quiet word under a setting stands. */
 .north-view-title > .btn-quiet { margin-right: calc(var(--s4) * -1); }
 
+/* Replace text stands beside Edit at the right, not in the middle of the
+   row: the name at the left, the two words together at the edge, one
+   centre. Only Edit, the last word, reaches out past the column's edge. */
+.north-view-title > .north-replace-open {
+  margin-left: auto;
+  margin-right: 0;
+}
+
 /* The page's name, smaller and quieter than the words under it: on this page
    the text is the thing, and the name only says where you are. */
 .north-view-head h2 {
@@ -11711,6 +11739,27 @@ button.north-day-line:focus-visible {
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
+}
+
+/* What a pasted text will make, read as it is typed - see NorthReplace.
+   One quiet line each, under the rule, in the register the rule is in. */
+.north-replace-found {
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+/* The field is the editor's, without the drawing under it: nothing here
+   colours a line while it is typed, because what it will make is said in
+   words under it instead. */
+.north-replace-text {
+  position: static;
+  width: 100%;
+  min-height: 14em;
+  color: var(--text);
 }
 
 /* The page's two rules, said once in one calm grey line under the field,

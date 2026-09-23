@@ -4664,3 +4664,38 @@ the tasks standing for one block, or for one routine, the ticked one is
 kept, else the one moved by hand, else the first. A task written by hand
 stands for nothing and is never touched. This is the repair that runs on
 every open, beside the one that carries a block's edits to its days.
+
+## A whole shelf pasted at once, and North replaced at once
+
+v2.39, the owner's brief of 2026-09-22, part 4 - the last of "everything in
+one paste": the recipes went into Kitchen in v2.32, the templates, the
+roster and the routines into Settings in v2.33 and v2.37, and this is the
+books and the North text.
+
+**A line in capitals is a list.** A shelf written somewhere else is written
+as a list under a name, and the plainest way to say "this is a name, not a
+book" in a text with no other marks is to write it in capitals - MAIN, SIDE.
+The lines under it go into that list, and a list the library does not have
+is made, counting in chapters until its editor says otherwise. The lines
+before the first capitals line go into the list the screen is pointed at,
+which is offered beside the field. Paste many stands on the empty page as
+well as the full one: a shelf written elsewhere is the likeliest first
+thing on a fresh device, and the paste makes the lists it names.
+
+**"A title - An author", on the last dash.** A title with a dash in it -
+"A book - and its subtitle" - keeps it: the author is what follows the last
+dash with spaces around it. A line with no such dash is a title alone. The
+author is a field on the item now (`LibraryItem.author`), on the row and in
+the item's own fields, because a paste that read it and then threw it away
+would be reading for nothing.
+
+**A title the list already has is updated, never doubled** - the same rule a
+pasted recipe follows - and it keeps its place, its progress and its id,
+which every block bound to it holds.
+
+**North is replaced, not merged.** A text is one thing, and a paste of it
+means "this, instead of that": Edit changes lines in place; Replace text
+puts a whole text written elsewhere in the old one's place. What it will
+make is read as it is typed - how many headings, which are for the morning
+and which for the evening, an introduction, a signature - so a text pasted
+in the wrong shape says so before the press rather than after. One undo.
