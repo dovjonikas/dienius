@@ -32,6 +32,34 @@ export function kindOnDate(data: AppData, date: string): Template | undefined {
   return template && isDayKind(template) ? template : undefined
 }
 
+/** Whether a kind's days are nights: its day type, which is what the night's own hours are read from. */
+export function isNightKind(template: Template | undefined): boolean {
+  return !!template && isDayKind(template) && template.type === 'night'
+}
+
+/**
+ * The kind a date is given, read against the kind of the date before it -
+ * docs/RESEARCH-SHIFTS.md section 2.6. A kind naming an `afterNight` is that
+ * kind on a date after a night; on any other date it is itself. With
+ * `reverse`, the way back as well: a kind that stands in for exactly one
+ * other, on a date that no longer follows a night, is that other kind again
+ * - which is asked only for a date whose neighbour changed, never of a kind
+ * somebody wrote on a date themselves. A kind naming itself, or a template
+ * that is no kind any more, names nothing, and two kinds naming the same one
+ * leave the way back unguessed.
+ */
+export function resolveAfterNight(templates: Template[], kind: Template, before: Template | undefined, opts: { reverse?: boolean } = {}): Template {
+  const kinds = dayKinds(templates)
+  if (isNightKind(before)) {
+    const id = kind.dayKind?.afterNight
+    const named = id && id !== kind.id ? kinds.find(k => k.id === id) : undefined
+    return named ?? kind
+  }
+  if (!opts.reverse) return kind
+  const bases = kinds.filter(k => k.id !== kind.id && k.dayKind!.afterNight === kind.id)
+  return bases.length === 1 ? bases[0] : kind
+}
+
 /**
  * The kind a tap on a date moves to: the next in order, round to the first
  * after the last, and the first from a date with no kind - or with something

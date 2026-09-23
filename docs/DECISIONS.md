@@ -4699,3 +4699,31 @@ puts a whole text written elsewhere in the old one's place. What it will
 make is read as it is typed - how many headings, which are for the morning
 and which for the evening, an introduction, a signature - so a text pasted
 in the wrong shape says so before the press rather than after. One undo.
+
+## A kind names the kind it is after a night
+
+v2.40, the owner's question of 2026-09-23: two nights, then a free day, and
+the free day after a night is another day than the free day after a day
+shift - so is a day shift after a night. The separate "after nights"
+template was already the model (RESEARCH-SHIFTS 2.1); what the owner named
+as the risk was remembering its letter on every run of nights.
+
+**One field on the kind, resolved at every door.** `DayKindMark.afterNight`
+names the kind this one is on a date after a night (a kind whose day type
+is night). The roster carries `N N L L`; `rosterApplied`, which is the one
+function behind the Roster's Apply, the templates file and a kind put on a
+date by hand, stamps the first `L` as the after-nights kind and says so in
+the preview. The stamp is the kind - nothing is resolved on read, and the
+export writes what stands.
+
+**The date after follows.** When the kind before a date changes - a night
+arrives by hand, or goes - the date is read again: a rest day becomes the
+after-nights kind, an after-nights day becomes a rest day, on down the dates
+as far as the change reaches and never behind today. The way back is taken
+only where exactly one kind names this one, and never for a kind somebody
+wrote on a date themselves: an after-nights day written after a day shift is
+what was written.
+
+**Why not a map by the night's letter.** Two night kinds are both nights,
+and the day type already says so; one field reads in the editor as one
+select, "After a night, this day is". RESEARCH-SHIFTS 2.6 has the rest.

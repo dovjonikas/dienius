@@ -6,7 +6,29 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.39 is done - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.40 is done - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.40 - A kind after a night
+
+The owner's question of 2026-09-23: a free day after a night is not the free
+day after a day shift, and a second letter on the roster is the thing to
+get wrong.
+
+- **`DayKindMark.afterNight`** (`lib/dayKinds.ts` `resolveAfterNight`,
+  `lib/shiftDay.ts` `rosterApplied`): a kind names the kind it is on a date
+  after a night; the roster carries one letter, and every door - the
+  Roster's Apply and preview, the templates file (`afterNight` by letter,
+  docs/TEMPLATE-JSON.md sections 2 and 5), a kind put on a date by hand -
+  stamps the after-nights kind and says so ("Rest day after a night is After
+  nights."). The date after a changed kind follows it both ways, never
+  behind today.
+- **The editor**: "After a night, this day is", a select of the other kinds,
+  asked only of a kind.
+- **Tests**: `afterNight.test.ts` (the rule, the roster, a hand, the way
+  back, the past), `templateJsonAfterNight.test.ts`, `views/afterNight.test.tsx`
+  (the three screens), `e2e/after-night.e2e.ts` on a desktop and a phone.
+  DECISIONS "A kind names the kind it is after a night" and RESEARCH-SHIFTS
+  2.6 have why, and what was rejected.
 
 ## v2.39 - A whole shelf pasted at once, and North replaced at once
 
@@ -388,8 +410,9 @@ lunch and dinner, the ordinary sleep. The gym on Monday, Wednesday and Friday -
 
 Nothing stands between the owner and a real rota. What would make it smoother
 is one thing: a kind whose sleep follows the kind before it, so one Night shift
-would do for the first night and the rest. That is a new feature, and under the
-freeze it goes to BACKLOG's parking section.
+would do for the first night and the rest. That is v2.40: a kind names the
+kind it is after a night, so Night shift names a night-after-a-night kind
+with the day sleep, and the roster is written `N N N`.
 
 ## v2.31 - the night's own hours, and the days after a change
 

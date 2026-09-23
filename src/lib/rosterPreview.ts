@@ -1,6 +1,6 @@
 import { weekOf } from './dates'
 import { isDayKind, kindOnDate } from './dayKinds'
-import { handEdits, rosterApplied, type Following, type HandEdits } from './shiftDay'
+import { handEdits, rosterApplied, type Following, type HandEdits, type Resolved } from './shiftDay'
 import type { AppData, Template } from './types'
 
 /**
@@ -33,6 +33,8 @@ export interface RosterPreviewDate {
   runsInto: number
   /** What was changed by hand on the date as it stands, when there is any. */
   hand?: HandEdits
+  /** Where the date is given another kind than the one written for it, and why - section 2.6. */
+  resolved?: Resolved
 }
 
 /** A week of the preview, and the three numbers the week is read by. */
@@ -77,14 +79,14 @@ export function rosterPreview(data: AppData, draft: Record<string, string | null
   const weeks = new Map<string, RosterPreviewWeek>()
   const changing = applied.composed.length
 
-  for (const { date, kind, placements } of applied.composed) {
-
+  for (const { date, kind, placements, resolved } of applied.composed) {
     const entry: RosterPreviewDate = {
       date,
       letter: kind?.dayKind?.letter,
       kind,
       needsTime: placements.filter(p => 'reason' in p && p.reason === 'needs-time').length,
       runsInto: placements.filter(p => 'reason' in p && p.reason !== 'needs-time').length,
+      ...(resolved ? { resolved } : {}),
     }
     // What was changed by hand is asked about the day as it stands, not the day
     // it would become - section 6.3. A date with no kind yet has nothing of a

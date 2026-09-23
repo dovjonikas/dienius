@@ -173,9 +173,17 @@ export function RosterBar({
                   <ul className="roster-preview-dates">
                     {week.dates.map(date => {
                       const left = leftOut.includes(date.date)
+                      // A date read as another kind than the one written for
+                      // it - RESEARCH-SHIFTS section 2.6 - says so beside the kind.
+                      const why = date.resolved
+                        ? date.resolved.why === 'after-night'
+                          ? `${date.resolved.from.name} after a night`
+                          : 'no night before it now'
+                        : ''
                       const said = [
                         formatDayShort(date.date),
                         date.kind?.name ?? 'No kind',
+                        why,
                         date.hand ? `changed by hand: ${handWords(date.hand)}` : '',
                         left ? 'left alone' : '',
                       ]
@@ -188,6 +196,7 @@ export function RosterBar({
                           </span>
                           <span className="roster-preview-day">{formatDayShort(date.date)}</span>
                           <span className="roster-preview-kind">{date.kind?.name ?? 'No kind'}</span>
+                          {why && <span className="roster-preview-why">{why}</span>}
                           {date.hand && (
                             <>
                               <span className="roster-preview-hand">changed by hand: {handWords(date.hand)}</span>

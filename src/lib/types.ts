@@ -271,6 +271,16 @@ export interface DayKindMark {
   letter: string
   /** The kind's place in the cycle, from nought; ties fall back to the name. */
   order: number
+  /**
+   * The kind this kind is on a date after a night - the id of another kind
+   * template - docs/RESEARCH-SHIFTS.md section 2.6. A rest day after a night
+   * shift is not the rest day after a day shift, and this is how the roster
+   * knows without a second letter to remember: a rest day written after a
+   * night is stamped as the kind named here, every door says so, and the
+   * date follows the night before it when that arrives or goes. Absent, or
+   * naming itself or no kind: the kind is itself after a night too.
+   */
+  afterNight?: string
 }
 
 /**

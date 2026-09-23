@@ -36,7 +36,7 @@ const LIMITS = { name: 120, title: 200, minutes: 1440 } as const
 
 const FILE_FIELDS = ['format', 'version', 'templates', 'routines', 'roster']
 const ROUTINE_FIELDS = ['title', 'minutes', 'category', 'core', 'weekdays', 'times']
-const TEMPLATE_FIELDS = ['name', 'type', 'kind', 'color', 'sleep', 'blocks']
+const TEMPLATE_FIELDS = ['name', 'type', 'kind', 'afterNight', 'color', 'sleep', 'blocks']
 const BLOCK_FIELDS = ['time', 'title', 'minutes', 'category', 'core', 'key', 'ongoing', 'afterMidnight', 'mealType', 'followMeal', 'recipes', 'note']
 
 // ---- writing ------------------------------------------------------------------------------------
@@ -74,6 +74,11 @@ function templateEntry(template: Template, data: AppData): Entry {
   const out: Entry = { name: template.name }
   if (template.type && template.type !== 'full') out.type = template.type
   if (isDayKind(template)) out.kind = template.dayKind!.letter
+  // The kind it is after a night, by that kind's letter - section 2.6.
+  if (isDayKind(template) && template.dayKind!.afterNight) {
+    const after = dayKinds(data.templates).find(k => k.id === template.dayKind!.afterNight)
+    if (after && after.id !== template.id) out.afterNight = after.dayKind!.letter
+  }
   out.color = template.color
   const first = data.settings.sleepProfiles[0]
   const profile =
@@ -477,6 +482,9 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
   const rows: TemplateRow[] = []
   const entries: unknown[] = parsed.templates === undefined ? [] : Array.isArray(parsed.templates) ? parsed.templates : []
   if (parsed.templates !== undefined && !Array.isArray(parsed.templates)) notes.push('templates is not a list - left out.')
+  // What each template is after a night names a kind by letter, and that
+  // kind may come further down the file: read once every template is.
+  const afterNights: { name: string; row: TemplateRow; letter: string | null }[] = []
 
   // A name given twice: the later one is read.
   const names = entries.map(e => (isObject(e) && typeof e.name === 'string' ? e.name.trim() : ''))
@@ -524,7 +532,17 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
       else {
         const holder = templates.find(t => t !== known && isDayKind(t) && t.dayKind!.letter === letter)
         if (holder) own.push(`kind "${letter}" is ${holder.name}'s already - left out.`)
-        else dayKind = { letter, order: known?.dayKind ? known.dayKind.order : nextOrder++ }
+        else dayKind = { letter, order: known?.dayKind ? known.dayKind.order : nextOrder++, ...(known?.dayKind?.afterNight ? { afterNight: known.dayKind.afterNight } : {}) }
+      }
+    }
+    let afterNight: string | null | undefined
+    if (raw.afterNight !== undefined) {
+      if (raw.afterNight === null) afterNight = null
+      else if (typeof raw.afterNight === 'string' && cleanLetter(raw.afterNight)) afterNight = cleanLetter(raw.afterNight)
+      else own.push(`afterNight ${said(raw.afterNight)} is not a letter - left out.`)
+      if (afterNight !== undefined && !dayKind) {
+        own.push('afterNight needs a kind - left out.')
+        afterNight = undefined
       }
     }
 
@@ -594,15 +612,43 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
         JSON.stringify(known.blocks.map(b => b.id)) === JSON.stringify(next.blocks.map(b => b.id))
       if (same) {
         rows.push({ name: shown, action: 'unchanged', notes: own })
-        return
+      } else {
+        templates = templates.map(t => (t.id === known.id ? next : t))
+        rows.push({ name: shown, action: 'update', notes: own })
       }
-      templates = templates.map(t => (t.id === known.id ? next : t))
-      rows.push({ name: shown, action: 'update', notes: own })
     } else {
       templates = [...templates, next]
       rows.push({ name: shown, action: 'create', notes: own })
     }
+    if (afterNight !== undefined) afterNights.push({ name, row: rows[rows.length - 1], letter: afterNight })
   })
+
+  // The kind each template is after a night - section 2.6 - now that every
+  // kind in the file is there to be named. A change here is a change to the
+  // template, so a row read as unchanged above says update.
+  for (const { name, row, letter } of afterNights) {
+    const template = templates.find(t => t.kind !== 'week' && sameName(t.name, name))
+    if (!template?.dayKind) continue
+    let after: string | undefined
+    if (letter !== null) {
+      const kinds = dayKinds(templates)
+      const found = kinds.find(k => k.dayKind!.letter === letter)
+      if (!found) {
+        row.notes.push(`afterNight "${letter}" names no kind of day - left out.`)
+        continue
+      }
+      if (found.id === template.id) {
+        row.notes.push(`afterNight "${letter}" is this template itself - left out.`)
+        continue
+      }
+      after = found.id
+    }
+    if ((template.dayKind.afterNight ?? '') === (after ?? '')) continue
+    const { afterNight: _was, ...mark } = template.dayKind
+    const next: Template = { ...template, dayKind: { ...mark, ...(after ? { afterNight: after } : {}) } }
+    templates = templates.map(t => (t.id === template.id ? next : t))
+    if (row.action === 'unchanged') row.action = 'update'
+  }
 
   // The routines, against the kinds the templates leave: a time and a length
   // are written by a kind's letter, so the kinds have to be read first.
@@ -709,6 +755,17 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
   for (const row of roster) {
     if ((row.action === 'set' || row.action === 'clear') && !changed.has(row.date)) row.action = 'unchanged'
   }
+  // A date read as another kind than the one written for it - a rest day
+  // after a night, or one whose night went - says so on its row, and a date
+  // the file did not name but a night before it turned gets a row of its own.
+  for (const { date, kind, resolved } of applied.composed) {
+    if (!resolved || !kind) continue
+    const note = resolved.why === 'after-night' ? `${resolved.from.name} after a night is ${kind.name}.` : `No night before it now, so ${kind.name} again.`
+    const row = roster.find(r => r.date === date)
+    if (row) Object.assign(row, { letter: kind.dayKind!.letter, kindName: kind.name, action: 'set', note })
+    else roster.push({ date, letter: kind.dayKind!.letter, kindName: kind.name, action: 'set', note })
+  }
+  roster.sort((a, b) => a.date.localeCompare(b.date))
   return {
     notes,
     templates: rows,

@@ -1,5 +1,5 @@
 import { addDays } from './dates'
-import { isDayKind, kindOnDate } from './dayKinds'
+import { isDayKind, isNightKind, kindOnDate, resolveAfterNight } from './dayKinds'
 import { weekdayOf } from './repeats'
 import { applyStamps, columnFor, isNightBlock } from './stamping'
 import { originFor } from './taskIdentity'
@@ -63,11 +63,25 @@ export interface Following {
   after: string[]
 }
 
+/**
+ * A date given another kind than the one written for it, and why - section
+ * 2.6: the kind after a night where the date follows one, or the kind itself
+ * again where the night before it went.
+ */
+export interface Resolved {
+  from: Template
+  why: 'after-night' | 'no-night-before'
+}
+
 /** What applying a roster does, date by date: the plan it makes, and how each date in it came to change. */
 export interface RosterApplied {
   plan: AppData
-  /** The dates of the draft whose own composition changed, in order, each with where its routines went. */
-  composed: { date: string; kind: Template | undefined; placements: Placement[] }[]
+  /**
+   * The dates whose own composition changed, in order, each with where its
+   * routines went: the draft's, and the dates after a changed kind that
+   * follow it as another kind (`resolved`).
+   */
+  composed: { date: string; kind: Template | undefined; placements: Placement[]; resolved?: Resolved }[]
   /**
    * Every other date that changed: the date after a night that changed, and the
    * dates around a changed kind whose routines moved. A date of the draft that
@@ -529,6 +543,39 @@ export function rosterApplied(
   }
   const kindOf: KindOf = date => (drafted.has(date) ? drafted.get(date) : kindOnDate(data, date))
 
+  // A kind after a night - section 2.6. Each date of the draft is read
+  // against the kind before it, in order, so a rest day written after a
+  // night is the after-nights kind, and the day after that one a rest day.
+  const resolved = new Map<string, Resolved>()
+  for (const date of [...drafted.keys()].sort()) {
+    const kind = drafted.get(date)
+    if (!kind) continue
+    const read = resolveAfterNight(data.templates, kind, kindOf(addDays(date, -1)))
+    if (read !== kind) {
+      drafted.set(date, read)
+      resolved.set(date, { from: kind, why: 'after-night' })
+    }
+  }
+  // And the date after every kind that changes follows it: a rest day
+  // standing after a night that arrives becomes the after-nights kind, and
+  // one standing after a night that goes is a rest day again - on down the
+  // dates, as far as each change reaches. Only today or ahead: a lived day
+  // says what it was.
+  const queue = [...drafted.keys()].filter(date => kindOnDate(data, date)?.id !== drafted.get(date)?.id)
+  while (queue.length > 0) {
+    const date = queue.shift()!
+    const next = addDays(date, 1)
+    if (next < today || drafted.has(next)) continue
+    const standing = kindOnDate(data, next)
+    if (!standing) continue
+    const before = kindOf(date)
+    const read = resolveAfterNight(data.templates, standing, before, { reverse: true })
+    if (read.id === standing.id) continue
+    drafted.set(next, read)
+    resolved.set(next, { from: standing, why: isNightKind(before) ? 'after-night' : 'no-night-before' })
+    queue.push(next)
+  }
+
   let days = data.days
   const put = (date: string, day: DayPlan) => {
     if (days === data.days) days = { ...data.days }
@@ -536,14 +583,16 @@ export function rosterApplied(
   }
   const composed: RosterApplied['composed'] = []
   const turned: string[] = []
-  for (const [date, kind] of drafted) {
+  for (const date of [...drafted.keys()].sort()) {
+    const kind = drafted.get(date)
     const plan = days === data.days ? data : { ...data, days }
     const before = days[date]
     const { day, placements, nextDay } = composeDay(plan, date, kind, kindOf, today)
     const unchanged = before ? day === before : !day.templateId && day.tasks.length === 0
     if (!unchanged) {
       put(date, day)
-      composed.push({ date, kind, placements })
+      const why = resolved.get(date)
+      composed.push({ date, kind, placements, ...(why ? { resolved: why } : {}) })
     }
     if (nextDay) put(addDays(date, 1), nextDay)
     if (kindOnDate(data, date)?.id !== kind?.id) turned.push(date)

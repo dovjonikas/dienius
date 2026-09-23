@@ -4883,6 +4883,17 @@ button.primary {
   flex-wrap: wrap;
 }
 
+/* The questions' answers hang off one edge - one label column, the rule
+   every form here keeps (precision measures it): the label's slot is one
+   width, wide enough for the longest of them, whatever each row's words.
+   Without it "A kind of day" and "After a night" put their answers 3px
+   apart, by the difference in the two labels' widths. */
+.day-type-picker > :first-child,
+.template-sleep > :first-child {
+  flex: 0 0 auto;
+  min-width: calc(var(--s12) * 2);
+}
+
 /* The two questions' names, in the label's register. */
 .day-type-picker .muted,
 .wt-add-to .muted {
@@ -5725,6 +5736,10 @@ button.danger {
 }
 
 .roster-preview-kind { color: var(--muted); }
+
+/* Why a date is read as another kind than the one written for it - a rest
+   day after a night - in the kind's own quiet ink, after it. */
+.roster-preview-why { color: var(--muted); }
 
 /* What was changed by hand, and the answer to it, at the right of the row. */
 .roster-preview-hand {
@@ -10230,7 +10245,10 @@ button.task-recipe:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s2) var(--s3);
+  /* The same gap the rows above it keep between the label and the answer,
+     so the sleep's first time stands on the same edge as the letter and the
+     select - one label column, precision measures it. */
+  gap: var(--s2);
 }
 
 /* ------------------------------------------------------------------------

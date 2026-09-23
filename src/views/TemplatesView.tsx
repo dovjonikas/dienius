@@ -173,6 +173,11 @@ interface Draft {
    */
   kindLetter: string
   /**
+   * The kind this one is on a date after a night, by template id, or empty
+   * for itself - docs/RESEARCH-SHIFTS.md section 2.6. Asked only of a kind.
+   */
+  afterNightId: string
+  /**
    * The sleep schedule's window as it is being set here, when it has been
    * touched - rotating shifts, docs/RESEARCH-SHIFTS.md section 7. It belongs to
    * the named schedule, not to the template, and is written to it on Save.
@@ -181,7 +186,7 @@ interface Draft {
   blocks: DraftBlock[]
 }
 
-const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'full', kindLetter: '', blocks: [] })
+const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'full', kindLetter: '', afterNightId: '', blocks: [] })
 
 interface TemplateEditorProps {
   initial: Draft
@@ -524,6 +529,32 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           onChange={e => setDraft({ ...draft, kindLetter: cleanLetter(e.target.value) })}
         />
       </div>
+      {/* What this kind is on a date after a night - RESEARCH-SHIFTS section
+          2.6. A rest day after a night shift is another day than the rest
+          day after a day shift, and this is where it says which, so the
+          roster can carry one letter for both. Asked only of a kind, and
+          offered the other kinds; itself is the answer for a kind that is
+          the same after a night. */}
+      {draft.kindLetter !== '' && (
+        <div className="day-type-picker">
+          <span className="muted">After a night</span>
+          <select
+            className="setting-select"
+            aria-label="After a night, this day is"
+            value={draft.afterNightId}
+            onChange={e => setDraft({ ...draft, afterNightId: e.target.value })}
+          >
+            <option value="">Itself</option>
+            {dayKinds(templates)
+              .filter(k => k.id !== draft.id)
+              .map(k => (
+                <option key={k.id} value={k.id}>
+                  {k.name}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
       {/* The sleep the day wakes from and goes back to, set right over the
           picture that draws it - rotating shifts, section 7. It is the named
           schedule's, which other templates may sleep on too, so the line says
@@ -944,6 +975,7 @@ export function TemplatesView() {
       type: t.type ?? 'full',
       sleepProfileId: t.sleepProfileId,
       kindLetter: t.dayKind?.letter ?? '',
+      afterNightId: t.dayKind?.afterNight ?? '',
       blocks: t.blocks.map(b => ({
         id: b.id,
         time: b.time ?? '',
@@ -1060,8 +1092,10 @@ export function TemplatesView() {
     }
     const markKind = (id: string, was: DayKindMark | undefined) => {
       const letter = cleanLetter(next.kindLetter)
-      if (letter === (was?.letter ?? '')) return
-      actions.setDayKind(id, letter ? { letter, order: was?.order ?? dayKinds(data.templates).length } : null)
+      // The kind it is after a night goes with the mark - section 2.6.
+      const afterNight = letter && next.afterNightId && next.afterNightId !== id ? next.afterNightId : undefined
+      if (letter === (was?.letter ?? '') && (afterNight ?? '') === (was?.afterNight ?? '')) return
+      actions.setDayKind(id, letter ? { letter, order: was?.order ?? dayKinds(data.templates).length, ...(afterNight ? { afterNight } : {}) } : null)
     }
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)

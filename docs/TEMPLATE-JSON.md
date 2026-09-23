@@ -37,6 +37,7 @@ that is not JSON, or not an object, is not read, and the preview says why.
 | `name` | **yes** | 1 to 120 characters | The template's name, and its key: a template of the same name - the same words, whatever their case or spacing - is updated, never copied. Missing or empty, the template is skipped. A name given twice in one file: the later one is read, the earlier skipped. |
 | `type` | no | `full`, `shift`, `night` or `rest` | What kind of day it makes - Full day, Shift day, Night, Rest. Missing: `full`. |
 | `kind` | no | 1 or 2 characters, upper case | The letter the roster draws it by, which makes it a kind of day. Missing: an ordinary template, or on an update the letter it has. A letter another template already has is left out, and the template is imported without one. |
+| `afterNight` | no | a kind's letter, or `null` | The kind this one is on a date after a night - section 5. Read once every template in the file is, so the kind it names may come further down. A letter no kind has, or this template's own, is left out and said. Missing: on an update, what it has; `null` takes it off. Needs a `kind`. |
 | `color` | no | `#rrggbb` | Missing: a new template takes the palette's next colour; an update keeps its own. |
 | `sleep` | no | `{ "from": "HH:MM", "to": "HH:MM" }`, two different times | The sleep its days wake from. A sleep schedule with those hours is used, or made, named by its hours. Missing: the first schedule, or on an update the one it has. |
 | `blocks` | no | a list | Its blocks, in order - section 3. Missing: a new template has none; an update keeps the ones it has. |
@@ -109,6 +110,30 @@ It is laid on the plan the way the Roster's Apply lays it: each date is
 composed with its kind's blocks, its routines and its sleep; a night's hours
 after midnight land on the morning after; and the dates around a date whose
 kind changed are composed again, and the preview counts them.
+
+**A kind after a night.** A rest day after a night shift is not the rest day
+after a day shift - its morning is the night's, its sleep is the day's, its
+gym is later - and a roster that had to say so would need a second letter
+to remember. Instead the rest day's template names the kind it is after a
+night, and the roster carries one letter:
+
+    "templates": [
+      { "name": "Night shift", "type": "night", "kind": "N", ... },
+      { "name": "Rest day", "type": "rest", "kind": "L", "afterNight": "P", ... },
+      { "name": "After nights", "type": "rest", "kind": "P", ... }
+    ],
+    "roster": { "2030-01-09": "N", "2030-01-10": "N", "2030-01-11": "L", "2030-01-12": "L" }
+
+The 11th, an `L` written after a night, is stamped as `P` - the preview's
+row says "Rest day after a night is After nights." - and the 12th, after
+that, is a rest day. A night is a kind whose `type` is `night`. The rule
+holds at every door: the Roster's Apply, a kind put on a date by hand, and
+this file. And the day after a date whose kind changes follows it: a rest
+day standing after a night that arrives becomes the after-nights kind, and
+one standing after a night that goes is a rest day again, on down the dates
+as far as the change reaches, today or ahead. A `P` written on a date after
+a day shift is taken as written. An export writes each date as it stands,
+so the 11th comes back as `P`.
 
 ## 6. Import
 

@@ -328,6 +328,61 @@ nothing composes a day a second way.
 
 ---
 
+### 2.6 A kind after a night (v2.40)
+
+The owner's question of 2026-09-23: two nights, then a free day - but a
+free day after a night is not the free day after a day shift. The journey
+home and the night's meal are on its morning, the sleep is the day's, the
+gym cannot be at half past eleven. And the same is true of a day shift that
+follows a night. The obvious answer, a separate "after nights" template with
+its own letter, was already the model (2.1) - and its cost is exactly what
+the owner named: remembering to write the second letter on the roster, on
+every run of nights, and getting it wrong once.
+
+**The rule: a kind names the kind it is after a night.**
+
+```ts
+DayKindMark.afterNight?: string   // the id of another kind template
+```
+
+A night is a kind whose `type` is `night`. The rest day's mark says "after a
+night I am After nights", the roster carries `N N L L`, and the first `L` is
+stamped as the after-nights kind. The rule is applied in one place,
+`rosterApplied` (`resolveAfterNight` in lib/dayKinds.ts), which is the
+function behind every door a kind comes through: the Roster's Apply and its
+preview, the templates file, a kind put on a date by hand. So the same
+roster means the same days whichever way it arrived, and the preview says
+which dates are read that way and from what ("Rest day after a night").
+
+**The date after a changed kind follows it.** A rest day standing after a
+night that arrives by hand becomes the after-nights kind; one standing
+after a night that goes is a rest day again - the way back is taken only
+where exactly one kind names this one, and only for a date whose neighbour
+changed, never for a kind somebody wrote on a date themselves. The change
+walks on down the dates as far as it reaches, today or ahead; a date behind
+today is not touched, as ever.
+
+**Rejected: resolving on read** - keeping `L` stamped and composing the day
+as `P` when the date before is a night. It would make a date's kind two
+things (2.2 rejected exactly this), and every reader of the day - its sleep,
+its routines, its blocks, the month's letter - would have to ask the date
+before it first. The stamp is the kind; the export writes `P` on that date,
+and the contract says so.
+
+**The first night is the same rule.** Section 10.5 left one thing missing:
+a night after days wakes from the ordinary sleep, and only a night after a
+night wakes from the day sleep, so the first night needed its own letter.
+Now Night shift names the kind it is after a night - a second night
+template with the day sleep - and the roster carries `D D N N N R`: the
+first `N` is the first night, the two after it the night after a night,
+and nothing was written twice.
+
+**Rejected: keying on the night's letter** (`after: { "N": "P" }`). The
+owner's world may have two night kinds (a first night, a night), and both
+are nights; the day type already says so, and one field reads better than a
+map. If a kind ever has to differ after one night kind and not another,
+the map is the extension.
+
 ## 3. Midnight
 
 ### 3.1 The rule

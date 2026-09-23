@@ -27,7 +27,9 @@ export const shiftActions = {
       const { dayKind: _mark, ...rest } = t
       if (!letter) return rest
       const order = Math.max(0, Math.floor(Number.isFinite(mark!.order) ? mark!.order : 0))
-      return { ...rest, dayKind: { letter, order } }
+      // The kind it is after a night - section 2.6 - where that names another template.
+      const afterNight = mark!.afterNight && mark!.afterNight !== templateId && data.templates.some(k => k.id === mark!.afterNight) ? mark!.afterNight : undefined
+      return { ...rest, dayKind: { letter, order, ...(afterNight ? { afterNight } : {}) } }
     })
     commit({ ...data, templates })
   },

@@ -343,7 +343,8 @@ const TEMPLATE_BLOCK = record({
 
 // A day template marked as a kind of day on the roster - rotating shifts,
 // since v2.29: a letter of one or two characters, and a whole-number order.
-const DAY_KIND_MARK = record({ letter: text(1, ROUTINE_LIMITS.letter), order: wholeNumber(0) })
+// v2.40: the kind this kind is on a date after a night, by template id.
+const DAY_KIND_MARK = record({ letter: text(1, ROUTINE_LIMITS.letter), order: wholeNumber(0), afterNight: optional(string) })
 
 const WEEK_DAY_OVERRIDE = record({
   type: optional(oneOf(DAY_TYPES)),

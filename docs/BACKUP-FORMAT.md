@@ -220,6 +220,7 @@ rule; one changed on the day is the person's.
 |---|---|
 | `letter` | One or two characters, drawn on every date the kind is stamped on. |
 | `order` | Its place in the order a tap on the roster walks the kinds. |
+| `afterNight` | **v2.40.** The id of the kind template this kind is on a date after a night (a kind whose `type` is `night`): a rest day written after a night is stamped as that kind, and follows the night before it when that arrives or goes. Absent, naming itself or naming no kind: the kind is itself after a night too. |
 
 ### WeekDayOverride
 
@@ -322,3 +323,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.36 | `waitingRecipes` on a block: a recipe named by a templates file before Kitchen had it, taken when a recipe of that name arrives. |
 | v2.37 | `kindMinutes` and `core` on a routine, and `core` on what its rule gave a task: a routine may be a different length on each kind of day, and may count on a day that is not a full one. |
 | v2.39 | `author` on a library item: who wrote it, where somebody said so - a shelf pasted at once writes it from "A title - An author". |
+| v2.40 | `afterNight` on a kind's mark: the kind it is on a date after a night, so the roster carries one letter for a rest day whichever shift came before it. |
