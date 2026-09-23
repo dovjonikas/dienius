@@ -1,0 +1,1247 @@
+{
+  "templates": [
+    {
+      "id": "tpl-m-seed",
+      "name": "Working day",
+      "color": "#a7c4f5",
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "blocks": [
+        {
+          "id": "b-p-seed",
+          "time": "07:00",
+          "title": "Get up, shower, coffee",
+          "minutes": 45,
+          "category": "routine"
+        },
+        {
+          "id": "b-q-seed",
+          "time": "08:00",
+          "title": "Plan the day",
+          "minutes": 15,
+          "core": true,
+          "category": "core"
+        },
+        {
+          "id": "b-r-seed",
+          "time": "09:00",
+          "title": "Deep work block",
+          "minutes": 120,
+          "core": true,
+          "category": "core"
+        },
+        {
+          "id": "b-s-seed",
+          "time": "12:30",
+          "title": "Lunch",
+          "minutes": 45,
+          "category": "meal",
+          "mealType": "lunch"
+        },
+        {
+          "id": "b-t-seed",
+          "time": "13:30",
+          "title": "Email and admin",
+          "minutes": 45,
+          "category": "routine"
+        },
+        {
+          "id": "b-u-seed",
+          "time": "17:30",
+          "title": "Walk",
+          "minutes": 40,
+          "category": "health"
+        },
+        {
+          "id": "b-v-seed",
+          "time": "21:00",
+          "title": "Reading",
+          "minutes": 30,
+          "libraryListId": "list-1-seed",
+          "category": "personal"
+        }
+      ]
+    },
+    {
+      "id": "tpl-n-seed",
+      "name": "Twelve-hour shift",
+      "color": "#f5b0a7",
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "dayKind": {
+        "letter": "D",
+        "order": 0
+      },
+      "blocks": [
+        {
+          "id": "b-w-seed",
+          "time": "06:00",
+          "title": "Out the door",
+          "minutes": 30,
+          "category": "commute"
+        },
+        {
+          "id": "b-x-seed",
+          "time": "07:00",
+          "title": "On shift",
+          "minutes": 720,
+          "core": true,
+          "unbounded": true,
+          "category": "core"
+        },
+        {
+          "id": "b-y-seed",
+          "time": "19:30",
+          "title": "Eat something real",
+          "minutes": 40,
+          "category": "meal",
+          "mealType": "dinner"
+        }
+      ]
+    },
+    {
+      "id": "tpl-o-seed",
+      "name": "Slow Sunday",
+      "color": "#a7e3bd",
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "dayKind": {
+        "letter": "R",
+        "order": 1
+      },
+      "blocks": [
+        {
+          "id": "b-z-seed",
+          "time": "09:30",
+          "title": "Long breakfast",
+          "minutes": 60,
+          "category": "meal",
+          "recipeId": "rc-i-seed"
+        },
+        {
+          "id": "b-10-seed",
+          "title": "Something outside",
+          "minutes": 90,
+          "category": "health"
+        },
+        {
+          "id": "b-11-seed",
+          "time": "20:00",
+          "title": "Reading",
+          "minutes": 45,
+          "libraryListId": "list-1-seed",
+          "category": "personal"
+        }
+      ]
+    },
+    {
+      "id": "fx-night",
+      "name": "Night",
+      "color": "#44507a",
+      "type": "night",
+      "sleepProfileId": "fx-after-night",
+      "blocks": [
+        {
+          "id": "fx-n1",
+          "title": "Night shift",
+          "time": "21:00",
+          "minutes": 600,
+          "category": "core",
+          "core": true,
+          "highlight": true,
+          "note": "Badge and keys",
+          "noteExpanded": true
+        },
+        {
+          "id": "fx-n2",
+          "title": "Meal break",
+          "time": "01:00",
+          "minutes": 20,
+          "afterMidnight": true,
+          "mealType": "snack"
+        }
+      ],
+      "dayKind": {
+        "letter": "N",
+        "order": 5
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-week",
+      "name": "A week",
+      "color": "#6d8f5e",
+      "kind": "week",
+      "weekDays": {
+        "6": {
+          "type": "rest",
+          "sleepProfileId": "default"
+        }
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "blocks": [
+        {
+          "id": "fx-w1",
+          "title": "Run",
+          "time": "07:00",
+          "minutes": 30,
+          "category": "health",
+          "weekday": 1,
+          "groupId": "fx-g1"
+        },
+        {
+          "id": "fx-w2",
+          "title": "Run",
+          "time": "07:00",
+          "minutes": 30,
+          "category": "health",
+          "weekday": 3,
+          "groupId": "fx-g1"
+        },
+        {
+          "id": "fx-w3",
+          "title": "Long walk",
+          "minutes": 90,
+          "category": "health",
+          "weekday": 6,
+          "unbounded": true
+        }
+      ]
+    },
+    {
+      "id": "fx-rest",
+      "name": "Rest",
+      "color": "#8a8f98",
+      "type": "rest",
+      "blocks": [],
+      "dayKind": {
+        "letter": "Z",
+        "order": 6
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-meals",
+      "name": "Meals",
+      "color": "#b07a4f",
+      "blocks": [
+        {
+          "id": "fx-m1",
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "fx-recipe",
+          "mealType": "dinner",
+          "recipeIds": [
+            "fx-recipe",
+            "fx-recipe2"
+          ]
+        },
+        {
+          "id": "fx-m2",
+          "title": "Lunch",
+          "time": "12:30",
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "followMeal": true
+        }
+      ],
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "routines": [
+    {
+      "id": "rt-8f-seed",
+      "title": "Training",
+      "category": "health",
+      "minutes": 60,
+      "weekdays": [
+        1,
+        3,
+        5
+      ],
+      "times": {
+        "tpl-n-seed": "17:00"
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "rt-8g-seed",
+      "title": "Language practice",
+      "minutes": 20,
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "times": {
+        "tpl-n-seed": "07:30",
+        "tpl-o-seed": "10:00"
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-routine",
+      "title": "Stretch",
+      "category": "health",
+      "minutes": 30,
+      "weekdays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "times": {
+        "fx-rest": "17:00"
+      },
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "days": {
+    "2026-09-16": {
+      "date": "2026-09-16",
+      "templateId": "tpl-m-seed",
+      "dayType": "full",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "id": "t-12-seed",
+          "title": "Get up, shower, coffee",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "07:00",
+          "minutes": 45,
+          "category": "routine",
+          "fromTemplate": true,
+          "origin": {
+            "type": "template",
+            "sourceId": "tpl-m-seed"
+          }
+        },
+        {
+          "id": "t-17-seed",
+          "title": "Deep work block",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "09:00",
+          "minutes": 120,
+          "core": true,
+          "highlight": true,
+          "category": "core",
+          "fromTemplate": true,
+          "note": "The pricing page rewrite. Nothing else in this block.\n\n- Outline the three sections\n- Draft the middle one\n- Read it back out loud"
+        },
+        {
+          "id": "t-18-seed",
+          "title": "Call the dentist about the crown",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "11:30",
+          "minutes": 15,
+          "category": "personal",
+          "highlight": true,
+          "pushCount": 2
+        },
+        {
+          "id": "t-19-seed",
+          "title": "Lunch",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "12:30",
+          "minutes": 45,
+          "category": "meal",
+          "fromTemplate": true,
+          "recipeId": "rc-j-seed"
+        },
+        {
+          "id": "t-1a-seed",
+          "title": "Email and admin",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "13:30",
+          "minutes": 45,
+          "category": "routine",
+          "fromTemplate": true
+        },
+        {
+          "id": "t-1b-seed",
+          "title": "Review the quarter numbers with Ada",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "15:00",
+          "minutes": 60,
+          "core": true,
+          "highlight": true,
+          "category": "core"
+        },
+        {
+          "id": "t-1c-seed",
+          "title": "Order the replacement charger",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "minutes": 10,
+          "category": "personal",
+          "pushCount": 1
+        },
+        {
+          "id": "t-1d-seed",
+          "title": "Walk",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "17:30",
+          "minutes": 40,
+          "category": "health",
+          "fromTemplate": true,
+          "repeat": "weekdays"
+        },
+        {
+          "id": "t-1e-seed",
+          "title": "Reading",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "21:00",
+          "minutes": 30,
+          "category": "personal",
+          "fromTemplate": true,
+          "libraryRef": {
+            "listId": "list-1-seed",
+            "itemId": "item-3-seed"
+          }
+        },
+        {
+          "id": "t-1f-seed",
+          "title": "Dinner",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meal",
+          "recipeId": "rc-k-seed"
+        }
+      ]
+    },
+    "2026-09-15": {
+      "date": "2026-09-15",
+      "templateId": "tpl-m-seed",
+      "dayType": "full",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "id": "t-1g-seed",
+          "title": "Standup",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "08:00",
+          "minutes": 30,
+          "core": false,
+          "highlight": false,
+          "category": "routine"
+        },
+        {
+          "id": "t-1h-seed",
+          "title": "Deep work block",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "09:00",
+          "minutes": 90,
+          "core": true,
+          "highlight": true,
+          "category": "core"
+        },
+        {
+          "id": "t-1i-seed",
+          "title": "Email and admin",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "10:00",
+          "minutes": 45,
+          "core": false,
+          "highlight": false,
+          "category": "routine"
+        },
+        {
+          "id": "t-1j-seed",
+          "title": "Walk",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "11:00",
+          "minutes": 40,
+          "core": false,
+          "highlight": false,
+          "category": "health"
+        },
+        {
+          "id": "t-1k-seed",
+          "title": "Reading",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "12:00",
+          "minutes": 30,
+          "core": true,
+          "highlight": false,
+          "category": "personal"
+        }
+      ]
+    },
+    "2026-09-14": {
+      "date": "2026-09-14",
+      "templateId": "tpl-m-seed",
+      "dayType": "full",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "id": "t-1l-seed",
+          "title": "Standup",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "08:00",
+          "minutes": 30,
+          "core": false,
+          "highlight": false,
+          "category": "routine"
+        },
+        {
+          "id": "t-1m-seed",
+          "title": "Deep work block",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "09:00",
+          "minutes": 90,
+          "core": true,
+          "highlight": true,
+          "category": "core"
+        },
+        {
+          "id": "t-1n-seed",
+          "title": "Email and admin",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "10:00",
+          "minutes": 45,
+          "core": false,
+          "highlight": false,
+          "category": "routine"
+        },
+        {
+          "id": "t-1o-seed",
+          "title": "Walk",
+          "done": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "11:00",
+          "minutes": 40,
+          "core": false,
+          "highlight": false,
+          "category": "health"
+        },
+        {
+          "id": "t-1p-seed",
+          "title": "Reading",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "12:00",
+          "minutes": 30,
+          "core": true,
+          "highlight": false,
+          "category": "personal"
+        },
+        {
+          "id": "t-1q-seed",
+          "title": "Groceries",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "13:00",
+          "minutes": 45,
+          "core": false,
+          "highlight": false,
+          "category": "personal"
+        }
+      ]
+    },
+    "2026-09-13": {
+      "date": "2026-09-13",
+      "tasks": [],
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    "2026-09-17": {
+      "date": "2026-09-17",
+      "templateId": "tpl-m-seed",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "id": "t-8d-seed",
+          "title": "Deep work block",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "09:00",
+          "minutes": 120,
+          "core": true,
+          "category": "core"
+        },
+        {
+          "id": "t-8e-seed",
+          "title": "Dentist",
+          "done": false,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "time": "14:00",
+          "minutes": 60,
+          "category": "health"
+        }
+      ]
+    },
+    "2026-09-20": {
+      "date": "2026-09-20",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "done": false,
+          "id": "fx-rep",
+          "title": "Water the plants",
+          "time": "08:00",
+          "minutes": 10,
+          "repeat": "daily",
+          "category": "routine",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ]
+    },
+    "2026-09-21": {
+      "date": "2026-09-21",
+      "templateId": "fx-night",
+      "dayType": "night",
+      "sleepProfileId": "fx-after-night",
+      "journal": "A quiet shift.",
+      "lowDay": true,
+      "replannedOn": "2026-09-21",
+      "repeatSkips": [
+        "fx-rep-old"
+      ],
+      "away": "14:00",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "done": false,
+          "id": "fx-t1",
+          "title": "Night shift",
+          "time": "21:00",
+          "minutes": 600,
+          "category": "core",
+          "core": true,
+          "highlight": true,
+          "fromTemplate": true,
+          "origin": {
+            "type": "template",
+            "sourceId": "fx-night",
+            "blockId": "fx-n1"
+          },
+          "note": "Badge and keys",
+          "templateNote": "Badge and keys",
+          "noteExpanded": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "fromBlock": {
+            "title": "Night shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          }
+        },
+        {
+          "done": true,
+          "id": "fx-t2",
+          "title": "Call the garage",
+          "time": "10:00",
+          "minutes": 15,
+          "actualMinutes": 20,
+          "link": "https://example.com",
+          "pushCount": 2,
+          "latest": "12:00",
+          "category": "fx-errands",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-t3",
+          "title": "Sort the drawer",
+          "setAside": true,
+          "unbounded": true,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-t4",
+          "title": "Water the plants",
+          "time": "08:30",
+          "minutes": 10,
+          "repeatOf": "fx-rep",
+          "origin": {
+            "type": "repeat",
+            "sourceId": "fx-rep"
+          },
+          "category": "routine",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-t5",
+          "title": "Buy stamps",
+          "fromNote": "fx-note",
+          "origin": {
+            "type": "manual"
+          },
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ]
+    },
+    "2026-09-22": {
+      "date": "2026-09-22",
+      "autoApplied": true,
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "tasks": [
+        {
+          "done": false,
+          "id": "fx-t6",
+          "title": "Tidy the desk",
+          "time": "11:00",
+          "minutes": 20,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-r1",
+          "title": "Stretch",
+          "time": "17:00",
+          "minutes": 30,
+          "category": "health",
+          "routineId": "fx-routine",
+          "fromRoutine": {
+            "time": "17:00",
+            "minutes": 30,
+            "title": "Stretch",
+            "category": "health"
+          },
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-t7",
+          "title": "Meal break",
+          "time": "01:00",
+          "minutes": 20,
+          "fromTemplate": true,
+          "nightOf": "2026-09-21",
+          "origin": {
+            "type": "template",
+            "sourceId": "fx-night",
+            "blockId": "fx-n2"
+          },
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "done": false,
+          "id": "fx-t8",
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "fx-recipe",
+          "mealType": "dinner",
+          "fromTemplate": true,
+          "origin": {
+            "type": "template",
+            "sourceId": "fx-meals",
+            "blockId": "fx-m1"
+          },
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "fx-recipe",
+            "mealType": "dinner"
+          },
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ],
+      "templateId": "fx-rest",
+      "dayType": "rest",
+      "routineSkips": [
+        "fx-routine-old"
+      ]
+    }
+  },
+  "settings": {
+    "theme": {
+      "presetId": "dark",
+      "mode": "dark",
+      "overrides": {}
+    },
+    "timelineExpanded": true,
+    "dayLayoutFocus": "both",
+    "density": "comfortable",
+    "textScale": "m",
+    "sleepProfiles": [
+      {
+        "id": "default",
+        "name": "Weeknights",
+        "window": {
+          "start": "23:00",
+          "end": "07:00"
+        }
+      },
+      {
+        "id": "fx-after-night",
+        "name": "After a night",
+        "window": {
+          "start": "08:00",
+          "end": "15:00"
+        }
+      }
+    ],
+    "weekdayTemplates": {
+      "0": "tpl-o-seed",
+      "1": "tpl-m-seed",
+      "2": "tpl-m-seed",
+      "3": "tpl-m-seed",
+      "4": "tpl-m-seed",
+      "5": "tpl-m-seed",
+      "6": "tpl-o-seed"
+    },
+    "north": {
+      "afterASlowDay": true,
+      "stripOnDay": false,
+      "windowAfterSleep": false
+    },
+    "eveningClose": {
+      "enabled": true,
+      "at": "21:30",
+      "askBestMoment": true
+    },
+    "chime": {
+      "profile": "soft",
+      "volume": 0.5,
+      "atStart": false
+    },
+    "mealWords": [
+      {
+        "word": "Soup",
+        "meals": [
+          "lunch",
+          "dinner"
+        ]
+      }
+    ]
+  },
+  "ifThens": [],
+  "inbox": [],
+  "backlog": [
+    {
+      "id": "lt-8h-seed",
+      "title": "Ask Ada whether the Q3 deck is still the right one",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8i-seed",
+      "title": "Something about the boiler pressure",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8j-seed",
+      "title": "Fix the loose cupboard door",
+      "category": "personal",
+      "minutes": 30,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8k-seed",
+      "title": "Move the ISA",
+      "category": "core",
+      "minutes": 45,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8l-seed",
+      "title": "Write up the Rota notes",
+      "category": "routine",
+      "minutes": 60,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8m-seed",
+      "title": "Book the car in for its service",
+      "category": "personal",
+      "minutes": 20,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "lt-8n-seed",
+      "title": "Replace the bathroom bulb",
+      "category": "routine",
+      "minutes": 10,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-later",
+      "title": "Fix the shelf",
+      "category": "fx-errands",
+      "minutes": 30,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "scratch": [
+    {
+      "id": "sc-8o-seed",
+      "text": "Meter reading 41882",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-16",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "sc-8p-seed",
+      "text": "The week view drops a block when you drag it past the last column",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-16",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "sc-8q-seed",
+      "text": "Ada: her sister is called Nel, not Nell",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-16",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "sc-8r-seed",
+      "text": "Try the coffee place on Vokieciu",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-15",
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "pinned": true
+    },
+    {
+      "id": "sc-8s-seed",
+      "text": "Reading light, warm white, under 20 quid",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-14",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-note",
+      "text": "Buy stamps",
+      "createdAt": "2026-09-16T11:00:00.000Z",
+      "date": "2026-09-21",
+      "pinned": true,
+      "taskId": "fx-t5",
+      "taskDate": "2026-09-21",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "library": [
+    {
+      "id": "list-1-seed",
+      "name": "Books",
+      "unit": "chapter",
+      "unitShort": "ch",
+      "color": "#a7c4f5",
+      "items": [
+        {
+          "id": "item-3-seed",
+          "title": "Deep Work",
+          "total": 12,
+          "progress": 5,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "pace": "one chapter an evening"
+        },
+        {
+          "id": "item-4-seed",
+          "title": "Atomic Habits",
+          "total": 306,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z",
+          "track": "pages"
+        },
+        {
+          "id": "item-5-seed",
+          "title": "The Body Keeps the Score",
+          "total": 21,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-6-seed",
+          "title": "Thinking, Fast and Slow",
+          "total": 38,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-7-seed",
+          "title": "Range",
+          "total": 15,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-8-seed",
+          "title": "Four Thousand Weeks",
+          "total": 14,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-9-seed",
+          "title": "Why We Sleep",
+          "total": 16,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-a-seed",
+          "title": "The Creative Act",
+          "total": 78,
+          "progress": 0,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ],
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "list-2-seed",
+      "name": "Watching",
+      "unit": "episode",
+      "unitShort": "ep",
+      "color": "#c9b3f0",
+      "items": [
+        {
+          "id": "item-b-seed",
+          "title": "Severance",
+          "track": "series",
+          "seasons": 3,
+          "season": 1,
+          "total": 10,
+          "progress": 2,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-c-seed",
+          "title": "Andor",
+          "track": "series",
+          "seasons": 2,
+          "season": 1,
+          "total": 12,
+          "progress": 2,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-d-seed",
+          "title": "The Bear",
+          "track": "series",
+          "seasons": 4,
+          "season": 1,
+          "total": 10,
+          "progress": 2,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-e-seed",
+          "title": "Shogun",
+          "track": "series",
+          "seasons": 1,
+          "season": 1,
+          "total": 10,
+          "progress": 2,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-f-seed",
+          "title": "Slow Horses",
+          "track": "series",
+          "seasons": 4,
+          "season": 1,
+          "total": 6,
+          "progress": 2,
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-g-seed",
+          "title": "Dune: Part Two",
+          "track": "movie",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "item-h-seed",
+          "title": "Arrival",
+          "track": "movie",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ],
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-list",
+      "name": "Courses",
+      "unit": "lesson",
+      "unitPlural": "lessons",
+      "unitShort": "l",
+      "color": "#aa7744",
+      "updatedAt": "2026-09-16T11:00:00.000Z",
+      "items": [
+        {
+          "id": "fx-item",
+          "title": "Drawing basics",
+          "total": 12,
+          "progress": 3,
+          "pace": "two a week",
+          "link": "https://example.com/course",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        },
+        {
+          "id": "fx-item2",
+          "title": "Knots",
+          "total": 5,
+          "progress": 5,
+          "finished": "2026-09-01",
+          "updatedAt": "2026-09-16T11:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "picture": {
+    "text": "I wake before the house does, and the first hour is mine.\nI train like someone who intends to be carrying suitcases at seventy.\nI finish the things I start talking about, and I talk about fewer of them.\nThe books on the shelf are read, not owned.\nOn a Saturday I am already outside by nine, and the day is longer for it.\n\nWHEN THE DAY STARTS [morning]\nWater first, then the window, then the list.\nThe first hour is not for the phone.\n\nTHE WEEK\nMonday is the quiet one, and the long list waits for Tuesday.\nFriday ends at four, whatever the list says.\n\nBEFORE SLEEP [evening]\nThe day is closed when tomorrow has three things on it.\n---\nThe rest of the day is allowed to be ordinary.",
+    "updatedAt": "2026-09-16T11:00:00.000Z"
+  },
+  "recipes": [
+    {
+      "id": "rc-i-seed",
+      "title": "Overnight oats",
+      "text": "Made the night before and eaten cold.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n2 tbsp yoghurt\nA handful of berries\n\nSTEPS\nStir the oats, milk and yoghurt together in a jar.\nLeave it in the fridge overnight.\nPut the berries on top in the morning.",
+      "mealTypes": [
+        "breakfast",
+        "snack"
+      ],
+      "kcal": 380,
+      "protein": 18,
+      "carbs": 55,
+      "fat": 9,
+      "servings": 1,
+      "minutes": 5,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "rc-j-seed",
+      "title": "Chicken and rice bowl",
+      "text": "INGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce\n\nSTEPS\nCook the rice.\nSeason the chicken and cook it in a hot pan, about six minutes a side.\nSlice the chicken and the cucumber.\nShare the rice between two bowls and put everything on top.",
+      "mealTypes": [
+        "lunch",
+        "post-gym"
+      ],
+      "kcal": 610,
+      "protein": 45,
+      "carbs": 70,
+      "fat": 14,
+      "servings": 2,
+      "minutes": 30,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "rc-k-seed",
+      "title": "Lentil soup",
+      "text": "Keeps for three days, and better on the second.\n\nINGREDIENTS\n250 g red lentils\n1 onion\n2 carrots\n1 litre stock\n\nSTEPS\nChop the onion and the carrots and soften them in a little oil.\nAdd the lentils and the stock and simmer for twenty-five minutes.\nBlend half of it and stir it back in.",
+      "mealTypes": [
+        "lunch",
+        "dinner"
+      ],
+      "kcal": 420,
+      "protein": 22,
+      "carbs": 60,
+      "fat": 8,
+      "servings": 4,
+      "minutes": 45,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "rc-l-seed",
+      "title": "Banana toast",
+      "text": "Toast a slice of bread, spread it with peanut butter and slice a banana over it.",
+      "mealTypes": [
+        "pre-gym",
+        "snack"
+      ],
+      "kcal": 330,
+      "protein": 11,
+      "carbs": 45,
+      "fat": 12,
+      "servings": 1,
+      "minutes": 5,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-recipe",
+      "title": "Lentil soup",
+      "text": "Lentils, a carrot, an onion.\nSimmer for half an hour.",
+      "mealTypes": [
+        "lunch",
+        "dinner"
+      ],
+      "kcal": 420,
+      "protein": 24,
+      "carbs": 60,
+      "fat": 8,
+      "servings": 4,
+      "minutes": 40,
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    },
+    {
+      "id": "fx-recipe2",
+      "title": "Bean bowl",
+      "text": "Beans, rice, greens.",
+      "mealTypes": [
+        "dinner"
+      ],
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "core",
+      "label": "Deep work"
+    },
+    {
+      "id": "routine",
+      "label": "Routine"
+    },
+    {
+      "id": "health",
+      "label": "Health"
+    },
+    {
+      "id": "meal",
+      "label": "Meals"
+    },
+    {
+      "id": "commute",
+      "label": "Commute"
+    },
+    {
+      "id": "personal",
+      "label": "Personal"
+    },
+    {
+      "id": "fx-errands",
+      "label": "Errands",
+      "color": "#5b8def",
+      "updatedAt": "2026-09-16T11:00:00.000Z"
+    }
+  ],
+  "settingsUpdatedAt": "2026-09-16T11:00:00.000Z",
+  "tombstones": {
+    "task:fx-gone": "2026-09-16T11:00:00.000Z"
+  }
+}

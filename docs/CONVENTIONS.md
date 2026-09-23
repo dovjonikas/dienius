@@ -492,6 +492,14 @@ bar and everything under it.
   because it is also the import path for a file a person may have edited. A
   new field goes into its entity's table with its check, and into
   `normalizeLoaded` if absent has to become something.
+- **A new shape of the plan leaves a file written by it.** After the commit
+  that changes the guard, the types or a migration, add that commit to
+  `scripts/backup-fixtures.mjs`, give the writer beside it the new field
+  behind `since('<commit>')`, and run it for that commit: the version's own
+  code writes its backup into `src/lib/fixtures/backups/`, and
+  `backupVersions.test.ts` holds every format since v2.20 from then on -
+  each opens, loses nothing, and is a fixed point after one import. A file
+  that breaks that gets its migration fixed, never its bytes.
 - **A dangling id degrades, never crashes.** A `templateId`, `libraryRef`,
   `sleepProfileId` or `repeatOf` that resolves to nothing is treated exactly as
   if it were absent.

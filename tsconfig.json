@@ -21,5 +21,8 @@
   // they build is checked by validate.ts at run time rather than here, so
   // checking them against this project's own globals would be checking the
   // wrong thing. sweep.mjs itself, which does run in Node, is checked.
-  "exclude": ["scripts/audit.js", "scripts/sample-day.js"]
+  // The backup fixtures' writer is the same kind of stranger: it runs inside
+  // a worktree of an older commit, against that commit's storage.ts, and is
+  // checked there by the only compiler that knows those types.
+  "exclude": ["scripts/audit.js", "scripts/sample-day.js", "scripts/backup-fixtures.writer.ts"]
 }

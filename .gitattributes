@@ -1,0 +1,4 @@
+# The backups kept as test fixtures are compared byte for byte with what
+# the app writes, so they are checked out exactly as written - with the
+# line feeds JSON.stringify puts in them - on every platform.
+src/lib/fixtures/**/*.json text eol=lf

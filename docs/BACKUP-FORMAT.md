@@ -48,7 +48,12 @@ down here fails the build. Fields new in v2.31 are marked **v2.31**.
    names before anything is replaced; a file it would refuse is never half
    imported.
 6. **A backup imported and exported again is the same file, byte for byte.**
-   The test holds it on a backup recorded by the version before v2.31.
+   A file from before v2.29 changes once, on its first import, and only by
+   what section 5 says it gained - an open goal retired, an empty list of
+   recipes or routines where it had none - and is a fixed point from then
+   on. The test (`src/lib/backupVersions.test.ts`) holds this, and that
+   nothing is lost, on a file written by every format since v2.20, each by
+   its own version's code (`scripts/backup-fixtures.mjs`).
 7. **Clock and calendar.** A date is a `YYYY-MM-DD` key on the person's own
    clock, and sorts as a string. A time is `HH:MM` on its date's clock,
    `00:00` to `23:59`. A length is whole minutes. An instant (`updatedAt`) is
