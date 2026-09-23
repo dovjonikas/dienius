@@ -9713,6 +9713,11 @@ button.danger:focus-visible {
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s3) var(--s4) var(--s4);
+  /* A flex item keeps its content's height unless told it may be shorter,
+     so a body with a long recipe field pushed the sheet past its height
+     and the foot over the field's last row. The body scrolls; the foot
+     stays. */
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -18453,3 +18458,330 @@ button.link-out {
   font-size: var(--t-xs);
 }
 
+/* ------------------------------------------------------------------------
+   One look, rule 5 - a row stays a row (the owner's brief of 2026-09-22;
+   docs/DESIGN.md, docs/DESIGN-AUDIT.md, stage 5). A row of controls that
+   does not fit is made again - smaller, a strip, a menu, or a second row
+   with its own place - and never left to wrap. Every rule here replaces a
+   flex-wrap that the measure found wrapping on a 375px phone or at 1920,
+   and says what the row is instead:
+
+   - a strip: a row of chips that scrolls sideways inside its own box, the
+     way the Library's list chips have since v2.19 - the page never moves;
+   - a second row by design: a grid with a row for each part, where the row
+     wrapped into two by luck of the width before;
+   - one line that gives up its tail: a meta line whose long sentence ends
+     in an ellipsis rather than pushing the count under the time.
+   ------------------------------------------------------------------------ */
+
+/* The Today rail's templates, on a desktop: a column of chips, one a line,
+   in place of chips wrapping onto three lines in a 240px rail. */
+@media (min-width: 1024px) {
+  .template-rail-chips {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .template-rail-chips .chip { justify-content: flex-start; }
+}
+
+/* Kitchen's meals: a strip at every width, the Library's own chips. */
+.kitchen-chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: var(--s1);
+}
+
+/* The editor's block row on a desktop: one line - the grip, the time, the
+   title giving up its tail, the length, the marks, what it draws from and
+   the cross, each in a column of its own - with the note panel and the
+   binding line as rows of their own under it. A grid, so the two rows are
+   rows and not a wrap. The block row's grid on a phone is below. */
+@media (min-width: 600px) {
+  .block-list li {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) repeat(7, auto);
+    align-items: center;
+  }
+  .block-list li > .block-note,
+  .block-list li > .block-binding { grid-column: 1 / -1; }
+}
+
+@media (max-width: 599px) {
+  /* The task's meta line: the time and the count keep their words, the
+     sentence between them ends in an ellipsis. */
+  .task-meta { flex-wrap: nowrap; }
+  .task-meta > * {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .task-meta > .task-time,
+  .task-meta > .task-size,
+  .task-meta > .task-size-input { flex: 0 0 auto; }
+
+  /* The day's quick-add: the line across the top, the time and the length
+     on the row under it - the rows it had, as rows. */
+  .quick-add-row {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+  }
+  .quick-add-row > .return-field { grid-column: 1 / -1; grid-row: 1; }
+
+  /* The Library's add line: the words across the top, the amount and Add
+     under them. */
+  .library-add { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .library-add > .return-field,
+  .library-add > .library-add-controls { grid-column: 1 / -1; }
+
+  /* A routine's row: its name, what it is, and the two words that change it
+     on a row of their own at the right. */
+  .routines-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: var(--s1) var(--s2);
+  }
+  .routines-row-title,
+  .routines-row-line { grid-column: 1 / -1; }
+  .routines-row > button:nth-last-of-type(2) { grid-column: 2; margin-left: 0; }
+  .routines-row > button:last-of-type { grid-column: 3; }
+
+  /* The review's nav: the stretch's name and its arrows on one row, the
+     copy for somewhere else on the row under them. */
+  .review-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .review-nav > .review-tools { grid-column: 1 / -1; grid-row: 2; }
+
+  /* The template editor's last row: Delete on a row of its own, Cancel and
+     Save on the row under it, Save last. */
+  .template-editor-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .template-editor-actions > .delete-template { grid-column: 1 / -1; justify-self: start; }
+  .template-editor-actions > .btn-quiet { grid-column: 1; justify-self: end; }
+  .template-editor-actions > .btn-primary { grid-column: 2; }
+
+  /* The template's sleep: the word over the two times, and who else sleeps
+     on the schedule on a line under them. */
+  .template-sleep {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+    justify-content: start;
+    align-items: center;
+  }
+  .template-sleep > :first-child { grid-column: 1 / -1; min-width: 0; }
+  .template-sleep > .template-sleep-shared { grid-column: 1 / -1; }
+
+  /* The roster's cycle: the date and the press stacked. A part's flex
+     basis was its width in the row; in a column it would be its height. */
+  .roster-cycle-row { flex-direction: column; align-items: stretch; }
+  .roster-cycle-row > * { flex: 0 0 auto; }
+
+  /* Sync's two fields, one under the other, each its own height. */
+  .sync-fields { flex-direction: column; }
+  .sync-fields > * { flex: 0 0 auto; }
+
+  /* Strips: a row of chips that scrolls sideways inside its own box - and
+     only inside it: the strip is never wider than its row (min-width: 0,
+     or a flex item keeps its content's width and the page scrolls
+     sideways with it), and what is in it keeps its size and its one line
+     (a chip that wrapped its name in the strip stood 51px beside 44). */
+  .duration-chips,
+  .wt-presets,
+  .wt-add-to,
+  .stamp-bar,
+  .block-add-marks,
+  .roster-legend,
+  .kitchen-chips {
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: var(--s1);
+  }
+  .duration-chips > *,
+  .wt-presets > *,
+  .wt-add-to > *,
+  .stamp-bar > *,
+  .block-add-marks > *,
+  .roster-legend > *,
+  .kitchen-chips > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  /* The week's seven day toggles, a hairline apart: at a finger's width
+     each, seven with a step between them were wider than a phone's row. */
+  .wt-day-toggles { gap: var(--hairline); }
+  /* The roster's bar on a phone: the tools on the first row, Apply at its
+     right, and the legend a strip of its own on the row under them - in a
+     row with the tools the legend had 90px, less than one kind's name. */
+  .roster-bar-row {
+    display: grid;
+    grid-template-columns: auto auto auto minmax(0, 1fr);
+    align-items: center;
+  }
+  .roster-bar-row > .roster-legend { grid-column: 1 / -1; grid-row: 2; }
+  .roster-bar-row > .roster-apply { justify-self: end; }
+  /* What is in a strip keeps its size, and the strip scrolls: the category
+     picker inside the marks row was squeezed into eight lines instead. */
+  .block-add-marks > * { flex: 0 0 auto; }
+  .category-picker { flex-wrap: nowrap; }
+  /* The block's library list: the word, the list and the plus on one line,
+     the list giving up width before anything wraps. */
+  .library-binding:not(.block-meal) { flex-wrap: nowrap; }
+  .library-binding > select { flex: 1 1 auto; min-width: 0; }
+  .segmented {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* The editor's block row: the grip, the time, the title and the length
+     on the first row; the marks, when they are open, on their own; the word
+     that stands for them, what the block draws from and the cross on the
+     last. The note panel and the binding line are rows of their own. */
+  .block-list li {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "grip time title size size"
+      "marks marks marks marks marks"
+      "toggle toggle library note remove"
+      "panel panel panel panel panel"
+      "binding binding binding binding binding";
+    align-items: center;
+  }
+  .block-list .block-marks.is-open { grid-area: marks; flex: none; }
+  .block-list .block-marks-toggle { grid-area: toggle; justify-self: start; }
+  /* The row's parts, by name. A part a row has not got leaves its cell empty. */
+  .block-list li > .library-item-grip { grid-area: grip; }
+  .block-list li > .task-time { grid-area: time; }
+  .block-list li > .block-title { grid-area: title; }
+  /* The length stands on the row's edge, in its cell: the edge it took
+     back for the flex row would put its digits past the row here. */
+  .block-list li > .task-size { grid-area: size; justify-self: end; margin-right: 0; padding-right: 0; }
+  .block-list li > .block-note-toggle { grid-area: note; justify-self: start; }
+  .block-list li > .block-library { grid-area: library; }
+  .block-list li > .block-remove { grid-area: remove; }
+  .block-list li > .block-note { grid-area: panel; }
+  .block-list li > .block-binding { grid-area: binding; }
+  /* The list a reading block draws from, its own row under the rest: left
+     unnamed it took the first column and made the row 473px wide. */
+  .block-list li > .library-binding { grid-column: 1 / -1; }
+}
+
+/* And on a desktop the same row of its own, under the block's line. */
+@media (min-width: 600px) {
+  .block-list li > .library-binding { grid-column: 1 / -1; }
+}
+
+/* A meal block's recipes: the word and the summary on the first row, and
+   the panel the summary opens on a row of its own under them - the row it
+   wrapped onto before, as a row. The panel is a grid item here because
+   the field around it is display: contents. */
+.library-binding.block-meal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+.library-binding.block-meal .recipes-field-summary { justify-self: start; }
+.library-binding.block-meal .recipes-field-panel { grid-column: 1 / -1; }
+
+/* The palette: a grid of swatches, as many a row as fit, rather than a row
+   that wraps. */
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--s8), max-content));
+  justify-content: start;
+}
+
+/* The calendar's bar below the wide breakpoint: the arrows and the name on
+   the first row; Today at the left and Something came up at the right on
+   the second; how to read the week at the left and the mode at the right on
+   the third - the rows it wrapped into, as rows. On a month only the mode
+   is under the name, at the right. */
+@media (max-width: 1023px) {
+  .calendar-bar {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .calendar-bar .calendar-nav { grid-column: 1 / -1; grid-row: 1; }
+  .calendar-bar .calendar-today { grid-row: 2; grid-column: 1; justify-self: start; }
+  .calendar-bar .calendar-came-up { grid-row: 2; grid-column: 2; justify-self: end; }
+  .calendar-bar .segmented-quiet { grid-row: 3; grid-column: 1; justify-self: start; }
+  .calendar-bar .segmented:not(.segmented-quiet) { grid-column: 2; justify-self: end; margin-left: 0; }
+}
+
+/* Choices laid out as a grid of cells rather than a row that wraps where
+   the width breaks it: the replan's days and its hours, the Library's
+   quick starts, a recipe field's meals and recipes, a list's colours.
+   Every choice stays on the screen; the cells line up. */
+.replan-chips,
+.library-presets {
+  display: grid;
+  /* A cell wide enough for "Afternoon gone" on one line, and every cell in
+     a row the row's height, so a choice that takes two lines does not
+     stand taller than the one beside it. */
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--s12) * 2 + var(--s8)), 1fr));
+  align-items: stretch;
+}
+
+.duration-chips.recipes-field-options {
+  display: grid;
+  /* Cells the width of a meal's word, so the options pack as they did and
+     the last row stays above the sheet's foot. */
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--s12) * 2), 1fr));
+}
+
+.library-colors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--dot-size));
+}
+
+/* The week editor's Add to: the word and the seven days as a strip at
+   every width - in the add form's column at 1920 the row broke too. */
+.wt-add-to {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: var(--s1);
+}
+
+/* A book's open row: the row, and its panel on a row of its own under it,
+   which a wrap gave it by luck of a full-width child before. */
+.library-item.is-detailed {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) repeat(3, auto);
+  align-items: center;
+}
+.library-item.is-detailed > .library-detail { grid-column: 1 / -1; }
+
+@media (max-width: 599px) {
+  /* A task's repeat, in its sheet: five choices in two columns of cells. */
+  .task-detail-field .segmented {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* A book's actions on a phone: two to a row, in cells. */
+  .library-detail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The journal's head: the name on its row, the search and the copies on
+     the row under it; and its body a column, the month over the text. */
+  .journal-view-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .journal-view-head > h2 { grid-column: 1 / -1; }
+  .journal-view-body { flex-direction: column; align-items: stretch; }
+  .journal-view-body > * { flex: 0 0 auto; }
+}

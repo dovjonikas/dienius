@@ -4764,3 +4764,68 @@ page scrolls where its content is long by nature; the report's list of
 those screens gained the editor with its palette open, which is the
 editor's page, and the month with its roster, whose rows are a month's.
 `e2e/one-look-fits.e2e.ts` holds both sizes.
+
+## A row stays a row: three shapes, never a wrap
+
+One look, stage 5 - rule 5 of the owner's brief of 2026-09-22: a row of
+controls that does not fit is made again and never left to wrap. The
+measure (`scripts/unify.js`, `wrapped`) found 181 rows wrapping on a
+375px phone or at 1920, most of them `flex-wrap: wrap` rows that broke
+where the width happened to break them - the quick-add's time and length
+under its line one day and beside it the next, the calendar's bar in two
+or three rows depending on the month's name.
+
+**Every wrapping row became one of three things**, and the stylesheet's
+last section says which for each:
+
+- **A strip** - `flex-wrap: nowrap; overflow-x: auto` - for a row of
+  chips: the meals, the lengths, the week editor's presets and day
+  toggles, the month's stamp bar, the roster's legend, the marks row and
+  its category picker, a segmented control with more choices than a
+  phone's width. The row scrolls sideways inside its own box, the way the
+  Library's list chips have since v2.19; the page never does.
+- **A second row by design** - a grid with a row for each part, in the
+  place of a flex row that wrapped into the same shape by luck: the
+  quick-add (the line, then the time and the length), the Library's add
+  line, the calendar's bar (the arrows and the name; Today and Something
+  came up; how to read the week and the mode), the review's nav, the
+  editor's last row (Delete on its own, Cancel and Save under it), a
+  routine's row, the template's sleep, the roster's bar (its tools, then
+  its legend as a strip of its own), a meal block's recipes (the word and
+  the summary, then the panel it opens), and the editor's block row. A
+  grid is not a wrap: each part has a place, and the place does not move
+  with the width.
+- **One line that gives up its tail** - `nowrap` with an ellipsis on the
+  long part - for the task's meta line on a phone, where the pace's
+  sentence ends in three dots rather than pushing the count under the
+  time.
+
+**Two rows were made lists.** The Today rail's templates are a column of
+chips now, one a line, rather than chips wrapping onto three lines in a
+240px rail; the palette is a grid of swatches.
+
+**The editor's block row on a desktop** is a grid too: one line - the
+grip, the time, the title giving up its tail, the length, the marks, what
+it draws from, the note and the cross, each in a column - with the note
+panel and the binding line as rows of their own under it. Before, the row
+wrapped for those two by design and the measure counted it.
+
+**A strip is never wider than its row.** The first cut let a strip keep
+its content's width (a flex item's minimum is its content), and on a 390px
+phone the template editor's marks row pushed the whole page 115px
+sideways - the one thing rule 6 says never happens. A strip is
+`min-width: 0; max-width: 100%`, and what is in it keeps its size and its
+one line, so it scrolls inside its box and nothing else moves.
+
+**What stayed a wrap and why: nothing.** The measure skips a grid, a
+column and a nowrap row, so a row that passes it is one of the three
+shapes above and says so in the stylesheet; there is no exception list.
+
+**Two things the new rows brought out.** A task's sheet held a meal's
+recipes in a body that could not be shorter than its content, so the
+sheet grew past the window and its foot stood over the last chips; the
+body scrolls now (`min-height: 0`) and the foot stays. And the sweep's
+"control covered" asked what stands at the middle of the part of a
+control that is on screen - a chip with one pixel left at the edge of a
+box it scrolls in was "under" the sheet's foot; a control mostly scrolled
+out of its box is further down the box, not covered, and is not asked.

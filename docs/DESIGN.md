@@ -56,7 +56,12 @@ from Templates to Kitchen to the day, nothing may jump.
    limit, and what belongs to a field stands in the field's row.
 5. **A row stays a row.** A row that does not fit is redesigned - made
    smaller, its chips made a menu, or given a second row with its own
-   label - and never left to wrap.
+   label - and never left to wrap. Since stage 5 every such row is one of
+   three shapes, named in the stylesheet's last section: a strip of chips
+   that scrolls sideways inside its own box; a second row by design, a
+   grid with a row for each part; or one line whose long part ends in an
+   ellipsis. A grid, a column and a nowrap row are what the measure
+   passes, so a row that passes is one of the three and says so.
 6. **It fits.** On a desktop no page scrolls: a list that is long scrolls
    inside its own box. On a phone the page scrolls only where the content
    is long by nature - a day, a week's agenda, a list of templates, books

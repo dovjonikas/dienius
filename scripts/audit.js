@@ -529,6 +529,14 @@
       if (b.closest('.visually-hidden')) continue
       if (layer && !layer.contains(b)) continue
       const r = seenRect(b)
+      // A control mostly scrolled out of its box - a sliver of it at the
+      // box's edge, the rest further down - is not covered; it is further
+      // down the box, one scroll away. Only what a person sees most of is
+      // asked whether something stands over it. A recipe field's last
+      // chips read as under the sheet's foot this way, by the pixel of
+      // them left above the body's edge.
+      const whole = b.getBoundingClientRect()
+      if (r.height < whole.height / 2 || r.width < whole.width / 2) continue
       const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
       if (!hit) continue
       if (hit === b || b.contains(hit) || hit.contains(b)) continue

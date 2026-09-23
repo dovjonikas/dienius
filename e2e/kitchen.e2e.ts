@@ -62,12 +62,14 @@ test('a recipe is written, read as a list and steps, and found by its meal and i
   await page.getByRole('searchbox', { name: 'Search recipes' }).fill('lentils')
   await expect(rows).toHaveText(['A simple soup'])
   if (phone) {
-    // The meals wrap inside the screen rather than running off it.
+    // The meals are a strip that scrolls inside its own box - one look,
+    // rule 5, a row stays a row - and the page never scrolls sideways.
     const overflow = await page.evaluate(() => {
       const chips = document.querySelector('.kitchen-chips') as HTMLElement
-      return { scroll: chips.scrollWidth, client: chips.clientWidth, page: document.documentElement.scrollWidth - window.innerWidth }
+      return { strip: getComputedStyle(chips).overflowX, wrap: getComputedStyle(chips).flexWrap, page: document.documentElement.scrollWidth - window.innerWidth }
     })
-    expect(overflow.scroll).toBeLessThanOrEqual(overflow.client)
+    expect(overflow.strip).toBe('auto')
+    expect(overflow.wrap).toBe('nowrap')
     expect(overflow.page).toBeLessThanOrEqual(0)
   }
 

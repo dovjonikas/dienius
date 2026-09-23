@@ -87,7 +87,19 @@ roster now counted as such. 651 findings are left on 111 screens and
 sizes, 15 of them clean: rule 2 79, rule 3 348, rule 4 43, rule 5 181,
 rule 6 0. The pictures of the pages that changed are in
 [`screenshots/unify/after/`](screenshots/unify/after/). The table under
-"The count, after stage 4" is the whole measure as it stands.
+"The count, after stage 5" is the whole measure as it stands, with the
+stage 4 measure in git (0406711).
+
+**After stage 5 - a row stays a row.** Every row the measure found
+wrapping is a strip, a second row by design or one line that gives up its
+tail (DESIGN.md, rule 5; DECISIONS "A row stays a row"). Rule 5 finds
+nothing at either size - 181 rows wrapped before it, the task's meta line
+and the quick-add on every phone screen among them. 488 findings are left
+on 111 screens and sizes, 21 of them clean: rule 2 79, rule 3 366, rule 4
+43, rule 5 0, rule 6 0. Rule 3 grew by eighteen: a row that wrapped into
+two lines had its controls' heights compared a line at a time, and one
+line of them compares them all - the strips show what the wrap hid. The
+table under "The count, after stage 5" is the whole measure as it stands.
 
 ### The count
 
@@ -199,71 +211,71 @@ rule 6 0. The pictures of the pages that changed are in
 
 **1088 found**, and rule 7 below, which is one finding for the app.
 
-### The count, after stage 4
+### The count, after stage 5
 
-Measured on 2026-09-23 with the stage 4 tree, the sample day's demo content only. A screen with nothing in its row is closed.
+Measured on 2026-09-23 with the stage 5 tree, the sample day's demo content only. A screen with nothing in its row is closed.
 
 | Screen | Size | 1 | 2 | 3 | 4 | 5 | 6 | Found |
 |---|---|---|---|---|---|---|---|---|
-| Day: Today | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Today (notice dismissed) | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Today (North open) | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Today (North after sleep) | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Gap offers | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Focus | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Day: Timer | 1920x1080 |  | 1 | 4 |  | 1 |  | 6 |
-| Day: Replan: something came up | 1920x1080 |  |  | 4 | 1 | 3 |  | 8 |
-| Day: Replan: shift the rest | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Day: Replan: i was away | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Day: Low day | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Day: Today (after a night shift) | 1920x1080 |  |  | 3 |  | 1 |  | 4 |
-| Day: Today | 375x812 |  |  | 3 |  | 2 |  | 5 |
-| Day: Today (notice dismissed) | 375x812 |  |  | 3 |  | 2 |  | 5 |
-| Day: Today (North open) | 375x812 |  |  | 3 |  | 2 |  | 5 |
-| Day: Today (North after sleep) | 375x812 |  |  | 3 |  | 2 |  | 5 |
-| Day: Gap offers | 375x812 |  |  | 3 |  | 2 |  | 5 |
-| Day: Focus | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Day: Timer | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Day: Replan: something came up | 375x812 |  | 1 | 4 |  | 4 |  | 9 |
-| Day: Replan: shift the rest | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Day: Replan: i was away | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Day: Low day | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Day: Today (after a night shift) | 375x812 |  |  | 3 |  | 2 |  | 5 |
+| Day: Today | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Today (notice dismissed) | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Today (North open) | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Today (North after sleep) | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Gap offers | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Focus | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Day: Timer | 1920x1080 |  | 1 | 4 |  |  |  | 5 |
+| Day: Replan: something came up | 1920x1080 |  |  | 4 | 1 |  |  | 5 |
+| Day: Replan: shift the rest | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Day: Replan: i was away | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Day: Low day | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Day: Today (after a night shift) | 1920x1080 |  |  | 3 |  |  |  | 3 |
+| Day: Today | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Today (notice dismissed) | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Today (North open) | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Today (North after sleep) | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Gap offers | 375x812 |  |  | 4 |  |  |  | 4 |
+| Day: Focus | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Timer | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Replan: something came up | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Replan: shift the rest | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Replan: i was away | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Low day | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Day: Today (after a night shift) | 375x812 |  |  | 4 |  |  |  | 4 |
 | Week: Calendar week | 1920x1080 |  |  |  |  |  |  | 0 |
 | Week: Calendar week (a focus running) | 1920x1080 |  |  | 1 |  |  |  | 1 |
 | Week: Calendar agenda | 1920x1080 |  |  | 1 |  |  |  | 1 |
 | Week: Calendar week (after a night shift) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Week: Calendar week | 375x812 |  |  | 3 |  | 1 |  | 4 |
-| Week: Calendar week (a focus running) | 375x812 |  | 1 | 4 |  | 1 |  | 6 |
-| Week: Calendar agenda | 375x812 |  | 1 | 1 |  | 1 |  | 3 |
-| Week: Calendar week (after a night shift) | 375x812 |  |  | 3 |  | 1 |  | 4 |
+| Week: Calendar week | 375x812 |  |  | 3 |  |  |  | 3 |
+| Week: Calendar week (a focus running) | 375x812 |  | 1 | 4 |  |  |  | 5 |
+| Week: Calendar agenda | 375x812 |  | 1 | 1 |  |  |  | 2 |
+| Week: Calendar week (after a night shift) | 375x812 |  |  | 3 |  |  |  | 3 |
 | Month: Calendar month | 1920x1080 |  |  |  |  |  |  | 0 |
 | Month: Calendar month (day peek) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Month: Calendar month | 375x812 |  |  |  |  | 2 |  | 2 |
+| Month: Calendar month | 375x812 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates | 1920x1080 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (routines) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Templates and the editor: Templates (a routine) | 1920x1080 |  | 1 |  | 1 |  |  | 2 |
-| Templates and the editor: Template editor | 1920x1080 |  | 1 | 1 | 2 | 2 |  | 6 |
-| Templates and the editor: Template colour | 1920x1080 |  | 2 | 1 | 2 | 3 |  | 8 |
-| Templates and the editor: Week template editor | 1920x1080 |  | 1 | 1 | 2 | 1 |  | 5 |
+| Templates and the editor: Template editor | 1920x1080 |  | 1 | 1 | 2 |  |  | 4 |
+| Templates and the editor: Template colour | 1920x1080 |  | 2 | 1 | 2 |  |  | 5 |
+| Templates and the editor: Week template editor | 1920x1080 |  | 1 | 1 | 2 |  |  | 4 |
 | Templates and the editor: Week template editor (block open) | 1920x1080 |  | 1 | 1 | 1 |  |  | 3 |
-| Templates and the editor: Template editor (a meal's recipes) | 1920x1080 |  | 1 | 1 | 3 | 5 |  | 10 |
-| Templates and the editor: Template editor (a night shift) | 1920x1080 |  | 1 | 1 | 2 | 1 |  | 5 |
-| Templates and the editor: Templates | 375x812 |  | 2 |  |  | 2 |  | 4 |
-| Templates and the editor: Templates (routines) | 375x812 |  | 2 |  |  | 2 |  | 4 |
-| Templates and the editor: Templates (a routine) | 375x812 |  | 3 |  |  | 3 |  | 6 |
-| Templates and the editor: Template editor | 375x812 |  | 3 | 2 |  | 12 |  | 17 |
-| Templates and the editor: Template colour | 375x812 |  | 4 | 2 |  | 13 |  | 19 |
-| Templates and the editor: Week template editor | 375x812 |  | 3 | 1 |  | 4 |  | 8 |
-| Templates and the editor: Week template editor (block open) | 375x812 |  | 3 | 1 |  | 2 |  | 6 |
-| Templates and the editor: Template editor (a meal's recipes) | 375x812 |  | 3 | 2 |  | 14 |  | 19 |
-| Templates and the editor: Template editor (a night shift) | 375x812 |  | 3 | 2 |  | 7 |  | 12 |
+| Templates and the editor: Template editor (a meal's recipes) | 1920x1080 |  | 1 | 1 | 3 |  |  | 5 |
+| Templates and the editor: Template editor (a night shift) | 1920x1080 |  | 1 | 1 | 2 |  |  | 4 |
+| Templates and the editor: Templates | 375x812 |  | 2 |  |  |  |  | 2 |
+| Templates and the editor: Templates (routines) | 375x812 |  | 2 |  |  |  |  | 2 |
+| Templates and the editor: Templates (a routine) | 375x812 |  | 3 |  |  |  |  | 3 |
+| Templates and the editor: Template editor | 375x812 |  | 3 | 2 |  |  |  | 5 |
+| Templates and the editor: Template colour | 375x812 |  | 4 | 2 |  |  |  | 6 |
+| Templates and the editor: Week template editor | 375x812 |  | 3 | 1 |  |  |  | 4 |
+| Templates and the editor: Week template editor (block open) | 375x812 |  | 3 | 1 |  |  |  | 4 |
+| Templates and the editor: Template editor (a meal's recipes) | 375x812 |  | 3 | 2 |  |  |  | 5 |
+| Templates and the editor: Template editor (a night shift) | 375x812 |  | 3 | 2 |  |  |  | 5 |
 | Roster: Calendar (the roster) | 1920x1080 |  |  |  |  |  |  | 0 |
 | Roster: Calendar (what Apply will do) | 1920x1080 |  | 1 |  |  |  |  | 1 |
 | Roster: Calendar (a cycle) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Roster: Calendar (the roster) | 375x812 |  |  |  |  | 2 |  | 2 |
-| Roster: Calendar (what Apply will do) | 375x812 |  | 1 |  |  | 2 |  | 3 |
-| Roster: Calendar (a cycle) | 375x812 |  |  |  |  | 3 |  | 3 |
+| Roster: Calendar (the roster) | 375x812 |  |  |  |  |  |  | 0 |
+| Roster: Calendar (what Apply will do) | 375x812 |  | 1 |  |  |  |  | 1 |
+| Roster: Calendar (a cycle) | 375x812 |  |  |  |  |  |  | 0 |
 | Kitchen and a recipe: Kitchen | 1920x1080 |  |  |  | 1 |  |  | 1 |
 | Kitchen and a recipe: Kitchen (a meal chosen) | 1920x1080 |  |  |  | 1 |  |  | 1 |
 | Kitchen and a recipe: Kitchen (a recipe) | 1920x1080 |  |  |  |  |  |  | 0 |
@@ -272,52 +284,52 @@ Measured on 2026-09-23 with the stage 4 tree, the sample day's demo content only
 | Kitchen and a recipe: Kitchen (paste many) | 1920x1080 |  | 1 |  |  |  |  | 1 |
 | Kitchen and a recipe: Kitchen (a card's meals) | 1920x1080 |  | 1 |  | 1 |  |  | 2 |
 | Kitchen and a recipe: Kitchen (select) | 1920x1080 |  |  |  |  |  |  | 0 |
-| Kitchen and a recipe: Kitchen | 375x812 |  |  |  |  | 1 |  | 1 |
-| Kitchen and a recipe: Kitchen (a meal chosen) | 375x812 |  |  |  |  | 1 |  | 1 |
+| Kitchen and a recipe: Kitchen | 375x812 |  |  |  |  |  |  | 0 |
+| Kitchen and a recipe: Kitchen (a meal chosen) | 375x812 |  |  |  |  |  |  | 0 |
 | Kitchen and a recipe: Kitchen (a recipe) | 375x812 |  |  |  |  |  |  | 0 |
-| Kitchen and a recipe: Kitchen (writing) | 375x812 |  | 1 |  |  | 1 |  | 2 |
+| Kitchen and a recipe: Kitchen (writing) | 375x812 |  | 1 |  |  |  |  | 1 |
 | Kitchen and a recipe: Kitchen (to a template) | 375x812 |  | 1 |  |  |  |  | 1 |
 | Kitchen and a recipe: Kitchen (paste many) | 375x812 |  | 1 |  |  |  |  | 1 |
-| Kitchen and a recipe: Kitchen (a card's meals) | 375x812 |  | 1 |  |  | 1 |  | 2 |
-| Kitchen and a recipe: Kitchen (select) | 375x812 |  |  |  |  | 1 |  | 1 |
+| Kitchen and a recipe: Kitchen (a card's meals) | 375x812 |  | 1 |  |  |  |  | 1 |
+| Kitchen and a recipe: Kitchen (select) | 375x812 |  |  |  |  |  |  | 0 |
 | Books: Library | 1920x1080 |  | 1 | 17 | 2 |  |  | 20 |
-| Books: Library (item panel) | 1920x1080 |  | 1 | 18 | 4 | 1 |  | 24 |
+| Books: Library (item panel) | 1920x1080 |  | 1 | 17 | 4 |  |  | 22 |
 | Books: Library (a new list) | 1920x1080 |  | 2 | 17 | 4 |  |  | 23 |
 | Books: Library (list settings) | 1920x1080 |  | 1 | 17 | 2 |  |  | 20 |
-| Books: Library | 375x812 |  | 2 | 15 |  | 2 |  | 19 |
-| Books: Library (item panel) | 375x812 |  | 2 | 16 |  | 5 |  | 23 |
-| Books: Library (a new list) | 375x812 |  | 3 | 15 |  | 4 |  | 22 |
-| Books: Library (list settings) | 375x812 |  | 2 | 15 |  | 3 |  | 20 |
+| Books: Library | 375x812 |  | 2 | 15 |  |  |  | 17 |
+| Books: Library (item panel) | 375x812 |  | 2 | 15 |  |  |  | 17 |
+| Books: Library (a new list) | 375x812 |  | 3 | 15 |  |  |  | 18 |
+| Books: Library (list settings) | 375x812 |  | 2 | 15 |  |  |  | 17 |
 | Picture: North | 1920x1080 |  |  |  |  |  |  | 0 |
 | Picture: North (writing) | 1920x1080 |  | 1 |  |  |  |  | 1 |
 | Picture: North | 375x812 |  |  |  |  |  |  | 0 |
 | Picture: North (writing) | 375x812 |  | 1 |  |  |  |  | 1 |
 | Review: Review week | 1920x1080 |  |  |  |  |  |  | 0 |
 | Review: Review month | 1920x1080 |  |  |  |  |  |  | 0 |
-| Review: Review week | 375x812 |  | 1 |  |  | 1 |  | 2 |
-| Review: Review month | 375x812 |  | 1 |  |  | 1 |  | 2 |
-| Search: Command palette | 1920x1080 |  |  | 4 | 1 | 1 |  | 6 |
-| Search: Command palette | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Notes: Header: notes | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Notes: Scratch | 1920x1080 |  |  | 5 |  | 1 |  | 6 |
-| Notes: Header: notes | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Notes: Scratch | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Journal: Header: journal | 1920x1080 |  |  | 4 |  | 1 |  | 5 |
-| Journal: Journal (open full) | 1920x1080 |  |  | 4 | 1 | 1 |  | 6 |
-| Journal: Header: journal | 375x812 |  | 1 | 4 |  | 2 |  | 7 |
-| Journal: Journal (open full) | 375x812 |  | 1 | 4 |  | 4 |  | 9 |
+| Review: Review week | 375x812 |  | 1 |  |  |  |  | 1 |
+| Review: Review month | 375x812 |  | 1 |  |  |  |  | 1 |
+| Search: Command palette | 1920x1080 |  |  | 4 | 1 |  |  | 5 |
+| Search: Command palette | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Notes: Header: notes | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Notes: Scratch | 1920x1080 |  |  | 5 |  |  |  | 5 |
+| Notes: Header: notes | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Notes: Scratch | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Journal: Header: journal | 1920x1080 |  |  | 4 |  |  |  | 4 |
+| Journal: Journal (open full) | 1920x1080 |  |  | 4 | 1 |  |  | 5 |
+| Journal: Header: journal | 375x812 |  | 1 | 5 |  |  |  | 6 |
+| Journal: Journal (open full) | 375x812 |  | 1 | 5 |  |  |  | 6 |
 | Settings: Settings | 1920x1080 |  |  | 10 | 4 |  |  | 14 |
 | Settings: Settings (templates as JSON) | 1920x1080 |  |  | 10 | 4 |  |  | 14 |
-| Settings: Settings | 375x812 |  |  | 10 |  | 2 |  | 12 |
-| Settings: Settings (templates as JSON) | 375x812 |  |  | 10 |  | 2 |  | 12 |
-| Dialogs: Task detail (a meal's recipe) | 1920x1080 |  |  | 4 | 2 | 1 |  | 7 |
-| Dialogs: Task detail | 1920x1080 |  |  | 4 | 1 | 1 |  | 6 |
-| Dialogs: Shortcut card | 1920x1080 |  | 1 | 4 |  | 1 |  | 6 |
-| Dialogs: Task detail (a meal's recipe) | 375x812 |  |  | 4 |  | 5 |  | 9 |
-| Dialogs: Task detail | 375x812 |  |  | 4 |  | 4 |  | 8 |
-| Dialogs: Shortcut card | 375x812 |  | 2 | 4 |  | 2 |  | 8 |
+| Settings: Settings | 375x812 |  |  | 10 |  |  |  | 10 |
+| Settings: Settings (templates as JSON) | 375x812 |  |  | 10 |  |  |  | 10 |
+| Dialogs: Task detail (a meal's recipe) | 1920x1080 |  |  | 4 | 2 |  |  | 6 |
+| Dialogs: Task detail | 1920x1080 |  |  | 4 | 1 |  |  | 5 |
+| Dialogs: Shortcut card | 1920x1080 |  | 1 | 4 |  |  |  | 5 |
+| Dialogs: Task detail (a meal's recipe) | 375x812 |  |  | 5 |  |  |  | 5 |
+| Dialogs: Task detail | 375x812 |  |  | 5 |  |  |  | 5 |
+| Dialogs: Shortcut card | 375x812 |  | 2 | 5 |  |  |  | 7 |
 
-**651 found**, and rule 7 below, which is one finding for the app.
+**488 found**, and rule 7 below, which is one finding for the app.
 
 ### Rule 7, the frame
 
