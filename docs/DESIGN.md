@@ -53,7 +53,13 @@ from Templates to Kitchen to the day, nothing may jump.
    are one height and stand on one centre line; everything that has a
    corner has the one corner; the app has five type sizes.
 4. **Nothing stretched.** A field is as wide as what goes in it, up to a
-   limit, and what belongs to a field stands in the field's row.
+   limit, and what belongs to a field stands in the field's row. The limit
+   is `--field-w`, 24rem, since stage 6; a joined line (a block's time, its
+   words and its length; a book's words, amount and Add) is as wide as its
+   parts, with its words one field wide. A field that is a narrow dialog's
+   own line - the palette's search, a field across a task's sheet - is the
+   dialog's width, and the dialog, no wider than the reading width, is the
+   limit there.
 5. **A row stays a row.** A row that does not fit is redesigned - made
    smaller, its chips made a menu, or given a second row with its own
    label - and never left to wrap. Since stage 5 every such row is one of

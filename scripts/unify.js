@@ -228,6 +228,12 @@
     for (const el of all) {
       if (!el.matches('input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select')) continue
       const r = el.getBoundingClientRect()
+      // A narrow dialog's own line - the palette's search, a field across a
+      // task's sheet - is the dialog's width, and the dialog is the limit:
+      // it is not a field stretched across a page. Narrow is the reading
+      // width or less.
+      const dialog = el.closest('[role="dialog"]')
+      if (dialog && dialog.getBoundingClientRect().width <= 640) continue
       if (r.width > limit) out.push(`${name(el)} "${el.getAttribute('placeholder') || el.getAttribute('aria-label') || ''}" is ${Math.round(r.width)}px wide`)
     }
     return out

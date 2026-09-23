@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** one look's stage 5, a row stays a row, is done - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** one look's stage 6, nothing stretched, is done - one limit for a field and a joined line as wide as its parts; stage 5 before it, a row stays a row - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.40 - A kind after a night
 
@@ -342,8 +342,16 @@ docs/DESIGN-AUDIT.md holds the findings, screen by screen.
   task's meta line). The Today rail lists its templates as a column, and
   the palette is a grid. DECISIONS "A row stays a row" has the three
   shapes and why there is no exception list.
-- **Next:** the left lines (2), the stretched fields (4) and the rows'
-  heights (3); the after pictures.
+- **Stage 6 - nothing stretched: done.** One limit for a field, `--field-w`
+  (24rem), on every field that reached a page's or a card's width at 1024
+  and up - a template's name across 1500px, a block's words across 1350,
+  the Library's forms, the searches, sync's fields, a routine's name, a
+  recipe's name. A joined line is as wide as its parts, so its focus ring
+  hugs it; the template's colour stands right after its name. The measure
+  leaves out a field that is a narrow dialog's own line (the palette, a
+  task's sheet, the replan), where the dialog is the limit.
+- **Next:** the left lines (2) and the rows' heights (3); the after
+  pictures.
 
 ## Pirmas realus menuo, dry run
 

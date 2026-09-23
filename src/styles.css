@@ -289,6 +289,8 @@
      Today, the week and the month use the whole width for their own grids. */
   --page-w: 840px;
   --read-w: 640px;
+  /* A field is as wide as what goes in it, up to this - one look, rule 4. */
+  --field-w: 24rem;
   --rail-open-w: 176px;
   --timeline-gutter: 44px;
   --touch: 44px;
@@ -18784,4 +18786,46 @@ button.link-out {
   .journal-view-head > h2 { grid-column: 1 / -1; }
   .journal-view-body { flex-direction: column; align-items: stretch; }
   .journal-view-body > * { flex: 0 0 auto; }
+}
+
+/* ------------------------------------------------------------------------
+   One look, rule 4 - nothing stretched (the owner's brief of 2026-09-22;
+   docs/DESIGN.md, docs/DESIGN-AUDIT.md, stage 6). A field is as wide as
+   what goes in it, up to one limit, --field-w, and what belongs to a field
+   stands in the field's row. Every field that reached a page's width or a
+   card's - a template's name across 1500px, a block's words across 1350, a
+   search across 550 - is held to the limit here. A field that is a narrow
+   dialog's own line (the palette, a task's sheet, the replan) is the
+   dialog's width, and the dialog is the limit there. On a phone every
+   field is narrower than the limit, so nothing here matches.
+   ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  .field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .field select,
+  .template-name-row input,
+  .library-detail-row input,
+  .library-new input,
+  .library-quick-add input,
+  .routines-form input,
+  .sync-field input,
+  .kitchen-search,
+  .journal-search,
+  .recipes-field-search {
+    max-width: var(--field-w);
+  }
+
+  /* A joined line - a block's time, its words and how long; a book's
+     words, its amount and Add - is as wide as its parts, with the words one
+     field wide. Stretched across the card, the words ran to the far edge
+     and the line's focus ring drew round all of it. */
+  .block-add-line,
+  .library-add {
+    width: fit-content;
+    max-width: 100%;
+  }
+  .block-add-line > .return-field,
+  .library-add > .return-field {
+    flex: 0 1 auto;
+    width: var(--field-w);
+  }
 }

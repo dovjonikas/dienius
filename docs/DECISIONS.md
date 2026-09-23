@@ -4829,3 +4829,32 @@ body scrolls now (`min-height: 0`) and the foot stays. And the sweep's
 control that is on screen - a chip with one pixel left at the edge of a
 box it scrolls in was "under" the sheet's foot; a control mostly scrolled
 out of its box is further down the box, not covered, and is not asked.
+
+## Nothing stretched: one limit, and the joined line as wide as its parts
+
+One look, stage 6 - rule 4 of the owner's brief of 2026-09-22, the first
+thing the owner named: the template's name field stretched across the whole
+width with its colour dot left outside it. The measure found 43 fields
+wider than 400px on a 1920 screen, the name at 1506, a block's words at
+1362, the Library's new-list fields at 1440.
+
+**One limit, `--field-w`, 24rem.** 384px holds a long title, a URL, a
+search, a token, and it is the answer's column of a form rather than the
+page's width. Every field that reached a page's or a card's width is held
+to it at 1024px and up; on a phone every field is narrower anyway.
+
+**A joined line is as wide as its parts.** The block's time, words and
+length, and the book's words, amount and Add, are one line of touching
+parts. Capping the words alone left the line's box across the card, its
+focus ring drawn round an empty tail; the line is `width: fit-content` now,
+with its words one field wide, so the parts and the ring end together.
+
+**The colour stands after the name.** The name row is the name, one field
+wide, and its colour right after it - the accessory in the field's row,
+where the brief put it, rather than at the far edge of the card.
+
+**A narrow dialog's own line is not stretched.** The palette's search is
+the palette (560px), a link's field is a task sheet's width (460 less its
+room): each is the dialog's line, and the dialog, no wider than the reading
+width, is the limit there. The measure says so rather than an exception
+list: a field inside a dialog no wider than 640px is not asked.
