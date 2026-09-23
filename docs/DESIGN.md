@@ -48,7 +48,17 @@ from Templates to Kitchen to the day, nothing may jump.
 
 1. **One grid.** Every margin, padding and gap is a step of the scale under
    Spacing, by its token. No spacing in `styles.css` is written as a number.
-2. **One left line.** In a card or a form, every row starts on one edge.
+2. **One left line.** In a card or a form, every row starts on one edge -
+   or, the owner's own words, every start corner stands on another: a line
+   under a title starts where the title's words do. The measure reads a
+   row's start the way the eye does (since stage 7): things side by side on
+   one line are one row; a word on a painted ground (a key cap, a chip)
+   starts where the ground does; a quiet word whose ground reaches out past
+   the edge it stands on is its words, a field or a filled button its box; a
+   box to tick and a mark (a category's edge, a colour's dot) start a row
+   too; a strip scrolled along starts where the strip does. A row of presses
+   ending on the card's right edge stands on that edge, and a row starting on
+   a corner of the row above stands on that corner.
 3. **One height in a row, one corner, five sizes.** The controls in a row
    are one height and stand on one centre line; everything that has a
    corner has the one corner; the app has five type sizes.

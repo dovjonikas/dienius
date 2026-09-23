@@ -425,6 +425,19 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
         </button>
       </div>
 
+      {/* Where this list is used, from the list's side. The block's own editor
+          answers the other half - which book this block will carry - and the
+          two are different questions with different readers, so neither is
+          the other said twice (CONVENTIONS 23). Nothing points at it, no
+          line. Under the head, before the settings: it stands on the
+          name's corner, and a form opened between them left it indented
+          under the form. */}
+      {uses.length > 0 && (
+        <p className="library-list-used">
+          Used by {uses.map(u => `${u.blockTitle} in ${u.templateName}`).join(', ')}
+        </p>
+      )}
+
       {settingsOpen && (
         <div className="library-list-settings">
           <label className="field">
@@ -487,17 +500,6 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             </button>
           </div>
         </div>
-      )}
-
-      {/* Where this list is used, from the list's side. The block's own editor
-          answers the other half - which book this block will carry - and the
-          two are different questions with different readers, so neither is
-          the other said twice (CONVENTIONS 23). Nothing points at it, no
-          line. */}
-      {uses.length > 0 && (
-        <p className="library-list-used">
-          Used by {uses.map(u => `${u.blockTitle} in ${u.templateName}`).join(', ')}
-        </p>
       )}
 
       {open && (

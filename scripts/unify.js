@@ -127,9 +127,41 @@
     const r = el.getBoundingClientRect()
     return (ground || el.tagName === 'FORM' || el.getAttribute('role') === 'dialog') && radius && room && r.width >= 240 && r.height >= 80
   }
-  /** Where a row starts to the eye: the left of its first word or control. */
-  function startOf(/** @type {HTMLElement} */ row) {
-    let left = Infinity
+  /** Whether an element paints something of its own: a ground, or a left edge. */
+  const paints = (/** @type {Element} */ el) => {
+    const cs = getComputedStyle(el)
+    const clear = (/** @type {string} */ c) => c === 'transparent' || /,\s*0\)$|\/\s*0\)$/.test(c)
+    const ground = !clear(cs.backgroundColor) || cs.backgroundImage !== 'none'
+    const edge = parseFloat(cs.borderLeftWidth) > 0 && cs.borderLeftStyle !== 'none' && !clear(cs.borderLeftColor)
+    return ground || edge
+  }
+  /**
+   * An x as it is seen: not left of the box that clips it sideways, up to
+   * the row. A strip scrolled along has its first chip out of view, and the
+   * row starts where the strip does, not where the scrolled chip would.
+   */
+  const seenX = (/** @type {Element} */ el, /** @type {number} */ x, /** @type {Element} */ row) => {
+    for (let a = /** @type {Element | null} */ (el); a; a = a === row ? null : a.parentElement) {
+      if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(a).overflowX)) x = Math.max(x, a.getBoundingClientRect().left)
+    }
+    return x
+  }
+  /**
+   * Where a row starts to the eye - and every corner along it, where each
+   * thing on it starts, for a row that stands on a corner of the row above.
+   *
+   * - A word starts where its ground does, when something under it paints
+   *   one: a key cap's letters, a chip's words.
+   * - A control that paints - a field, a filled button - starts at its box.
+   *   One that does not - a quiet word, whose ground under the pointer
+   *   reaches out past the edge its words stand on (an edge taken back) - is
+   *   its words; one with neither words nor ground is its box.
+   * - A box to tick, and a mark - a category's edge, a colour's dot - start
+   *   a row to the eye as well, though a reader is told nothing by them.
+   */
+  function cornersOf(/** @type {HTMLElement} */ row) {
+    /** @type {number[]} */
+    const xs = []
     const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT)
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
       if (!node.textContent?.trim()) continue
@@ -138,11 +170,37 @@
       const range = document.createRange()
       range.selectNodeContents(node)
       const r = range.getBoundingClientRect()
-      if (r.width > 0) left = Math.min(left, r.left)
+      if (r.width <= 0) continue
+      let x = r.left
+      for (let a = /** @type {Element | null} */ (parent); a; a = a === row ? null : a.parentElement) {
+        if (paints(a)) {
+          x = Math.min(x, a.getBoundingClientRect().left)
+          break
+        }
+      }
+      xs.push(seenX(parent, x, row))
     }
-    for (const c of row.querySelectorAll(CONTROLS)) if (shown(c)) left = Math.min(left, c.getBoundingClientRect().left)
-    if (row.matches(CONTROLS)) left = Math.min(left, row.getBoundingClientRect().left)
-    return left
+    for (const c of [row, ...row.querySelectorAll(CONTROLS)]) {
+      if (!c.matches(CONTROLS) || !shown(c)) continue
+      // A quiet control with words is its words, which the walk above has;
+      // one that paints, or has no words, is its box.
+      if (paints(c) || !(c.textContent || '').trim()) xs.push(seenX(c, c.getBoundingClientRect().left, row))
+    }
+    for (const c of row.querySelectorAll('input[type="checkbox"], input[type="radio"], .check')) if (shown(c)) xs.push(seenX(c, c.getBoundingClientRect().left, row))
+    for (const m of row.querySelectorAll('*')) {
+      if (m.children.length || (m.textContent || '').trim()) continue
+      const r = m.getBoundingClientRect()
+      if (r.width < 2 || r.width > 24 || r.height < 8) continue
+      const cs = getComputedStyle(m)
+      if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0 || !paints(m)) continue
+      xs.push(seenX(m, r.left, row))
+    }
+    return xs.sort((a, b) => a - b)
+  }
+  /** Where a row starts to the eye: its first corner. */
+  function startOf(/** @type {HTMLElement} */ row) {
+    const xs = cornersOf(row)
+    return xs.length ? xs[0] : Infinity
   }
   function leftLines(/** @type {HTMLElement[]} */ all) {
     const out = []
@@ -157,7 +215,48 @@
         return !isSurface(c)
       })
       if (rows.length < 2) continue
-      const starts = rows.map(r => Math.round(startOf(/** @type {HTMLElement} */ (r)))).filter(Number.isFinite)
+      // Two things side by side are one row - a label and its answer, a
+      // word and the button after it, the cells of a grid - and the row
+      // starts where its first thing does. Children are gathered by the
+      // line their middles sit on, the way the eye reads a card.
+      const cardBox = card.getBoundingClientRect()
+      const cardCs = getComputedStyle(card)
+      const rightEdge = cardBox.right - parseFloat(cardCs.paddingRight) - parseFloat(cardCs.borderRightWidth)
+      /** @type {{ mid: number, start: number, end: number, onlyControls: boolean, corners: number[] }[]} */
+      const byLine = []
+      for (const r of rows) {
+        const box = r.getBoundingClientRect()
+        const mid = box.top + box.height / 2
+        const corners = cornersOf(/** @type {HTMLElement} */ (r))
+        if (!corners.length) continue
+        const start = corners[0]
+        // Whether everything this child shows is a press: itself one, or
+        // only presses in it (a row of Cancel and Save).
+        const shownKids = [...r.querySelectorAll('*')].filter(k => shown(k) && !k.children.length && (k.textContent || '').trim())
+        const onlyControls = r.matches(CONTROLS) || (shownKids.length > 0 && shownKids.every(k => k.closest(CONTROLS)))
+        const line = byLine.find(l => Math.abs(l.mid - mid) < Math.max(8, box.height / 2))
+        if (line) {
+          line.start = Math.min(line.start, start)
+          line.end = Math.max(line.end, box.right)
+          line.onlyControls = line.onlyControls && onlyControls
+          line.corners.push(...corners)
+        } else byLine.push({ mid, start, end: box.right, onlyControls, corners })
+      }
+      byLine.sort((a, b) => a.mid - b.mid)
+      // A row of presses whose end is on the card's right edge is on an
+      // edge, the right one: it is not asked for the left.
+      const leftRows = byLine.filter(l => !(l.onlyControls && Math.abs(l.end - rightEdge) <= 2))
+      if (leftRows.length < 2) continue
+      // The card's left line is its leftmost start. A row off it that
+      // starts on a corner of the row above - the meta under its title -
+      // stands on an edge as well, and is not asked for the left line.
+      const line0 = Math.min(...leftRows.map(l => l.start))
+      const onCorner = leftRows.filter(l => {
+        if (Math.abs(l.start - line0) <= 2) return false
+        const above = byLine[byLine.indexOf(l) - 1]
+        return !!above && above.corners.some(x => Math.abs(x - l.start) <= 1)
+      })
+      const starts = leftRows.filter(l => !onCorner.includes(l)).map(l => Math.round(l.start))
       const lines = [...new Set(starts)].sort((a, b) => a - b)
       // Two starts within 2px are one line.
       const distinct = lines.filter((x, i) => i === 0 || x - lines[i - 1] > 2)

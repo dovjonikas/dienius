@@ -8784,9 +8784,15 @@ button.danger:focus-visible {
    row's do. */
 .block-meal { flex: 1 0 100%; }
 
+/* Which templates draw from the list, under the list's name: its words
+   start exactly where the name does - past the head's caret, its dot and
+   the gap after each (one look, rule 2: a line under a title stands on the
+   title's corner). It was two pixels past it, at 32. */
 .library-list-used {
+  --list-caret-w: 6px;
+  --list-dot-w: 8px;
   margin: 0;
-  padding: 0 var(--s3) var(--s2) calc(var(--s6) + var(--s2));
+  padding: 0 var(--s3) var(--s2) calc(var(--list-caret-w) + var(--list-dot-w) + var(--s2) * 2);
   color: var(--muted);
   font-size: var(--t-xs);
 }
@@ -18538,17 +18544,20 @@ button.link-out {
   .library-add > .return-field,
   .library-add > .library-add-controls { grid-column: 1 / -1; }
 
-  /* A routine's row: its name, what it is, and the two words that change it
-     on a row of their own at the right. */
+  /* A routine's row: its name with the two words that change it at the
+     right, on one row the way a status and its actions stand, and what it
+     is on the row under them across the card. It was three rows, the
+     presses alone on the last. */
   .routines-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
     gap: var(--s1) var(--s2);
   }
-  .routines-row-title,
-  .routines-row-line { grid-column: 1 / -1; }
-  .routines-row > button:nth-last-of-type(2) { grid-column: 2; margin-left: 0; }
-  .routines-row > button:last-of-type { grid-column: 3; }
+  .routines-row-title { grid-column: 1; grid-row: 1; min-width: 0; }
+  .routines-row-line { grid-column: 1 / -1; grid-row: 2; }
+  .routines-row > button:nth-last-of-type(2) { grid-column: 2; grid-row: 1; margin-left: 0; }
+  .routines-row > button:last-of-type { grid-column: 3; grid-row: 1; }
 
   /* The review's nav: the stretch's name and its arrows on one row, the
      copy for somewhere else on the row under them. */

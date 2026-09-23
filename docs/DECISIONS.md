@@ -4858,3 +4858,41 @@ the palette (560px), a link's field is a task sheet's width (460 less its
 room): each is the dialog's line, and the dialog, no wider than the reading
 width, is the limit there. The measure says so rather than an exception
 list: a field inside a dialog no wider than 640px is not asked.
+
+## One left line, as the eye reads it
+
+One look, stage 7 - rule 2 of the owner's brief of 2026-09-22: in a card
+or a form every row starts on one edge; in the owner's other words, every
+start corner stands on another. The measure found 79 cards whose rows
+started at more than one place. Read one by one, most were the measure's,
+not the screens':
+
+- **It counted a row's parts as rows.** The focus bar - its word, its
+  task, its presses on one line - was "four rows starting at 54, 94, 142
+  and 287". The measure reads a card a line at a time now: things side by
+  side are one row, starting where the first of them does.
+- **It read a quiet word by its reaching ground.** Delete, More, a list's
+  Edit stand their words on the card's edge while the ground under the
+  pointer reaches out past it (an edge taken back, DESIGN.md); the measure
+  put those rows at 0. A control that paints nothing is read by its words,
+  one that paints - a field, a filled button - by its box.
+- **It read a key cap by its letter.** A word on a painted ground starts
+  where the ground does; a box to tick and a mark (a category's edge, a
+  colour's dot) start a row too; a strip scrolled along starts where the
+  strip does, not where its first chip went.
+- **It asked a row of presses for the left edge.** Cancel and Save, Apply,
+  Done, at the right of a form, stand on the card's right edge - the quiet
+  words on a row's edge the owner asked for - and are not asked for the left.
+- **It asked a line under a title to start at the card's edge.** A row
+  whose start stands on a corner of the row directly above it - within a
+  pixel - is on an edge, the corner it stands on.
+
+**What was real, and fixed.** A list's "Used by" line was indented to stand
+under the list's name and missed it by two pixels (32 where the name is at
+6 + 8 + 8 + 8); it is exactly under the name now, from the caret's and the
+dot's widths. And when the list's settings opened, the form came between
+the name and that line, which then stood indented under a form: the line
+is above the settings now, under the name whatever is open. A routine's
+row on a phone was three rows, its two presses alone on the last; it is
+its name and its presses on one row, the way a status and its actions
+stand, and what it is on the row under them.
