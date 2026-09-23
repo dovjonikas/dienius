@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from '@playwright/test'
 import { openFreshAt, quickAdd, reopenAt, tick } from './app'
 
@@ -24,7 +24,8 @@ import { openFreshAt, quickAdd, reopenAt, tick } from './app'
 function ownersFilePath(): string | undefined {
   const fromEnv = process.env.DIENIUS_OWNERS_FILE
   if (fromEnv) return fromEnv
-  const pointer = join(__dirname, '../owners-file.local')
+  // From this file's own URL, not __dirname: the runner loads the e2e files as ES modules, where there is none.
+  const pointer = fileURLToPath(new URL('../owners-file.local', import.meta.url))
   return existsSync(pointer) ? readFileSync(pointer, 'utf8').trim() : undefined
 }
 

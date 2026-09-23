@@ -28,6 +28,7 @@ import { kindOnDate } from './dayKinds'
 function ownersFilePath(): string | undefined {
   const fromEnv = process.env.DIENIUS_OWNERS_FILE
   if (fromEnv) return fromEnv
+  // __dirname, as the other tests that read a file do: under jsdom import.meta.url is the page's, not this file's.
   const pointer = join(__dirname, '../../owners-file.local')
   return existsSync(pointer) ? readFileSync(pointer, 'utf8').trim() : undefined
 }

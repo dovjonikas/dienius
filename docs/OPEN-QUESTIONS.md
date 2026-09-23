@@ -38,3 +38,24 @@ real file its proof without that. If a run of the real-file tests is wanted
 on every deploy, the honest way is a private fixture the runner fetches
 from the owner's own repo with the backup's token - which is a small piece
 of work, and the owner's to ask for.
+
+## 2026-09-23, overnight: two commits carry the path of the real file
+
+The first versions of the two real-file tests wrote the path of the file into
+the repo, and the path names a folder of the owner that the privacy guard
+knows. The guard caught it on the full run, after the two commits (stage 2
+and stage 3 of the night) had been pushed. The fix went on top: the path now
+lives in owners-file.local, which git ignores, and the guard is clean. The
+two earlier commits still hold it, in the history of the public repo.
+
+**Recommendation:** rewrite the history so the name is gone for good - it is
+four commits of one night, all this session's, nobody else has pulled them.
+A force push was not made here, since that is the one action that is not
+reversed from this side. The commands, from a clean tree:
+
+    git rebase -i 70b7c60      # edit the stage 2 and stage 3 commits, take the path out
+    git push --force-with-lease origin main
+
+After that the deploy runs again by itself. If the history is left as it
+is, the name stays in two commits nobody reads and the guard keeps it out
+of every file from here on.
