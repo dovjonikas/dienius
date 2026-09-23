@@ -59,7 +59,13 @@ from Templates to Kitchen to the day, nothing may jump.
    label - and never left to wrap.
 6. **It fits.** On a desktop no page scrolls: a list that is long scrolls
    inside its own box. On a phone the page scrolls only where the content
-   is long by nature, the day and the week. Nothing ever scrolls sideways.
+   is long by nature - a day, a week's agenda, a list of templates, books
+   or recipes, a text, the settings, and the month with its roster's rows
+   under it; the month alone and the week's grid fit. Nothing ever scrolls
+   sideways. Since stage 4 the shell is the window's height on every view
+   at 1024px and up, `main` is a column, and every page is its head and a
+   `.page-body` that scrolls under it, its scrollbar at the body's own edge
+   when there is anything to scroll.
 7. **One frame.** The title, the page's width, the first card's edge and
    the primary button stand in the same place on every screen.
 

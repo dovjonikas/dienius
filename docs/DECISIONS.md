@@ -4727,3 +4727,40 @@ what was written.
 **Why not a map by the night's letter.** Two night kinds are both nights,
 and the day type already says so; one field reads in the editor as one
 select, "After a night, this day is". RESEARCH-SHIFTS 2.6 has the rest.
+
+## It fits: the shell is the window's height on every view
+
+One look, stage 4 - rule 6 of the owner's brief of 2026-09-22: on a desktop
+no page scrolls, what is long scrolls inside its own box. Today and the
+week's grid had been built that way since the wide-screen day
+(LAYOUT-WIDE.md) and the week; Templates, Library, Kitchen, Settings and
+the week's agenda were "ordinary documents that scroll as documents do",
+which the day view's own note called the right thing for a list with no
+length limit. The brief says otherwise, and it is right for this app: the
+page's name and its action are the frame, and a frame that scrolls away
+is not one.
+
+**The shell, not each page.** The fixed height moved from
+`.app:has(.main-day)` and `.app:has(.week-grid)` to `.app` at 1024px and
+up; `main` became a column; and every page is a head and a `.page-body` -
+one class, `flex: 1 1 auto; min-height: 0; overflow-y: auto` - so the
+change is one rule and seven wrappers, not seven arrangements. Settings'
+body is its layout, with the section list sticky inside it as before; the
+two pastes' forms are their own bodies, since a form of thirty rows is the
+box. The head is the edge the body scrolls under; no line is drawn for it.
+
+**No gutter is kept.** The first cut reserved the scrollbar's room on every
+body (`scrollbar-gutter: stable`), so a card's right edge would not move
+between a page that scrolls and one that does not. It put every body's
+content nine pixels short of its head on every page, scrolled or not -
+North's column no longer ended under Edit's word, and its own walk said
+so. The frame the brief holds still is the head's: the title, the action
+and the first card's edge, none of which the gutter touches. A body that
+scrolls shows its bar at its own edge and is a bar narrower; that is where
+a scrollbar stands on any page, and it is not the frame.
+
+**The phone is not touched.** Below 1024px none of it matches, and the
+page scrolls where its content is long by nature; the report's list of
+those screens gained the editor with its palette open, which is the
+editor's page, and the month with its roster, whose rows are a month's.
+`e2e/one-look-fits.e2e.ts` holds both sizes.

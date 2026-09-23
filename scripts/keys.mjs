@@ -132,19 +132,27 @@ const focused = (/** @type {Page} */ page) => page.evaluate(() => {
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
       return Math.round(el.getBoundingClientRect().top + scrollY)
     })(),
-    // The box the stop scrolls inside, if it is not the page, and where the
-    // stop stands in what that box holds. A template's picture of its day
-    // scrolls in its own box, and a browser brings a focused gap to the
-    // middle of it: the gap after one at the foot of the box was drawn
-    // higher on the screen, though it is lower in the picture, and read as
-    // a climb. Two stops in one box are compared where they stand in it -
-    // see check 2 - and stops in different boxes as the eye sees them.
+    // The boxes the stop scrolls inside, innermost first, if any is not the
+    // page, and where the stop stands in what each box holds. A template's
+    // picture of its day scrolls in its own box, and a browser brings a
+    // focused gap to the middle of it: the gap after one at the foot of the
+    // box was drawn higher on the screen, though it is lower in the picture,
+    // and read as a climb. Two stops in one box are compared where they
+    // stand in it - see check 2 - and stops in different boxes as the eye
+    // sees them. Since one look's rule 6 every page is a body that scrolls,
+    // so a box is often inside another: the picture inside the editor
+    // inside the page's body. The stop keeps every box up the chain, and
+    // two stops are compared in the innermost box they share - a gap in the
+    // picture and a grip in the list under it, both in the page's body.
     ...(() => {
-      let box = el.parentElement
-      while (box && !(box.scrollHeight > box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement
-      if (!box) return { box: '', inBox: 0 }
-      if (!box.dataset.keysBox) box.dataset.keysBox = String((w.__keysBoxes = (w.__keysBoxes ?? 0) + 1))
-      return { box: box.dataset.keysBox, inBox: Math.round(el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop) }
+      /** @type {{ box: string, inBox: number }[]} */
+      const boxes = []
+      for (let box = el.parentElement; box; box = box.parentElement) {
+        if (!(box.scrollHeight > box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) continue
+        if (!box.dataset.keysBox) box.dataset.keysBox = String((w.__keysBoxes = (w.__keysBoxes ?? 0) + 1))
+        boxes.push({ box: box.dataset.keysBox, inBox: Math.round(el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop) })
+      }
+      return { boxes }
     })(),
     left: Math.round(el.getBoundingClientRect().left + scrollX),
     visible: r.width > 0 && r.height > 0,
@@ -231,7 +239,10 @@ async function main() {
           const a = stops[i - 1]
           const b = stops[i]
           if (!a.visible || !b.visible) continue
-          const climbed = a.box && a.box === b.box ? a.inBox - b.inBox > CLIMB_PX : a.top - b.top > CLIMB_PX
+          // In the innermost box the two share, where they have one; on the screen otherwise.
+          const shared = a.boxes.find(x => b.boxes.some(y => y.box === x.box))
+          const inShared = shared ? b.boxes.find(y => y.box === shared.box) : undefined
+          const climbed = shared && inShared ? shared.inBox - inShared.inBox > CLIMB_PX : a.top - b.top > CLIMB_PX
           const movedRight = b.left - a.left > 80
           if (climbed && !movedRight) {
             findings.push(`  [${where}] Tab climbs the screen: "${a.name}" (y ${a.top}) then "${b.name}" (y ${b.top})`)

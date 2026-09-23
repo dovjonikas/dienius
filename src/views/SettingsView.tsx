@@ -232,7 +232,10 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
         <p className="warning">Saving to this browser failed. Your changes only live in memory - export a backup.</p>
       )}
 
-      <div className="settings-layout">
+      {/* The page's body - one look, rule 6: on a desktop the sections
+          scroll inside it, with their list sticky beside them, and the
+          title stands still. */}
+      <div className="settings-layout page-body">
         {/* The section list. Links into one document, not tabs - see the
             comment on `section` above. Sticky beside the content at a wide
             viewport so it stays with whatever is being read; a plain

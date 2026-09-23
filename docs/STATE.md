@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.40 is done - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** one look's stage 4, it fits, is done - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.40 - A kind after a night
 
@@ -323,9 +323,17 @@ docs/DESIGN-AUDIT.md holds the findings, screen by screen.
   window. The pages of two things stand them two abreast; Settings' rows and
   the forms keep a page's measure from the left edge; on a phone the day's
   and the month's arrows moved to the right of their names.
-- **Next:** the scrolling (rule 6), then the rows that wrap (5), the left
-  lines (2), the stretched fields (4) and the rows' heights (3); the after
-  pictures; an e2e per screen at both sizes for the scrolling.
+- **Stage 4 - it fits: done.** On a desktop no page scrolls: the shell is
+  the window's height on every view (it was on Today and the week's grid
+  only), `main` is a column, and every page is its head and a `.page-body`
+  that scrolls inside its own box under it. Templates, Library, Kitchen,
+  Settings, Review, North and the week's agenda have one; the two pastes'
+  forms are their own. On a phone nothing changed but what the report
+  counts as long by nature: the editor with its palette open, and the
+  month with its roster. `e2e/one-look-fits.e2e.ts` walks every screen at
+  1920x1080 and on a 375px phone, with something on each.
+- **Next:** the rows that wrap (5), then the left lines (2), the stretched
+  fields (4) and the rows' heights (3); the after pictures.
 
 ## Pirmas realus menuo, dry run
 

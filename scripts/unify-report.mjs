@@ -37,8 +37,13 @@ const GROUPS = [
   ['Dialogs', /^Task detail|^Shortcut card/],
 ]
 
-/** Where a screen's page may scroll: on a phone, the screens that are long by nature. */
-const PHONE_MAY_SCROLL = /^Today|^Calendar agenda|^Templates|^Template editor|^Week template editor|^Library|^Kitchen|^Review|^Settings|^North|^Journal|^Task detail|^Gap offers|^Focus$|^Timer$|^Replan|^Low day$|^Command palette|^Scratch|^Header|^Shortcut card/
+/**
+ * Where a screen's page may scroll: on a phone, the screens that are long by
+ * nature. The template's colour is the editor's own page with its palette
+ * open, and the roster is the month with its legend, its cycle and what
+ * Apply will do under it - a month's worth of rows on a 375px screen.
+ */
+const PHONE_MAY_SCROLL = /^Today|^Calendar agenda|^Calendar \((what Apply will do|a cycle)\)|^Templates|^Template editor|^Template colour|^Week template editor|^Library|^Kitchen|^Review|^Settings|^North|^Journal|^Task detail|^Gap offers|^Focus$|^Timer$|^Replan|^Low day$|^Command palette|^Scratch|^Header|^Shortcut card/
 
 const slug = (/** @type {string} */ s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 

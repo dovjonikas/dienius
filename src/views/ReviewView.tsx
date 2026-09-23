@@ -124,6 +124,9 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         </button>
       </div>
 
+      {/* The page's body under its head and its nav - one look, rule 6: the
+          figures and the charts scroll inside it on a desktop. */}
+      <div className="page-body review-body">
       {stats.plannedDays === 0 ? (
         // A quiet empty state, not a prompt. Nothing was planned; that is a
         // fact about a week, not a failing to be corrected.
@@ -208,6 +211,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
           )}
         </>
       )}
+      </div>
     </section>
   )
 }

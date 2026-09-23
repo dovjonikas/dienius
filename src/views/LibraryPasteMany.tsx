@@ -61,7 +61,7 @@ export function LibraryPasteMany({ onDone, onCancel }: { onDone: () => void; onC
       </div>
 
       <form
-        className="library-list kitchen-form kitchen-paste"
+        className="library-list kitchen-form kitchen-paste page-body"
         noValidate
         onSubmit={e => {
           e.preventDefault()

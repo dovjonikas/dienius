@@ -611,6 +611,57 @@ button {
 
 main { flex: 1 1 auto; min-height: 0; }
 
+/* One look, rule 6 - it fits: on a desktop no page scrolls. The shell is
+   the window's height on every view (it was on Today and the week's grid
+   only, and Templates, Library, Kitchen and Settings scrolled the page by
+   up to four screens), main is a column, and every page is its head and a
+   .page-body that scrolls inside its own box under it - the head is the
+   edge the body scrolls under. No gutter is kept for the scrollbar: a
+   body that scrolls shows its bar at its own edge and is a bar narrower,
+   and the frame - the title, the action, the first card's edge - is the
+   head's, which does not move. (A kept gutter put North's column nine
+   pixels short of Edit's word on every page, scrolled or not.)
+   min-height: 0 at every link of the chain, or a flex item keeps its
+   content's height and the page scrolls again (see the day view's note).
+   Below 1024px nothing here matches: on a phone the page scrolls where its
+   content is long by nature. */
+@media (min-width: 1024px) {
+  .app {
+    height: calc(100dvh - var(--nav-bar-h));
+    min-height: 0;
+    padding-bottom: var(--s4);
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  main > .settings,
+  main > .templates,
+  main > .library,
+  main > .review,
+  main > .north-view,
+  main > .calendar {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* The week's agenda is the calendar's body: a list that scrolls inside
+     its own box under the calendar's bar (its base rule already lets it
+     scroll; here it takes the height the shell leaves it). */
+  .week-agenda { flex: 1 1 auto; }
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -3122,9 +3173,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 /* On the templates page the offers stand where the list would begin, and
    their sentence over them is the empty state's one quiet line at their
    left edge, not a status centred in the column. */
-.templates > .first-run { padding: 0; }
+.templates-body > .first-run { padding: 0; }
 
-.templates > .first-run > .empty {
+.templates-body > .first-run > .empty {
   margin: 0 0 var(--s4);
   padding: 0;
   font-size: var(--t-sm);
@@ -7703,11 +7754,9 @@ button.danger:focus-visible {
      Escaping .app's own max-width: 760px needs the ancestor itself to
      widen, not just this element - a child's max-width can never exceed the
      box its parent already constrained it to. */
-  .app:has(.main-day) {
-    height: 100dvh;
-    min-height: 0;
-    padding-bottom: var(--s4);
-  }
+  /* Since one look's rule 6 the shell is the window's height on every
+     view, in the rule under `main` near the top of this file; what was
+     scoped to the Today tab here is that rule now. */
 
   /* min-height: 0 on every link in this chain. A flex item's default
      min-height is auto - its content's height - which silently defeats the
@@ -8868,18 +8917,19 @@ button.danger:focus-visible {
     align-items: start;
   }
 
-  /* The templates and the routines side by side; the title, the question a
-     new template asks, the first run and the editors across both. */
-  .templates {
+  /* The templates and the routines side by side; the question a new
+     template asks, the first run and the editors across both. On the
+     page's body, under its head - one look, rule 6. */
+  .templates-body {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--s6);
     align-items: start;
   }
 
-  .templates > * { grid-column: 1 / -1; }
-  .templates > .template-list { grid-column: 1; }
-  .templates > .routines { grid-column: 2; margin-top: 0; }
+  .templates-body > * { grid-column: 1 / -1; }
+  .templates-body > .template-list { grid-column: 1; }
+  .templates-body > .routines { grid-column: 2; margin-top: 0; }
 }
 
 .library-list {
@@ -10779,17 +10829,25 @@ button.task-recipe:focus-visible {
    1280px, where half the frame is still a reading's measure: at 1024 a
    reading's line broke into two under its block's name. */
 @media (min-width: 1280px) {
-  .review {
+  .review-body {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--s4);
     align-items: start;
   }
 
-  .review > .review-header,
-  .review > .review-nav,
-  .review > .review-figures,
-  .review > .review-empty { grid-column: 1 / -1; }
+  .review-body > .review-figures,
+  .review-body > .review-empty { grid-column: 1 / -1; }
+}
+
+/* The page's body under its head and its nav - one look, rule 6 - with the
+   room between its parts the page kept between them. */
+.review-body,
+.library-body,
+.kitchen-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
 }
 
 .review-header {
@@ -12872,10 +12930,13 @@ main:has(.week) > .calendar {
     background: var(--bg);
   }
 
-  /* The page holds still and the grid scrolls within it: the shell is the
-     window's height on the grid, where elsewhere it is at least that, so the
-     grid has a height to fit and to scroll inside. Not the agenda, which is a
-     list and scrolls the page like any list. */
+  /* The page holds still and the grid scrolls within it: on a phone the
+     shell is the window's height on the grid, where elsewhere it is at
+     least that, so the grid has a height to fit and to scroll inside. Not
+     the agenda, which is a list and scrolls the page like any list on a
+     phone. (On a desktop the shell is the window's height on every view
+     since one look's rule 6 - the rule under `main` near the top of this
+     file - and the agenda scrolls inside its box there.) */
   .app:has(.week-grid) { height: calc(100dvh - var(--nav-bar-h)); }
 }
 

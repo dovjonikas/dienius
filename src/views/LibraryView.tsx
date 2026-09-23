@@ -161,6 +161,9 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
           </div>
         )}
       </div>
+      {/* The page's body under its head - one look, rule 6: the lists
+          scroll inside it on a desktop, and the head stands still. */}
+      <div className="page-body library-body">
       {newListOpen && <NewListForm onDone={() => setNewListOpen(false)} />}
 
       {/* Every list in one line, with what is going in each. It is here
@@ -204,6 +207,7 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
             onOpenDay={onOpenDay}
           />
         ))}
+      </div>
       </div>
     </section>
   )

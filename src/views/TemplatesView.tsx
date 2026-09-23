@@ -1141,6 +1141,10 @@ export function TemplatesView() {
         )}
       </div>
 
+      {/* The page's body under its head: the question, the editors, the
+          list and the routines scroll inside it on a desktop - one look,
+          rule 6 - and the head stands still. */}
+      <div className="page-body templates-body">
       {/* The one question a new template asks, before anything else, because
           it is the only one that cannot be changed afterwards: a day and a
           week are the same entity but not the same editor, and switching
@@ -1321,6 +1325,7 @@ export function TemplatesView() {
           a kind of day is one of the templates above it. Nothing is drawn until
           one of them is a kind - see RoutinesSection. */}
       <RoutinesSection />
+      </div>
     </section>
   )
 }

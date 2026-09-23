@@ -43,12 +43,16 @@ test('a week template is built once and stamps each day its own column', async (
   // Dragged from Thursday to Friday with a real mouse.
   // The block on the week picture, which is what a drag now takes hold of.
   const block = page.getByRole('button', { name: /^Physio at .* on Thursday/ })
-  const from = await block.boundingBox()
   // The track, not the column: a column is display: contents, so it has no
   // box of its own - its three parts are placed straight into the grid.
   // The drop still finds the column, because closest() walks the DOM and
-  // not the layout.
-  const friday = await page.locator('[data-wt-day="5"] .week-track').boundingBox()
+  // not the layout. Brought into view first, the way a hand would scroll
+  // to it: since one look's rule 6 the editor scrolls inside the page's
+  // body, and a point outside that box lands on nothing.
+  const track = page.locator('[data-wt-day="5"] .week-track')
+  await track.scrollIntoViewIfNeeded()
+  const from = await block.boundingBox()
+  const friday = await track.boundingBox()
   if (!from || !friday) throw new Error('the week editor did not lay out')
 
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)

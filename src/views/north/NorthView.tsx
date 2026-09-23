@@ -112,15 +112,19 @@ export function NorthView() {
         </div>
       </header>
 
-      {editing ? (
-        <NorthEditor text={text} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />
-      ) : replacing ? (
-        <NorthReplace onDone={() => setReplacing(false)} onCancel={() => setReplacing(false)} />
-      ) : text === '' ? (
-        <NorthInvite />
-      ) : (
-        <NorthText text={text} />
-      )}
+      {/* The page's body under its head - one look, rule 6: a long text
+          scrolls inside it on a desktop, and the name and Edit stand still. */}
+      <div className="page-body north-body">
+        {editing ? (
+          <NorthEditor text={text} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />
+        ) : replacing ? (
+          <NorthReplace onDone={() => setReplacing(false)} onCancel={() => setReplacing(false)} />
+        ) : text === '' ? (
+          <NorthInvite />
+        ) : (
+          <NorthText text={text} />
+        )}
+      </div>
     </section>
   )
 }

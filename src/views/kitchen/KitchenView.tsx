@@ -175,6 +175,9 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
     <section className="library kitchen kitchen-shelf" aria-label="Kitchen">
       {header}
 
+      {/* The page's body under its head - one look, rule 6: the meals, the
+          search and the cards scroll inside it on a desktop. */}
+      <div className="page-body kitchen-body">
       <div className="library-chips kitchen-chips" role="group" aria-label="Meal">
         {(['all', ...MEAL_TYPES] as const).map(option => (
           <button
@@ -239,6 +242,7 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
       ) : (
         <p className="kitchen-none">{noneLine(meal, query)}</p>
       )}
+      </div>
     </section>
   )
 }
