@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getData, useAppData } from '../lib/store'
 import { addDays, todayKey } from '../lib/dates'
+import { templateName } from '../lib/names'
 import {
   LIST_PRESETS,
   STARTER_LISTS,
@@ -1193,7 +1194,7 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
         <select value={templateId} onChange={e => setTemplateId(e.target.value)}>
           {data.templates.map(t => (
             <option key={t.id} value={t.id}>
-              {t.name}
+              {templateName(t)}
             </option>
           ))}
         </select>

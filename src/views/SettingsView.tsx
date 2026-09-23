@@ -5,7 +5,10 @@ import { canInstall, isInstalled,
 import { listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type SnapshotMeta } from '../lib/snapshots'
 import { eraseThisDevice } from '../lib/eraseDevice'
 import { exportJson } from '../lib/storage'
-import { addDays, todayKey } from '../lib/dates'
+import { downloadText } from '../lib/download'
+import { forgetUnreadable, useUnreadablePlan } from '../lib/unreadable'
+import { addDays, dateKey, todayKey } from '../lib/dates'
+import { templateName } from '../lib/names'
 import { enterTourSandbox } from '../lib/tourMode'
 import { findPreset } from '../lib/themes'
 
@@ -151,19 +154,14 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
   const [section, setSection] = useState<SectionId>('general')
 
   function handleExport() {
-    const blob = new Blob([exportJson(data)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'dienius-backup.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    // WebKit's download handoff is asynchronous, so revoking the object URL
-    // in the same tick can produce an empty or failed download on iOS Safari.
-    // Deferring the revoke gives the browser time to start reading the blob.
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    downloadText('dienius-backup.json', exportJson(data))
   }
+
+  // A plan this browser could not read, kept aside - see lib/unreadable.ts.
+  // Its row stands beside the export because the choices are the same kind:
+  // a file to keep, and a second press to let it go.
+  const unreadable = useUnreadablePlan()
+  const [confirmForget, setConfirmForget] = useState(false)
 
   async function handleImport(file: File | undefined) {
     if (!file) return
@@ -299,6 +297,43 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
               onChange={e => handleImport(e.target.files?.[0])}
             />
             {importError && <p className="warning">{importError}</p>}
+
+            {unreadable && (
+              <div className="setting-row" id="settings-unreadable">
+                <div className="setting-label">
+                  <span className="setting-name">A plan that could not be read</span>
+                  <span className="setting-desc">
+                    {unreadable.held
+                      ? 'The plan saved in this browser could not be read, and there is no room left here to keep a copy aside - so nothing is saved over it until you forget it. Save it as a file first.'
+                      : 'The plan saved in this browser could not be read, so Dienius opened without it. It is kept here as it was: save it as a file to keep it or to have it looked at, or restore a snapshot below.'}
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => downloadText(`dienius-unreadable-${dateKey(new Date(unreadable.keptAt))}.json`, unreadable.text)}
+                  >
+                    Save as a file
+                  </button>
+                  <button
+                    type="button"
+                    className={confirmForget ? 'btn-danger is-armed' : 'btn-secondary'}
+                    onBlur={() => setConfirmForget(false)}
+                    onClick={() => {
+                      if (!confirmForget) {
+                        setConfirmForget(true)
+                        return
+                      }
+                      forgetUnreadable()
+                      setConfirmForget(false)
+                    }}
+                  >
+                    {confirmForget ? 'Forget it?' : 'Forget it'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Install. Three honest states rather than a button that is
                 sometimes a lie: already installed, installable right now, or
@@ -539,7 +574,7 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
                         <option value="">Nothing</option>
                         {data.templates.map(t => (
                           <option key={t.id} value={t.id}>
-                            {t.name}
+                            {templateName(t)}
                           </option>
                         ))}
                       </select>

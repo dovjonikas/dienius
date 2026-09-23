@@ -5,6 +5,7 @@ import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
 import type { Category, DayKindMark, DayType, LibraryList, MealType, Recipe, SleepProfile, SleepWindow, Template } from '../lib/types'
+import { templateName } from '../lib/names'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -220,7 +221,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
   // Who else sleeps on it: changing it here changes it for them.
   const sharedWith = templates
     .filter(t => t.id !== draft.id && (sleepProfiles.find(p => p.id === t.sleepProfileId) ?? sleepProfiles[0]).id === sleepProfile.id)
-    .map(t => t.name)
+    .map(templateName)
   // Closed on every open, including on a template that already carries a
   // type: the value is on the line above it either way, and what is hidden
   // is the question, not the answer.
@@ -1267,7 +1268,7 @@ export function TemplatesView() {
               <span className="dot" style={{ background: t.color }} />
             )}
             <div className="template-info">
-              <strong>{t.name}</strong>
+              <strong>{templateName(t)}</strong>
               {/* "4 blocks" is the least informative summary a template could
                   give: the whole question somebody has in front of this list
                   is which template this is, and the answer is what is in it.
@@ -1314,7 +1315,7 @@ export function TemplatesView() {
             {/* One control on the row. Delete is inside the editor since
                 v2.22 - see DeleteTemplateButton - so a list of three is not
                 three red buttons before anything is pressed. */}
-            <button className="btn-quiet" aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>
+            <button className="btn-quiet" aria-label={`Edit ${templateName(t)}`} onClick={() => startEdit(t)}>
               Edit
             </button>
           </li>

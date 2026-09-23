@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { monthGrid, todayKey, type MonthCell } from '../../lib/dates'
+import { templateName } from '../../lib/names'
 import { cellLabel, resolveTemplate, taskState } from '../../lib/calendarCell'
 import { dateFromArrow, tabStopFor } from '../../lib/gridKeys'
 
@@ -185,7 +186,7 @@ export function MiniCalendar({ date, onDateChange, marked }: MiniCalendarProps) 
                   data-date={cell.key}
                   tabIndex={cell.key === stop ? 0 : -1}
                   style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
-                  aria-label={cellLabel(cell, template?.name, state)}
+                  aria-label={cellLabel(cell, template && templateName(template), state)}
                   aria-current={cell.key === today ? 'date' : undefined}
                   onClick={() => onDateChange(cell.key)}
                 >

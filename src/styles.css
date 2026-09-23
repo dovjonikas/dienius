@@ -10866,6 +10866,17 @@ button.task-recipe:focus-visible {
   gap: var(--s6);
 }
 
+/* What is in a body keeps its own height: the body scrolls, its parts do not
+   give way to it. A strip that scrolls sideways has no height of its own to
+   hold on to in a column, and Kitchen's meals gave all of theirs up to a
+   shelf of cards longer than the window - a 4px band on every desktop from
+   one look's stage 5 until the freeze (the sweep's "a box squeezed shut"). */
+.review-body > *,
+.library-body > *,
+.kitchen-body > * {
+  flex-shrink: 0;
+}
+
 .review-header {
   display: flex;
   align-items: center;
@@ -18936,4 +18947,74 @@ button.link-out {
     width: var(--touch);
     height: var(--touch);
   }
+}
+
+/* ------------------------------------------------------------------------
+   A screen that cannot draw - ScreenBoundary.tsx, the freeze's point 2.
+
+   A page keeps the page's frame: its name where every title stands, and in
+   its body one card that says what happened, the error in a line, and the
+   two ways on. A sheet or a part of a screen is one line in the place it
+   would have been. Both carry the sync line's mark in the danger ink - the
+   app's one way of saying something went wrong - rather than a drawn edge;
+   a sheet's line stands over the page where the undo line does, since the
+   sheet it replaces stood over the page too.
+   ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  main > .screen-crash {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.screen-crash > h2 {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+  margin: 0 0 var(--s6);
+}
+
+.screen-crash-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  max-width: var(--field-w);
+  padding: var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.screen-crash-card p { margin: 0; color: var(--muted); line-height: var(--lh-read); }
+.screen-crash-card .screen-crash-lead { display: flex; align-items: center; gap: var(--s2); color: var(--text); font-weight: var(--w-strong); }
+.screen-crash-error { font-size: var(--t-sm); overflow-wrap: anywhere; }
+.screen-crash-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.screen-crash-line {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+.screen-crash-line-text { flex: 1 1 auto; min-width: 0; }
+
+.screen-crash-line.is-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--s6) + env(safe-area-inset-bottom));
+  z-index: 60;
+  max-width: min(92vw, 480px);
+  transform: translateX(-50%);
+  box-shadow: var(--e2);
+}
+
+@media (max-width: 1023px) {
+  .screen-crash-line.is-sheet { bottom: calc(var(--rail-bar-h) + env(safe-area-inset-bottom) + var(--s2)); }
 }

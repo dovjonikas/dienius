@@ -12,6 +12,7 @@ import { NoteSections } from '../../views/NoteSections'
 import { parseNote } from '../../lib/note'
 import { mealLink } from '../../lib/kitchen'
 import type { MealType, Recipe } from '../../lib/types'
+import { recipeTitle } from '../../lib/names'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -420,17 +421,17 @@ export function TaskRow({
               <button
                 type="button"
                 className="task-recipe"
-                aria-label={meal.kind === 'recipe' ? `Recipe: ${meal.recipe.title}` : meal.label}
+                aria-label={meal.kind === 'recipe' ? `Recipe: ${recipeTitle(meal.recipe)}` : meal.label}
                 onClick={e => {
                   e.stopPropagation()
                   onOpenKitchen(meal.kind === 'recipe' ? { recipeId: meal.recipe.id } : { meal: meal.meal })
                 }}
               >
-                <span className="task-recipe-name">{meal.kind === 'recipe' ? meal.recipe.title : meal.label}</span>
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
               </button>
             ) : (
               <span className="task-recipe">
-                <span className="task-recipe-name">{meal.kind === 'recipe' ? meal.recipe.title : meal.label}</span>
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
               </span>
             ))}
           {/* A control among marks, which is why it is an anchor with its own

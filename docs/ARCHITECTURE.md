@@ -150,6 +150,11 @@ of them is in a backup. The ones that hold something worth knowing about:
   settings and do sync; what they contain is refetched per device, because a
   week of somebody's work meetings is not a plan worth carrying in a backup and
   is stale the moment it is written.
+- **`dienius:unreadable`** - a stored plan that could not be read, kept as it
+  was until the person saves it as a file or forgets it
+  ([`unreadable.ts`](../src/lib/unreadable.ts), DECISIONS "A plan that
+  cannot be read is kept, and said"). In no backup and never synced: it is
+  the one copy of something the app could not read, for a person to look at.
 
 And a few device-local preferences under their own keys for the same
 reason, each explained where it lives: the evening close's and the yesterday

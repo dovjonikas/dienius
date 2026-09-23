@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { MEAL_TYPE_LABELS, isMealCategory } from '../../lib/kitchen'
 import { addDays, shortWeekday } from '../../lib/dates'
+import { templateName } from '../../lib/names'
 import type { Recipe, Template } from '../../lib/types'
 import { TimePicker } from '../TimePicker'
 import { DurationControl } from '../DurationControl'
@@ -50,7 +51,7 @@ export function AddRecipeToTemplate({ recipe, onAdded, onCancel }: { recipe: Rec
     if (into.kind === 'block') {
       const block = template.blocks.find(b => b.id === into.blockId)
       if (block && actions.addRecipeToTemplate(template.id, recipe.id, { blockId: block.id })) {
-        onAdded(`Added to ${block.title} on ${template.name}.`)
+        onAdded(`Added to ${block.title} on ${templateName(template)}.`)
       }
       return
     }
@@ -73,7 +74,7 @@ export function AddRecipeToTemplate({ recipe, onAdded, onCancel }: { recipe: Rec
         >
           {data.templates.map(t => (
             <option key={t.id} value={t.id}>
-              {t.name}
+              {templateName(t)}
             </option>
           ))}
         </select>

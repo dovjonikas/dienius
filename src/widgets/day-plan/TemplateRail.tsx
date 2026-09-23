@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Template } from '../../lib/types'
+import { templateName } from '../../lib/names'
 import { actions, getData, useAppData } from '../../lib/store'
 import { offerUndo } from '../../lib/undo'
 
@@ -126,7 +127,7 @@ export function TemplateRail({ date }: TemplateRailProps) {
       return
     }
     setAsk({
-      fromName: current?.name ?? 'a template that is gone',
+      fromName: current ? templateName(current) : 'a template that is gone',
       toId: template.id,
       toName: template.name,
     })
@@ -162,7 +163,7 @@ export function TemplateRail({ date }: TemplateRailProps) {
             onClick={() => press(t)}
           >
             <span className="template-chip-dot" aria-hidden="true" />
-            {t.name}
+            {templateName(t)}
           </button>
         ))}
       </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { readCycle } from '../../lib/rosterDraft'
 import { formatDayShort, formatWeekTitle, monthAndDay, monthEnd, weekOf } from '../../lib/dates'
+import { templateName } from '../../lib/names'
 import type { RosterPreview } from '../../lib/rosterPreview'
 import type { HandEdits } from '../../lib/shiftDay'
 import type { Template } from '../../lib/types'
@@ -112,7 +113,7 @@ export function RosterBar({
               <span className="roster-legend-letter" style={{ ['--chip' as string]: kind.color } as React.CSSProperties}>
                 {kind.dayKind!.letter}
               </span>
-              {kind.name}
+              {templateName(kind)}
             </span>
           ))}
         </span>
@@ -182,7 +183,7 @@ export function RosterBar({
                         : ''
                       const said = [
                         formatDayShort(date.date),
-                        date.kind?.name ?? 'No kind',
+                        date.kind ? templateName(date.kind) : 'No kind',
                         why,
                         date.hand ? `changed by hand: ${handWords(date.hand)}` : '',
                         left ? 'left alone' : '',
@@ -195,7 +196,7 @@ export function RosterBar({
                             {date.letter ?? ''}
                           </span>
                           <span className="roster-preview-day">{formatDayShort(date.date)}</span>
-                          <span className="roster-preview-kind">{date.kind?.name ?? 'No kind'}</span>
+                          <span className="roster-preview-kind">{date.kind ? templateName(date.kind) : 'No kind'}</span>
                           {why && <span className="roster-preview-why">{why}</span>}
                           {date.hand && (
                             <>
@@ -257,7 +258,7 @@ export function RosterBar({
             <div className="duration-chips roster-cycle-kinds" role="group" aria-label="The cycle">
               {kinds.map(kind => (
                 <button key={kind.id} type="button" onClick={() => setSequence(s => [...s, kind.id])}>
-                  {kind.dayKind!.letter} {kind.name}
+                  {kind.dayKind!.letter} {templateName(kind)}
                 </button>
               ))}
             </div>

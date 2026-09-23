@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { actions, getData, useAppData } from '../../lib/store'
 import { dayKinds } from '../../lib/dayKinds'
 import { addDays, shortWeekday, longWeekday } from '../../lib/dates'
+import { templateName } from '../../lib/names'
 import { offerUndo } from '../../lib/undo'
 import { defaultCategoryId, resolvedColor } from '../../lib/categories'
 import type { CategoryId } from '../../lib/categories'
@@ -239,11 +240,11 @@ export function RoutinesSection() {
               {kinds.map(kind => (
                 <div key={kind.id} className="field routines-time">
                   <span className="field-label">
-                    {kind.dayKind!.letter} {kind.name}
+                    {kind.dayKind!.letter} {templateName(kind)}
                   </span>
                   <TimePicker
                     value={times[kind.id] ?? ''}
-                    ariaLabel={`Time on ${kind.name}`}
+                    ariaLabel={`Time on ${templateName(kind)}`}
                     placeholder="No time"
                     onChange={next => setTimes(t => ({ ...t, [kind.id]: next }))}
                   />

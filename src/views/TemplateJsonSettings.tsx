@@ -3,6 +3,7 @@ import { actions, useAppData } from '../lib/store'
 import { readTemplatesJson, templatesJson, type TemplatesImport } from '../lib/templateJson'
 import { todayKey } from '../lib/dates'
 import { offerUndo } from '../lib/undo'
+import { downloadText } from '../lib/download'
 
 /** What Apply does to a template, in a word. */
 const TEMPLATE_WORDS = { create: 'New', update: 'Updated', unchanged: 'Unchanged', skip: 'Skipped' } as const
@@ -82,15 +83,7 @@ export function TemplateJsonSettings() {
 
   function download() {
     if (exported === null) return
-    const url = URL.createObjectURL(new Blob([exported], { type: 'application/json' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'dienius-templates.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    // As Export backup does: WebKit starts reading the blob a tick later.
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    downloadText('dienius-templates.json', exported)
   }
 
   return (

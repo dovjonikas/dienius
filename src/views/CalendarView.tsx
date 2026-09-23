@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
+import { templateName } from '../lib/names'
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
@@ -564,7 +565,7 @@ export function CalendarView({
                   onClick={() => selectTemplate(t.id)}
                 >
                   <span className="template-chip-dot" aria-hidden="true" />
-                  {t.name}
+                  {templateName(t)}
                 </button>
               ))}
               {/* The way into the roster, beside the templates it is made of:

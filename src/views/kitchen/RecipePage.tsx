@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { factsLine, fullMacroLine } from '../../lib/kitchen'
 import { readRecipe, type RecipePart } from '../../lib/recipeText'
 import type { Recipe } from '../../lib/types'
+import { recipeTitle } from '../../lib/names'
 import { AddRecipeToTemplate } from './AddRecipeToTemplate'
 
 /**
@@ -84,7 +85,7 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
       <article className="library-list kitchen-recipe" aria-labelledby={titleId}>
         <header className="kitchen-recipe-head">
           <h2 id={titleId} ref={titleRef} tabIndex={-1} className="kitchen-recipe-title">
-            {recipe.title}
+            {recipeTitle(recipe)}
           </h2>
           {macros && <p className="kitchen-recipe-line">{macros}</p>}
           {facts && <p className="kitchen-recipe-line">{facts}</p>}

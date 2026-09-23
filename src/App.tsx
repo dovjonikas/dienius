@@ -20,6 +20,8 @@ import { snapshotToday } from './lib/snapshots'
 import { requestCloudBackup } from './lib/cloudBackup'
 import { DemoBanner } from './views/DemoBanner'
 import { SyncBanner } from './views/SyncBanner'
+import { UnreadableBanner } from './views/UnreadableBanner'
+import { ScreenBoundary } from './ScreenBoundary'
 import type { SettingsSection } from './views/SettingsView'
 import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
@@ -49,7 +51,7 @@ import { NorthView } from './views/north/NorthView'
 import { KitchenView } from './views/kitchen/KitchenView'
 import type { MealType } from './lib/types'
 import { NorthWindow, useNorthAfterSleep } from './views/north/NorthWindow'
-import { NavRail, type NavView } from './views/NavRail'
+import { NAV_ITEMS, NavRail, SETTINGS_ITEM, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
 
 // The six places to be, and Settings after them, are the rail's own data now
@@ -57,6 +59,9 @@ import { WIDGETS } from './widgets/registry'
 // page and one quiet line under the day, and neither half was somewhere a
 // person could go.
 type View = NavView
+
+/** Each page's name as the rail says it: what a page that cannot draw puts where its title stands. */
+const PAGE_NAMES = Object.fromEntries([...NAV_ITEMS, SETTINGS_ITEM].map(item => [item.view, item.label])) as Record<View, string>
 
 /**
  * A timer from the palette, ringing its start bell like one from the panel.
@@ -615,13 +620,15 @@ export function App() {
             </button>
             {notesOpen && (
               <HeaderPopover label="Notes" className="notes-popover" onClose={() => setNotesOpen(false)}>
-                <NotesPanel
-                  onOpenFull={() => {
-                    setNotesOpen(false)
-                    setScratchOpen({})
-                  }}
-                  onClose={() => setNotesOpen(false)}
-                />
+                <ScreenBoundary name="Notes" kind="inline">
+                  <NotesPanel
+                    onOpenFull={() => {
+                      setNotesOpen(false)
+                      setScratchOpen({})
+                    }}
+                    onClose={() => setNotesOpen(false)}
+                  />
+                </ScreenBoundary>
               </HeaderPopover>
             )}
           </div>
@@ -639,12 +646,14 @@ export function App() {
             </button>
             {journalPanelOpen && (
               <HeaderPopover label="Journal" className="journal-popover" onClose={() => setJournalPanelOpen(false)}>
-                <JournalPanel
-                  onOpenFull={() => {
-                    setJournalPanelOpen(false)
-                    setJournalOpen({})
-                  }}
-                />
+                <ScreenBoundary name="The journal" kind="inline">
+                  <JournalPanel
+                    onOpenFull={() => {
+                      setJournalPanelOpen(false)
+                      setJournalOpen({})
+                    }}
+                  />
+                </ScreenBoundary>
               </HeaderPopover>
             )}
           </div>
@@ -661,13 +670,15 @@ export function App() {
             <span className="clock-button-face" aria-hidden="true" />
           </button>
             {clockOpen && (
-              <ClockPopover
-                onClose={() => {
-                  setClockOpen(false)
-                  setClockTab(undefined)
-                }}
-                tab={clockTab}
-              />
+              <ScreenBoundary name="The timer" kind="inline">
+                <ClockPopover
+                  onClose={() => {
+                    setClockOpen(false)
+                    setClockTab(undefined)
+                  }}
+                  tab={clockTab}
+                />
+              </ScreenBoundary>
             )}
           </div>
         </div>
@@ -678,43 +689,53 @@ export function App() {
           of the shell rather than of the day view: the whole point of making
           it a state instead of a screen is that the rest of the app keeps
           working while it runs. */}
-      <DemoBanner />
-      <SyncBanner onOpen={() => openSettingsAt('sync')} />
-      <FocusBar onExpand={() => setFocusExpanded(true)} />
+      <ScreenBoundary name="The line at the top" kind="inline">
+        <DemoBanner />
+        <SyncBanner onOpen={() => openSettingsAt('sync')} />
+        <UnreadableBanner onOpen={() => openSettingsAt('general')} />
+      </ScreenBoundary>
+      <ScreenBoundary name="The focus bar" kind="inline">
+        <FocusBar onExpand={() => setFocusExpanded(true)} />
+      </ScreenBoundary>
       <main className={view === 'day' ? 'main-day' : ''}>
-        {view === 'day' &&
-          WIDGETS.map(w => (
-            <w.Component
-              key={w.id}
+        {/* One boundary for the page that is open, keyed by it, so a page
+            that cannot draw says so in its own place and moving to another
+            page and back draws it afresh - see ScreenBoundary. */}
+        <ScreenBoundary key={view} name={PAGE_NAMES[view]}>
+          {view === 'day' &&
+            WIDGETS.map(w => (
+              <w.Component
+                key={w.id}
+                date={selectedDate}
+                onDateChange={setSelectedDate}
+                onOpenNorth={() => setView('north')}
+                openTask={openTaskRequest}
+                onOpenTaskDone={() => setOpenTaskRequest(null)}
+                onOpenNote={() => setScratchOpen({})}
+                onOpenKitchen={openKitchen}
+              />
+            ))}
+          {view === 'calendar' && (
+            <CalendarView
+              onOpenDay={openDay}
+              onOpenTemplates={() => setView('templates')}
               date={selectedDate}
               onDateChange={setSelectedDate}
-              onOpenNorth={() => setView('north')}
-              openTask={openTaskRequest}
-              onOpenTaskDone={() => setOpenTaskRequest(null)}
-              onOpenNote={() => setScratchOpen({})}
-              onOpenKitchen={openKitchen}
+              onOpenNotes={date => setScratchOpen({ date })}
+              onOpenJournal={date => setJournalOpen({ date })}
             />
-          ))}
-        {view === 'calendar' && (
-          <CalendarView
-            onOpenDay={openDay}
-            onOpenTemplates={() => setView('templates')}
-            date={selectedDate}
-            onDateChange={setSelectedDate}
-            onOpenNotes={date => setScratchOpen({ date })}
-            onOpenJournal={date => setJournalOpen({ date })}
-          />
-        )}
-        {view === 'north' && <NorthView />}
-        {view === 'kitchen' && (
-          <KitchenView key={kitchenOpening.key} recipeId={kitchenOpening.recipeId} meal={kitchenOpening.meal} />
-        )}
-        {view === 'templates' && <TemplatesView />}
-        {view === 'library' && <LibraryView onOpenDay={openDay} />}
-        {view === 'review' && <ReviewView onOpenDay={openDay} />}
-        {view === 'settings' && (
-          <SettingsView key={settingsOpening.key} openAt={settingsOpening.at} onShowShortcuts={() => setShortcutsOpen(true)} />
-        )}
+          )}
+          {view === 'north' && <NorthView />}
+          {view === 'kitchen' && (
+            <KitchenView key={kitchenOpening.key} recipeId={kitchenOpening.recipeId} meal={kitchenOpening.meal} />
+          )}
+          {view === 'templates' && <TemplatesView />}
+          {view === 'library' && <LibraryView onOpenDay={openDay} />}
+          {view === 'review' && <ReviewView onOpenDay={openDay} />}
+          {view === 'settings' && (
+            <SettingsView key={settingsOpening.key} openAt={settingsOpening.at} onShowShortcuts={() => setShortcutsOpen(true)} />
+          )}
+        </ScreenBoundary>
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by
           moving between tabs - a timer that stops when you open Settings is
@@ -723,54 +744,74 @@ export function App() {
           closes back to the bar rather than to nothing, so leaving it is
           leaving a view rather than abandoning the session. */}
       {focusExpanded && focusTask && tools.focus && (
-        <FocusView
-          task={focusTask}
-          date={tools.focus.date}
-          onDone={() => {
-            if (!focusTask.done) storeActions.toggleTask(tools.focus!.date, focusTask.id)
-            clockTools.endFocus()
-            setFocusExpanded(false)
-          }}
-          onClose={() => setFocusExpanded(false)}
-        />
+        <ScreenBoundary name="Focus" kind="sheet" onClose={() => setFocusExpanded(false)}>
+          <FocusView
+            task={focusTask}
+            date={tools.focus.date}
+            onDone={() => {
+              if (!focusTask.done) storeActions.toggleTask(tools.focus!.date, focusTask.id)
+              clockTools.endFocus()
+              setFocusExpanded(false)
+            }}
+            onClose={() => setFocusExpanded(false)}
+          />
+        </ScreenBoundary>
       )}
 
       {/* After sleep, over the day - see NorthWindow. At the root, like every
           sheet, so it is over whatever tab the app opened on. */}
-      {northAfterSleep.open && <NorthWindow onClose={northAfterSleep.close} />}
+      {northAfterSleep.open && (
+        <ScreenBoundary name="North" kind="sheet" onClose={northAfterSleep.close}>
+          <NorthWindow onClose={northAfterSleep.close} />
+        </ScreenBoundary>
+      )}
       {shortcutsOpen && (
-        <ShortcutsOverlay
-          onClose={() => setShortcutsOpen(false)}
-          onStartTour={() => {
-            setShortcutsOpen(false)
-            openDay(todayKey())
-            startTour(isWide ? 'desktop' : 'mobile')
-          }}
-        />
+        <ScreenBoundary name="The shortcuts" kind="sheet" onClose={() => setShortcutsOpen(false)}>
+          <ShortcutsOverlay
+            onClose={() => setShortcutsOpen(false)}
+            onStartTour={() => {
+              setShortcutsOpen(false)
+              openDay(todayKey())
+              startTour(isWide ? 'desktop' : 'mobile')
+            }}
+          />
+        </ScreenBoundary>
       )}
 
       {paletteOpen && (
-        <CommandPalette
-          actions={paletteActions}
-          onOpenDay={openDay}
-          onOpenLibrary={() => setView('library')}
-          onOpenScratch={() => setScratchOpen({})}
-          onOpenRecipe={id => openKitchen({ recipeId: id })}
-          onClose={() => setPaletteOpen(false)}
-        />
+        <ScreenBoundary name="The command palette" kind="sheet" onClose={() => setPaletteOpen(false)}>
+          <CommandPalette
+            actions={paletteActions}
+            onOpenDay={openDay}
+            onOpenLibrary={() => setView('library')}
+            onOpenScratch={() => setScratchOpen({})}
+            onOpenRecipe={id => openKitchen({ recipeId: id })}
+            onClose={() => setPaletteOpen(false)}
+          />
+        </ScreenBoundary>
       )}
 
-      <FloatingClock />
+      <ScreenBoundary name="The timer" kind="inline">
+        <FloatingClock />
+      </ScreenBoundary>
       {/* One undo offer, app-wide - see lib/undo.ts. At the root because
           what it undoes could have happened on any tab. */}
-      <UndoToast />
-      {replan && <ReplanSheet date={replan.date} mode={replan.mode} onClose={() => setReplan(null)} />}
+      <ScreenBoundary name="Undo" kind="inline">
+        <UndoToast />
+      </ScreenBoundary>
+      {replan && (
+        <ScreenBoundary name="Replan" kind="sheet" onClose={() => setReplan(null)}>
+          <ReplanSheet date={replan.date} mode={replan.mode} onClose={() => setReplan(null)} />
+        </ScreenBoundary>
+      )}
       <UpdateNotice />
       {/* The one tooltip, for every control carrying data-tip - see TipLayer. */}
       <TipLayer />
       {/* The tour, at the root: it points at things on every tab and has
           to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}
-      <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />
+      <ScreenBoundary name="The tour" kind="sheet" onClose={() => leaveTour('keep')}>
+        <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />
+      </ScreenBoundary>
       {/* Scratch: the layer under everything, reached by one key on a
           keyboard and by the pen in the rail on every platform. See
           lib/scratch.ts. The floating button that used to do that job on a
@@ -778,13 +819,19 @@ export function App() {
           somebody had to park somewhere, it sat over the bottom of every
           screen, and the rail put a pen in the same corner of the same bar
           as everything else - one control, one place, both platforms. */}
-      <Scratch
-        open={scratchOpen !== null}
-        date={scratchOpen?.date}
-        onClose={() => setScratchOpen(null)}
-        onOpenTask={openTask}
-      />
-      {journalOpen && <JournalOverlay date={journalOpen.date} onClose={() => setJournalOpen(null)} />}
+      <ScreenBoundary name="Scratch" kind="sheet" onClose={() => setScratchOpen(null)}>
+        <Scratch
+          open={scratchOpen !== null}
+          date={scratchOpen?.date}
+          onClose={() => setScratchOpen(null)}
+          onOpenTask={openTask}
+        />
+      </ScreenBoundary>
+      {journalOpen && (
+        <ScreenBoundary name="The journal" kind="sheet" onClose={() => setJournalOpen(null)}>
+          <JournalOverlay date={journalOpen.date} onClose={() => setJournalOpen(null)} />
+        </ScreenBoundary>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { MEAL_TYPE_LABELS, recipeSections, recipesForMeal, type MealRecipes } from '../../lib/kitchen'
 import { searchRecipes } from '../../lib/search'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
+import { recipeTitle } from '../../lib/names'
 
 export type { MealRecipes } from '../../lib/kitchen'
 
@@ -9,8 +10,8 @@ export type { MealRecipes } from '../../lib/kitchen'
 export function recipesSummary(value: MealRecipes, recipes: readonly Recipe[]): string {
   if (value.follow && value.mealType) return `Every ${MEAL_TYPE_LABELS[value.mealType]} recipe, in turn`
   const chosen = (value.recipeIds ?? []).flatMap(id => recipes.filter(r => r.id === id))
-  if (chosen.length === 1) return chosen[0].title
-  if (chosen.length > 1) return `${chosen[0].title} and ${chosen.length - 1} more`
+  if (chosen.length === 1) return recipeTitle(chosen[0])
+  if (chosen.length > 1) return `${recipeTitle(chosen[0])} and ${chosen.length - 1} more`
   if (value.mealType) return `${MEAL_TYPE_LABELS[value.mealType]}, chosen on the day`
   return 'No recipe'
 }
@@ -161,7 +162,7 @@ export function RecipesField({
             <ol className="recipes-field-walk" aria-label="Walked in this order">
               {chosen.map(recipeId => (
                 <li key={recipeId} className="recipes-field-walk-item">
-                  <span className="recipes-field-walk-title">{recipes.find(r => r.id === recipeId)!.title}</span>
+                  <span className="recipes-field-walk-title">{recipeTitle(recipes.find(r => r.id === recipeId)!)}</span>
                 </li>
               ))}
             </ol>
@@ -170,7 +171,7 @@ export function RecipesField({
           {!single && !following && chosen.length > 0 && (
             <ol className="recipes-field-walk" aria-label="Walked in this order">
               {chosen.map(recipeId => {
-                const title = recipes.find(r => r.id === recipeId)!.title
+                const title = recipeTitle(recipes.find(r => r.id === recipeId)!)
                 return (
                   <li key={recipeId} className="recipes-field-walk-item">
                     <span className="recipes-field-walk-title">{title}</span>
@@ -213,11 +214,11 @@ export function RecipesField({
                         key={recipe.id}
                         type="button"
                         className={chosen.includes(recipe.id) ? 'is-on' : ''}
-                        aria-label={recipe.title}
+                        aria-label={recipeTitle(recipe)}
                         aria-pressed={chosen.includes(recipe.id)}
                         onClick={() => toggle(recipe.id)}
                       >
-                        {recipe.title}
+                        {recipeTitle(recipe)}
                       </button>
                     ))}
                   </div>

@@ -5,6 +5,7 @@ import { categoryColor } from '../../lib/categories'
 import { searchRecipes } from '../../lib/search'
 import { offerUndo } from '../../lib/undo'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
+import { recipeTitle } from '../../lib/names'
 import { RecipePage } from './RecipePage'
 import { RecipeForm } from './RecipeForm'
 import { PasteMany } from './PasteMany'
@@ -330,7 +331,7 @@ function RecipeCard({ recipe, picked, onOpen }: { recipe: Recipe; picked?: boole
   return (
     <div className={picked ? 'kitchen-card is-picked' : 'kitchen-card'}>
       <button type="button" className="kitchen-card-open" data-recipe-id={recipe.id} aria-pressed={picking ? picked : undefined} onClick={onOpen}>
-        <span className="kitchen-card-title">{recipe.title}</span>
+        <span className="kitchen-card-title">{recipeTitle(recipe)}</span>
         {lines.facts && <span className="kitchen-card-line">{lines.facts}</span>}
         {lines.numbers && <span className="kitchen-card-line">{lines.numbers}</span>}
         {lines.ingredients && <span className="kitchen-card-line kitchen-card-ingredients">{lines.ingredients}</span>}
@@ -345,7 +346,7 @@ function RecipeCard({ recipe, picked, onOpen }: { recipe: Recipe; picked?: boole
       ) : (
         <MealsPicker
           meals={recipe.mealTypes ?? []}
-          label={`Meals for ${recipe.title}`}
+          label={`Meals for ${recipeTitle(recipe)}`}
           none="No meal yet"
           onChange={next => actions.setRecipeMeals(recipe.id, next)}
         />

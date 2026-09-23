@@ -2,6 +2,7 @@ import { formatDayTitle } from './dates'
 import { progressLabel } from './library'
 import { scratchTitle } from './scratch'
 import type { AppData, Recipe } from './types'
+import { recipeTitle } from './names'
 
 /**
  * Finding things, without an index.
@@ -138,7 +139,7 @@ export function searchEverything(data: AppData, query: string, today: string): S
     results.push({
       kind: 'recipe',
       id: `recipe:${recipe.id}`,
-      title: recipe.title,
+      title: recipeTitle(recipe),
       detail: 'Recipe',
       target: { type: 'recipe', id: recipe.id },
       score,

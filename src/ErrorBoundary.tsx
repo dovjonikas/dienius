@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { getData } from './lib/store'
 import { exportJson, STORAGE_KEY } from './lib/storage'
 import { clearClockTools } from './lib/clockTools'
+import { downloadText } from './lib/download'
 
 interface Props {
   children: ReactNode
@@ -29,15 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleExport = (): void => {
     try {
-      const blob = new Blob([exportJson(getData())], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'dienius-backup.json'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      setTimeout(() => URL.revokeObjectURL(url), 0)
+      downloadText('dienius-backup.json', exportJson(getData()))
     } catch {
       // If the export itself fails there is nothing left to automate;
       // the reset button below is still available.

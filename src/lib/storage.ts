@@ -10,6 +10,7 @@ import { mergeOldJournal } from './journal'
 import { foldInbox } from './later'
 import { retireGoals } from './north'
 import { foldLegacySteps } from './stepsToNote'
+import { holdsSaves, keepUnreadable } from './unreadable'
 
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -345,8 +346,9 @@ function salvageTheme(x: unknown): ThemeState | undefined {
 }
 
 export function loadData(): AppData {
+  let raw: string | null = null
   try {
-    const raw = localStorage.getItem(activeKey())
+    raw = localStorage.getItem(activeKey())
     // An empty demo key is not an empty app, it is a sample week waiting to be
     // built. Done here rather than before React mounts because this module is
     // evaluated first: store.ts calls loadData() at import time, so anything
@@ -356,17 +358,33 @@ export function loadData(): AppData {
     if (!raw) return defaultData()
     const parsed: unknown = JSON.parse(raw)
     if (!validate(parsed)) {
+      keepAside(raw)
       const theme = salvageTheme(parsed)
       const fallback = defaultData()
       return theme ? { ...fallback, settings: { ...fallback.settings, theme } } : fallback
     }
     return normalizeLoaded(parsed)
   } catch {
+    // Not JSON, or a migration that threw on it: the same as refused.
+    if (raw) keepAside(raw)
     return defaultData()
   }
 }
 
+/**
+ * A plan that could not be read, kept before anything can be saved over it -
+ * see unreadable.ts. The plan's own key only: the demo's and the tour's
+ * copies are thrown away by design, and keeping one would put a line about
+ * a lost plan over a sample.
+ */
+function keepAside(raw: string): void {
+  if (activeKey() === STORAGE_KEY) keepUnreadable(raw)
+}
+
 export function saveData(data: AppData): boolean {
+  // Where an unreadable plan could not be kept aside it is still here, and
+  // nothing goes over it until the person has let it go.
+  if (activeKey() === STORAGE_KEY && holdsSaves()) return false
   try {
     localStorage.setItem(activeKey(), JSON.stringify(data))
     return true

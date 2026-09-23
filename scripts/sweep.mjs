@@ -143,7 +143,7 @@ async function press(page, name) {
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** What scripts/audit.js puts on the page's own window. */
-/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], sideways: { sel: string, over: number, detail: string }[], mismatched: { sel: string, detail: string }[] }} Audit */
+/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], squeezed: { sel: string, axis: string, box: number, held: number }[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], sideways: { sel: string, over: number, detail: string }[], mismatched: { sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
 /** `pointerOnly`: the surface only exists where there is a pointer to rest on it, so the phone run skips it. */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown>, pointerOnly?: boolean }} Screen */
@@ -809,6 +809,14 @@ if (SELF_CHECK) {
     partly.style.cssText = 'position:absolute;left:-40px;top:600px;width:300px;height:30px;background:#222;z-index:5'
     partly.innerHTML = '<span>Planted partly past the left edge</span>'
     document.body.appendChild(partly)
+    // A strip that scrolls, in a column of fixed height with more in it than
+    // fits: the column takes the strip's height, as it took Kitchen's meals.
+    const column = document.createElement('div')
+    column.style.cssText = 'position:fixed;left:800px;top:300px;width:300px;height:120px;display:flex;flex-direction:column;overflow-y:auto'
+    column.innerHTML =
+      '<div style="display:flex;overflow-x:auto"><button type="button">Planted chip</button><button type="button">Another</button></div>' +
+      '<div style="flex:0 0 auto;height:400px;background:#222"></div>'
+    document.body.appendChild(column)
     const row = document.createElement('div')
     row.style.cssText = 'position:fixed;left:100px;top:460px;background:#333;padding:4px;display:flex;gap:4px'
     const chip = 'border:1px solid #555;background:#222;color:#ccc;padding:4px 8px;font-weight:400'
@@ -822,6 +830,7 @@ if (SELF_CHECK) {
   const sees = {
     'sideways scroll': planted.hScroll > 0,
     'text cut off': planted.clipped > clean.clipped,
+    'a box squeezed shut': planted.squeezed > clean.squeezed,
     'text over text': planted.overlap > clean.overlap,
     'a control covered': planted.covered > clean.covered,
     'text under AA': planted.faint > clean.faint,
@@ -903,6 +912,7 @@ for (const run of runs) {
     const a = await page.evaluate(name => /** @type {AuditWindow} */ (/** @type {unknown} */ (window)).__audit(name), screen.name)
     if (a.hScroll > 0) found(where, 'scrolls sideways', `${a.hScroll}px`)
     for (const c of a.clipped) found(where, 'text cut off', `${c.sel} +${c.overX}x${c.overY} "${c.text}"`)
+    for (const s of a.squeezed) found(where, 'a box squeezed shut', `${s.sel} is ${s.box}px in ${s.axis} and holds ${s.held}px`)
     for (const c of a.covered) found(where, 'control covered', `${c.sel} "${c.t}" under ${c.by}`)
     for (const o of a.overlap) found(where, 'text over text', `${o.a} "${o.ta}" over ${o.b} "${o.tb}"`)
     for (const o of a.offscreen) {

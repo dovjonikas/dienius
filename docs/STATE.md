@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** the freeze preparation, the owner's seven points before Sunday 2026-09-28 (section below): point 1 is done - every backup format since v2.20, each written by its own version's code, opens here, loses nothing and is a fixed point byte for byte. Before it one look is done - stage 8, one height in a row, closed it: the measure finds nothing on 111 screens and sizes, and the frame stands in one place per size; stage 7 before it, one left line - rows read the way the eye reads them, and a line under a title exactly under it; stage 6 before it, nothing stretched - one limit for a field and a joined line as wide as its parts; stage 5 before it, a row stays a row - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** the freeze preparation, the owner's seven points before Sunday 2026-09-28 (section below): points 1 and 2 are done - every backup format since v2.20, each written by its own version's code, opens here, loses nothing and is a fixed point byte for byte; and a screen that cannot draw says so in its own place while every other screen goes on, a plan that cannot be read is kept and said, and none of the owner's six cases needs either. Before it one look is done - stage 8, one height in a row, closed it: the measure finds nothing on 111 screens and sizes, and the frame stands in one place per size; stage 7 before it, one left line - rows read the way the eye reads them, and a line under a title exactly under it; stage 6 before it, nothing stretched - one limit for a field and a joined line as wide as its parts; stage 5 before it, a row stays a row - every row that wrapped is a strip, a second row by design or one line that gives up its tail; stage 4 before it, it fits - on a desktop no page scrolls, every page is its head and a body that scrolls under it; v2.40 before it - a kind names the kind it is after a night, so the roster carries one letter for a rest day whichever shift came before it; v2.39 before it - a whole shelf pasted at once and North replaced at once, the last of the four-part brief; before it the night of 2026-09-23, docs/OVERNIGHT-2026-09-23.md: v2.38 is done - a kind put on a date by hand holds that kind only, and a date opened again holds each block once - and behind it the real templates file read where it lives, a week of its roster lived in the browser, and two devices on the real clock; v2.37 before it, routines in the templates file, part 3 of the owner's four-part brief; v2.36 before it, the starting map of meal words, the recipes a template block waits for and an erase that takes this device's keys with it; v2.35, blocks that end by themselves. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## The freeze preparation (2026-09-23 to 2026-09-28)
 
@@ -28,6 +28,29 @@ later. Seven points, each with every gate green.
   once. No version broke, so no migration needed fixing; a planted lost
   field and a planted unstable export were both caught. CONVENTIONS 7 says
   how the next shape leaves its own file.
+- **2. A screen fails, not the app: done.** Every page, sheet and panel of
+  the header is in its own boundary (`src/ScreenBoundary.tsx`): what cannot
+  draw says so in its own place - a page its name and a card (it could not
+  be shown, nothing is lost, the error in one line, Try again, Export
+  backup), a sheet or a panel one line - and the rail goes everywhere else
+  (`src/screenFails.test.tsx`). `src/resilience.test.tsx` opens the app on
+  each of the owner's six cases and walks every page: a store that cannot
+  be read (five ways, and every other key the app keeps filled with six
+  kinds of rubbish), a field nobody expected (it rides along through a
+  save), an empty template, a date without a kind, a roster without days
+  (on this device and in a templates file), a recipe without a name. None
+  needs the boundary; a crash planted in Kitchen was seen before the walk
+  was believed. Two were not crashes and not clear either, and are fixed: a
+  stored plan that could not be read opened an empty app without a word and
+  was written over by the first save - now it is kept aside
+  (`lib/unreadable.ts`), a line over every page says so, and Settings saves
+  it as a file or forgets it; and a recipe or a template with no name was a
+  blank row - "Untitled recipe" and "Untitled template" now
+  (`lib/names.ts`), the plan keeping the empty name. Found on the way:
+  Kitchen's meal filter was a 4px band on every desktop since one look's
+  stage 5 - fixed, and the sweep now sees a box squeezed shut. DECISIONS
+  "One screen fails, not the app", "A plan that cannot be read is kept, and
+  said" and "A strip in a column keeps its height".
 
 ## v2.40 - A kind after a night
 

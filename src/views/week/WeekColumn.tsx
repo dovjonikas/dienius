@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Category, Template } from '../../lib/types'
+import { templateName } from '../../lib/names'
 import type { DayStat } from '../../lib/dayStats'
 import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
@@ -212,7 +213,7 @@ export function WeekColumn({
                 }}
               >
                 <span className="template-chip-dot" aria-hidden="true" />
-                {t.name}
+                {templateName(t)}
               </button>
             ))}
             {/* In the menu the stamp is chosen from, because emptying a day

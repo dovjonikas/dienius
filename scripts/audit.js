@@ -493,6 +493,7 @@
       hScroll: Math.max(0, de.scrollWidth - de.clientWidth),
       vScroll: Math.max(0, de.scrollHeight - de.clientHeight),
       clipped: [],
+      squeezed: [],
       covered: [],
       overlap: [],
       offscreen: [],
@@ -514,6 +515,29 @@
       if (overX <= 1 && overY <= 1) continue
       if (cs.overflow === 'visible') continue
       out.clipped.push({ sel: sig(el), overX, overY, text: t.slice(0, 50) })
+    }
+
+    // A box squeezed shut. A strip that scrolls, in a column of fixed height,
+    // gives its height up to the column: Kitchen's meals were a 4px band on
+    // every desktop from one look's stage 5 until the freeze, and nothing
+    // above saw it - the strip scrolls, so it is not "cut off", and the chips
+    // inside it were clipped by it, so they were not on screen to be counted.
+    // A box that hides or scrolls its overflow, less than a control in one
+    // direction, holding something a control's size more than itself in
+    // that direction, is shut - squeezed to nothing most of all, so this
+    // reads every box that is drawn, not only those with a size to see: a
+    // strip without the padding Kitchen's had goes to 0px, and the pass that
+    // looks only at what is on screen never meets it.
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el)
+      if (cs.display === 'none' || cs.visibility === 'hidden' || el.closest('.visually-hidden')) continue
+      if (!/auto|scroll|hidden|clip/.test(cs.overflowX + cs.overflowY)) continue
+      const r = el.getBoundingClientRect()
+      for (const axis of /** @type {const} */ (['height', 'width'])) {
+        if (r[axis] >= 24) continue
+        const held = [...el.children].reduce((most, c) => Math.max(most, c.getBoundingClientRect()[axis]), 0)
+        if (held > r[axis] + 8) out.squeezed.push({ sel: sig(el), axis, box: Math.round(r[axis]), held: Math.round(held) })
+      }
     }
 
     // While a sheet is open, everything behind it is meant to be behind it.
@@ -690,7 +714,7 @@
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, offscreenPartly: a.offscreen.filter(o => o.side === 'left-partly').length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length, sideways: a.sideways.length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, squeezed: a.squeezed.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, offscreenPartly: a.offscreen.filter(o => o.side === 'left-partly').length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length, sideways: a.sideways.length }
   }
 
   /** @param {string} tab */

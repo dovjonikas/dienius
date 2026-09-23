@@ -4952,3 +4952,98 @@ the title's box, so North's quieter name and Settings' taller heading read
 as five places, and a focus session's bar left over from one screen to the
 next moved the agenda's by 64px. Measured from main's top and by its centre
 line, the title stands in one place per size.
+
+## One screen fails, not the app
+
+The freeze's point 2, 2026-09-23. The owner's brief: a store that cannot be
+read, a field nobody expected, an empty template, a date without a kind, a
+roster without days, a recipe without a name - none may bring the whole app
+down; a clear message in that place, and the other screens working.
+
+**Every page, sheet and panel sits in its own boundary**
+(`src/ScreenBoundary.tsx`). The app-wide one in `main.tsx` was the only one:
+a page that threw took the header, the rail and every other page with it,
+and its one way on - reload - opened the same page into the same throw. Now
+a page that cannot draw keeps the page's frame - its name where every
+title stands, a card that says the page could not be shown, that nothing
+is lost, the error in one line, Try again and Export backup - and the rail
+goes everywhere else. A sheet (Focus, the journal, Scratch, replan, the
+palette, the shortcuts, the tour, North after sleep) is one line over the
+page with Close; a panel of the header or a strip under it is one line in
+its place. The page's boundary is keyed by the page, so going to another
+page and back draws it afresh. Both carry the sync line's danger mark, the
+app's one way of saying something went wrong - not a drawn edge, which the
+design pass is retiring.
+
+**None of the six needs the boundary, and a test walks every page to
+prove it** (`src/resilience.test.tsx`): each case is written into this
+browser's storage and the app's modules are loaded fresh, the way a real
+open reads them, and a crash planted in Kitchen was seen before the walk
+was believed. The boundary is the net, not the answer.
+
+**A recipe or a template with no name is called what it is on the screen**
+- "Untitled recipe", "Untitled template" (`lib/names.ts`) - and stays empty
+in the plan. The app never makes one (both editors want a name, a
+templates file and a pasted shelf skip a line without one), but a backup
+edited by hand can hold one, and the guard lets it in: refusing a whole
+file for one blank name would lose everything else in it. Before this, a
+nameless recipe was a blank button in Kitchen with no name to read or to
+hear.
+
+## A plan that cannot be read is kept, and said
+
+Also point 2. A stored plan that did not parse, or did not pass the guard,
+opened as an empty app without a word - and the first thing saved wrote the
+empty plan over it. The only copy of somebody's month could be gone
+because one byte was wrong, with nothing on the screen to say so.
+
+Now `loadData` keeps the text it could not read under `dienius:unreadable`,
+as it was, before anything can be saved over it (`lib/unreadable.ts`); a
+line over every page says so ("The plan saved in this browser could not be
+read, so Dienius opened without it. It is kept, as it was.") and its What to
+do opens Settings, where the row beside Export and import saves it as a
+file or, on a second press, forgets it. The line stands until one of those
+is chosen.
+
+- **One copy at a time.** A second unreadable plan replaces a first one
+  kept, which nobody saved or forgot while a line over every page asked
+  them to. The same plan found on the next open keeps the time it was
+  first found.
+- **Where the copy cannot be written** - storage full, which only a plan
+  big enough to fill half of it could cause - it stays where it is, and
+  nothing is saved over it until it has been forgotten; the row says why.
+  Saving fails the way it does when storage is full, and Settings says so.
+- **The plan's own key only.** The demo's and the tour's copies are thrown
+  away by design, and a line about a lost plan over a sample would be a
+  lie.
+- **Not repaired.** A plan the guard refuses is not half-read - a file is
+  accepted or refused whole (BACKUP-FORMAT section 2). What cannot be read
+  is kept for a person, or another agent, to look at.
+
+Rejected: holding every save while the app runs on an empty plan until the
+person chooses. Everything done in the meantime would be lost on the next
+reload, which is a second loss to prevent the first.
+
+## A strip in a column keeps its height
+
+Found while looking at point 2's pictures, 2026-09-23: Kitchen's meals -
+All, Breakfast, Lunch and the rest - were a 4px band under the page's title
+on every desktop, and had been since one look's stage 5 made the row a
+strip that scrolls sideways. On a desktop a page's body is a column of fixed
+height that scrolls; a strip that scrolls has no height of its own to hold
+on to in a column (its least height is nothing), so it gave all of it up to
+a shelf of cards longer than the window. The "after" pictures of one look
+show it, and no pass saw it: the strip scrolls, so it was not text cut off,
+and the chips inside it were clipped by it, so they were not on screen to be
+counted.
+
+- **What is in a page's body keeps its own height** (`.review-body > *`,
+  `.library-body > *`, `.kitchen-body > *`): the body scrolls, its parts do
+  not give way to it. The Library's jump bar over its lists is the same
+  kind of strip, and would have gone the same way on a longer page.
+- **The sweep sees a box squeezed shut** (`scripts/audit.js`): a box that
+  hides or scrolls its overflow, less than a control in one direction,
+  holding something a control's size more than itself. It reads every box
+  that is drawn, not only those with a size to see - the planted one in the
+  self-check went to 0px, and a pass reading only what is on screen never
+  met it.
