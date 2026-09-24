@@ -92,7 +92,7 @@ function overlay(p: Loose, stamp: string): void {
     replannedOn: '2026-09-21', repeatSkips: ['fx-rep-old'], away: '14:00', autoApplied: true, ...u,
     tasks: [
       night,
-      t({ id: 'fx-t2', title: 'Call the garage', done: true, time: '10:00', minutes: 15, actualMinutes: 20, link: 'https://example.com', pushCount: 2, latest: '12:00', category: 'fx-errands' }),
+      t({ id: 'fx-t2', title: 'Call the garage', done: true, time: '10:00', minutes: 15, actualMinutes: 20, link: 'https://example.com', pushCount: 2, latest: '12:00', category: 'fx-errands', ...(since('9bb7835') ? { doneAt: '2026-09-21T07:20:00.000Z' } : {}) }),
       t({ id: 'fx-t3', title: 'Sort the drawer', setAside: true, unbounded: true }),
       t({ id: 'fx-t4', title: 'Water the plants', time: '08:30', minutes: 10, repeatOf: 'fx-rep', origin: { type: 'repeat', sourceId: 'fx-rep' }, category: 'routine' }),
       t({ id: 'fx-t5', title: 'Buy stamps', fromNote: 'fx-note', origin: { type: 'manual' } }),

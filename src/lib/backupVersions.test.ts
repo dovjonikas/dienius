@@ -117,7 +117,7 @@ describe.each(FILES)('%s', name => {
 })
 
 test('every format since v2.20 is here, the oldest and the newest among them', () => {
-  expect(FILES.length).toBeGreaterThanOrEqual(20)
+  expect(FILES.length).toBeGreaterThanOrEqual(21)
   expect(FILES[0]).toMatch(/^backup-v2\.20-/)
-  expect(FILES[FILES.length - 1]).toMatch(/^backup-v2\.41-/)
+  expect(FILES[FILES.length - 1]).toMatch(/^backup-v2\.43-/)
 })
