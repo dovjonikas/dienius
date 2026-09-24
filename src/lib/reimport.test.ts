@@ -174,6 +174,15 @@ describe('the file pasted again', () => {
     expect(titled('2030-01-10', 'Travel home').done).toBe(true)
   })
 
+  test('a key block the file adds arrives unmarked on a date that already has its three key tasks', () => {
+    const keyed = DAY_ONE.map((b, i) => (i < 3 ? { ...b, key: true } : b))
+    actions.importTemplatesJson(file(keyed, ROSTER))
+    at(10, 5)
+    actions.importTemplatesJson(file([...keyed, { time: '21:00', title: 'Plan tomorrow', minutes: 10, key: true }], ROSTER))
+    expect(titled('2030-01-11', 'Plan tomorrow').highlight).toBe(false)
+    expect(tasksOn('2030-01-11').filter(t => t.highlight)).toHaveLength(3)
+  })
+
   test('a block the file adds arrives today only where it has not ended yet', () => {
     actions.importTemplatesJson(file(DAY_ONE, ROSTER))
     at(10, 21)

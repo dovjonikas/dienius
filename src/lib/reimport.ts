@@ -128,10 +128,10 @@ function follow(
   for (const block of fresh) {
     if (endedBy(block.time, block.minutes, now)) continue
     const task = stampedTask(block, template.id, [], stampDate, data.library, data.recipes)
-    // Three key tasks a day, however they came.
-    const highlight = task.highlight && keys < MAX_HIGHLIGHTS
-    if (highlight) keys++
-    tasks.push({ ...task, highlight, ...(night ? { nightOf: stampDate } : {}) })
+    // Three key tasks a day, however they came: a fourth arrives unmarked.
+    const over = !!task.highlight && keys >= MAX_HIGHLIGHTS
+    if (task.highlight && !over) keys++
+    tasks.push({ ...task, ...(over ? { highlight: false } : {}), ...(night ? { nightOf: stampDate } : {}) })
   }
 
   const same = tasks.length === day.tasks.length && tasks.every((t, i) => t === day.tasks[i])
