@@ -306,6 +306,7 @@ timer, Notes, the journal and Search on every page.
 | Export and import | Plain JSON both ways, by hand - docs/BACKUP-FORMAT.md |
 | A plan that could not be read | Kept aside, as it was, before anything is saved over it; a line over every page says so, and Settings saves it as a file |
 | Backup to GitHub | The plan as JSON in the owner's private repo, written when a day closes, when a new one opens and on Back up now; Restore from cloud compares both copies, then brings back what is missing or replaces everything; the token stays on the device |
+| Archive | Beside the backup, in the same repo: a file for every lived day - its kind, blocks, what was ticked and when, meals with recipe and numbers, notes, the score - and the whole plan once a week, never written over; "Archived until" in Settings, Backup - docs/ARCHIVE-FORMAT.md |
 | Sync | Optional, between devices, through GitHub or a server of your own; per entity, the later write wins, a delete is kept; a device joining with a plan of its own - or turning sync on again - chooses Take from GitHub, Keep this one or Merge first, and a line over every page says when sync fails or waits - docs/SYNC.md |
 | External calendars | An imported .ics file, or a subscribed address fetched through a sync server of your own, drawn as a read-only layer on Today and the week; free time counts their timed events |
 | Screens that fail alone | A page, a sheet the shell opens, or a panel of the header that cannot draw says so in its own place, and everything else goes on; a sheet a page opens itself fails with its page |
@@ -327,6 +328,7 @@ after that a version is found by its number in the commit messages
 |---|---|
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
+| **v2.43** | An archive of every lived day, beside the backup |
 | **v2.42** | A templates file pasted again brings today and the dates ahead along |
 | **v2.41** | A reading block names its list in the templates file |
 | **v2.40** | A kind after a night: a kind of day names the kind it is after a night |

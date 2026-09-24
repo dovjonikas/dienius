@@ -5,7 +5,8 @@ import { BackupSettings } from './BackupSettings'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
 import { resetCloudBackupForTests, setCloudBackupConfig, toBase64 } from '../lib/cloudBackup'
-import { todayKey } from '../lib/dates'
+import { addDays, monthAndDay, todayKey } from '../lib/dates'
+import { resetArchiveForTests } from '../lib/archive'
 import { resetSyncForTests, setSyncConfig } from '../lib/syncClient'
 
 /**
@@ -251,4 +252,24 @@ test('with sync off, the restore preview says nothing about sync', async () => {
   await screen.findByRole('group', { name: 'Restore from cloud' })
 
   expect(screen.queryByRole('note')).toBeNull()
+})
+
+test('the archive says how far it reaches, Archive now runs it, and a failure is said on its line', async () => {
+  const yesterday = addDays(todayKey(), -1)
+  actions.resetForTests({ ...defaultData(), days: { [yesterday]: { date: yesterday, tasks: [{ id: 'a', title: 'A thing done yesterday', done: true }] } } })
+  resetArchiveForTests()
+  setCloudBackupConfig({ repo: 'me/dienius-data', token: 'github_pat_x' })
+  render(<BackupSettings />)
+  expect(screen.getByText('Nothing archived yet.')).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Archive now' }))
+  await vi.waitFor(() => expect(screen.getByText(`Archived until ${monthAndDay(yesterday)}.`)).toBeInTheDocument())
+
+  // The token refused: said on the same line, in the danger ink, with what to check.
+  actions.addTask(yesterday, 'Written in afterwards')
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('{}', { status: 401 }))))
+  await userEvent.click(screen.getByRole('button', { name: 'Archive now' }))
+  const line = await screen.findByText(/GitHub refused the token/)
+  expect(line).toHaveTextContent(/^Nothing archived yet\. GitHub refused the token/)
+  expect(line).toHaveClass('sync-status-bad')
 })

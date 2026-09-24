@@ -16,6 +16,8 @@ import {
   type CloudBackupStatus,
   type RestorePreview,
 } from '../lib/cloudBackup'
+import { archiveNow, useArchiveStatus, type ArchiveStatus } from '../lib/archive'
+import { monthAndDay } from '../lib/dates'
 
 /**
  * Where the third copy is set up, and the only place its state is visible.
@@ -45,8 +47,27 @@ function statusLine(status: CloudBackupStatus): { text: string; tone: 'ok' | 'bu
   }
 }
 
+/**
+ * The archive's one line - lib/archive.ts: how far it reaches, and what went
+ * wrong when something did, on the same line and never quietly.
+ */
+function archiveLine(status: ArchiveStatus): { text: string; tone: 'ok' | 'busy' | 'bad' } {
+  const until = status.through ? `Archived until ${monthAndDay(status.through)}.` : 'Nothing archived yet.'
+  switch (status.phase) {
+    case 'working':
+      return { text: 'Archiving…', tone: 'busy' }
+    case 'offline':
+      return { text: `${until} ${status.message ?? ''}`.trim(), tone: 'busy' }
+    case 'error':
+      return { text: `${until} ${status.message ?? 'It did not go through. It will try again.'}`, tone: 'bad' }
+    default:
+      return { text: until, tone: 'ok' }
+  }
+}
+
 export function BackupSettings() {
   const status = useCloudBackupStatus()
+  const archive = useArchiveStatus()
   const saved = getCloudBackupConfig()
   const [repo, setRepo] = useState(saved.repo)
   const [token, setToken] = useState(saved.token)
@@ -64,6 +85,7 @@ export function BackupSettings() {
 
   const dirty = repo.trim() !== saved.repo || token.trim() !== saved.token
   const line = statusLine(status)
+  const archived = archiveLine(archive)
 
   function save() {
     setCloudBackupConfig({ repo, token })
@@ -188,6 +210,24 @@ export function BackupSettings() {
           {line.text}
         </p>
 
+        {/* The archive, beside the copy: every lived day and a week at a
+            time, in the same repo - lib/archive.ts. */}
+        {!dirty && isCloudBackupOn() && (
+          <div className="setting-row archive-row">
+            <div className="setting-label">
+              <span className="setting-name">Archive</span>
+              <span className={archived.tone === 'bad' ? 'sync-status sync-status-bad' : 'setting-desc'} aria-live="polite">
+                {archived.text}
+              </span>
+            </div>
+            <div className="setting-control">
+              <button type="button" className="btn-secondary" onClick={() => void archiveNow()} disabled={archive.phase === 'working'}>
+                Archive now
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Two devices backing up here with sync off: each copy is merged now,
             so neither is lost, but the two plans still never meet - see
             cloudBackup.ts, othersUnseenAt. Said on both sections. */}
@@ -288,7 +328,9 @@ export function BackupSettings() {
         <p className="setting-desc">
           The third copy, beside the other two: sync keeps your devices agreeing, the daily
           snapshots keep a week of this device's own history, and this one is off site, as{' '}
-          <code>data/state.json</code> and one file per day under <code>data/history/</code>.
+          <code>data/state.json</code> and one file per day under <code>data/history/</code>. The archive
+          keeps every lived day under <code>archive/days/</code>, written again only when the day changes, and the
+          whole plan once a week under <code>archive/weekly/</code>, never written over.
         </p>
       </div>
     </div>

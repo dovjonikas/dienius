@@ -11,7 +11,7 @@ is today: for that, read STATE, and for why things are the way they are,
 
 Newest first:
 
-- [v2.42 back to v2.17](#v242---a-templates-file-pasted-again-brings-today-and-the-dates-ahead-along), a section each, with
+- [v2.43 back to v2.17](#v243---an-archive-of-every-lived-day-beside-the-backup), a section each, with
   One look and the first real month's dry run between them
 - [The versions before, one line each](#the-versions-before-one-line-each),
   v1.0 to v2.17
@@ -22,6 +22,31 @@ Newest first:
 - [Where steps lived, before they were removed](#where-steps-lived-before-they-were-removed)
 
 ---
+
+## v2.43 - An archive of every lived day, beside the backup
+
+The owner's shift brief of 2026-09-25, stage 3, a new feature before the
+freeze.
+
+- **`lib/archive.ts`**, in the backup's repo through its token:
+  `archive/days/YYYY/MM/YYYY-MM-DD.json` for every lived day - its kind, its
+  blocks, what was ticked and when, the meals with their recipe, kcal and
+  protein, the notes, the routines, the score - written when the day is
+  over and again only when it changes; `archive/weekly/YYYY-MM-DD.json`, the
+  whole plan once a week under its Monday, never written over. Nothing is
+  deleted. Two devices make one file of a day, and an older copy never goes
+  over a newer one.
+- **`Task.doneAt`**: when a block was ticked - a hand's moment, or the end of
+  a block the clock marked done.
+- **Settings, Backup**: "Archived until September 23." and Archive now,
+  with what went wrong said on the same line.
+- **docs/ARCHIVE-FORMAT.md** for the journal that reads it, its example held
+  to the code by a test.
+- **Tests**: `archive.test.ts` (the record, once, again when changed, the
+  week never written over, no connection, a refused token, archived until,
+  two devices, when a block was ticked, the document's example), and
+  `views/BackupSettings.test.tsx` (the line and the button). DECISIONS "An
+  archive of every lived day, beside the backup".
 
 ## v2.42 - A templates file pasted again brings today and the dates ahead along
 

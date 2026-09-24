@@ -340,6 +340,12 @@ export interface Task extends Timestamped {
   time?: string
   title: string
   done: boolean
+  /**
+   * When it was ticked: the instant a hand ticked it, or the end of a block
+   * the clock marked done. Absent on a task not done, and on one done before
+   * this was kept (v2.43) - the archive then says it was done and not when.
+   */
+  doneAt?: string
   fromTemplate?: boolean
   /**
    * How many times this task has been pushed to the next day. Absent or

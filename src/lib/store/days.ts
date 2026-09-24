@@ -76,8 +76,9 @@ export const dayActions = {
     const missed = !!task && task.done && endsItself(task, data.categories) && hasEnded(task, date, new Date())
     const tasks = day.tasks.map(t => {
       if (t.id !== taskId) return t
-      const { missed: _said, ...rest } = t
-      return t.done ? { ...rest, done: false, ...(missed ? { missed: true } : {}) } : { ...rest, done: true }
+      const { missed: _said, doneAt: _when, ...rest } = t
+      // When it was ticked, for the archive: kept with the tick, gone with it.
+      return t.done ? { ...rest, done: false, ...(missed ? { missed: true } : {}) } : { ...rest, done: true, doneAt: new Date().toISOString() }
     })
     const library = task ? advanceForTask(data.library, task, !task.done, date) : data.library
     commit({ ...withDay(date, { ...day, tasks }), library })

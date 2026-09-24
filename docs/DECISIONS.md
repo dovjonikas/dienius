@@ -5447,3 +5447,64 @@ block back at its template's time and takes away what has no block, which
 is the hand's work this has to keep. Rejected: asking about each changed
 date, as the Roster does. A file pasted many times a month that asks every
 time is a file that stops being pasted.
+
+## An archive of every lived day, beside the backup
+
+v2.43, the owner's shift brief of 2026-09-25, stage 3 - a new feature, asked
+for before the freeze of 2026-09-28. The backup keeps the plan as it is now
+and a day's last copy; the snapshots keep a week of one device. Neither
+keeps what a day was in a shape the owner's journal can read a month later
+to see the progress, and the owner asked for exactly that: everything
+archived on GitHub, with dates, with nothing new to set up.
+
+**In the backup's repo, through its token** (lib/archive.ts,
+docs/ARCHIVE-FORMAT.md): a file for every lived day under
+`archive/days/YYYY/MM/`, and the whole plan once a week under
+`archive/weekly/`, named by the week's Monday. On whenever the backup is:
+a second repo, or a second token, would be a second thing to set up for
+something nobody would think of as separate.
+
+**A day's own shape, not a backup of it.** A reader wants what happened -
+the kind, the blocks, what was ticked and when, the meals with their
+recipe and numbers, the notes, the score - and not the ids and stamps that
+let a plan merge. So a day file names things: a category by its name, a
+recipe by its title with its kcal and protein, a book by its list and its
+title. The numbers are never added up, as Kitchen never adds them; the
+week's file is the whole plan for anything a day file leaves out.
+
+**When it was ticked is kept now** (`Task.doneAt`). A tick said nothing of
+its time before; the archive's first reader asked for it. A hand's tick
+keeps its moment, and a block the clock marks done keeps its end rather
+than the moment the app was next opened - the shift was over at seven,
+whoever looked at nine.
+
+**Written once, again only when changed, and never deleted.** The day is
+written when it is over - the first open of a new day, after every backup,
+or Archive now - and again only when it changes afterwards, which is a hand
+coming back to it. The week's file is never written over, whatever changes:
+it is the plan as it stood that Monday, and a copy that could be replaced
+would not be one. Nothing is deleted by the app: the files are small, and
+the history is the point.
+
+**Two devices, one archive.** A day's path is its date, so two devices
+never make two files of it. Which copy stands is the sync rule, read off
+the day itself: `changedAt`, the newest stamp in the day, and a device
+holding an older copy leaves a newer file alone. What this device has
+written is kept as a mark of each day's own state (`dienius:archive`) - its
+newest stamp, and how many tasks and notes it holds - so a run reads the
+repo only for a day that changed, and a device without the record reads
+the repo and writes nothing it finds there already. A day changes when the
+day does: a recipe retold or a category renamed afterwards leaves the days
+that had them as they were written, which is what "nothing else touches
+it" means.
+
+**Said, never silent.** One line in Settings, Backup: "Archived until
+September 23.", and on the same line what went wrong - a refused token, a
+repo not found, no connection - in the danger ink where it failed. A
+failure marks nothing, so what waited goes on the next run. Archive now is
+beside it.
+
+Rejected: writing the archive into `data/history/`, the backup's one file a
+day. That file is a plan, merged from every device that backed up that day,
+and the next backup writes over it; an archive has to be a record of the
+day, written for a reader, that stays.

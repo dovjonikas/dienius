@@ -129,6 +129,28 @@ so in Settings and catches up by itself.
    what Pull is for. Replace everything is for rolling every device back to
    the backup, on purpose.
 
+## The archive beside them
+
+Since v2.43 the backup's repo also keeps an archive (docs/ARCHIVE-FORMAT.md):
+`archive/days/YYYY/MM/YYYY-MM-DD.json` for every lived day, and
+`archive/weekly/YYYY-MM-DD.json`, the whole plan once a week, named by the
+week's Monday. The same token, and on whenever the backup is. It is not
+sync and not the backup: nothing in it is ever read back into a plan by
+itself, and nothing in it is deleted.
+
+- **When.** The first open of a new day, after every backup, and on
+  Archive now in Settings, Backup - a day is archived once it is over, and
+  written again only when it changes afterwards.
+- **Two devices.** A day's file is named by its date, so there is one
+  whichever device writes it. A device finding the day there as it would
+  write it writes nothing; one holding an older copy of the day leaves the
+  newer file alone, and one holding a later change writes it - the day's
+  `changedAt`, the newest stamp in it, says which. A week's file is written
+  only where there is none.
+- **No connection, or a refused token.** Said on the archive's line in
+  Settings, Backup, and nothing is marked as archived: what waited goes on
+  the next run.
+
 ## What was checked where
 
 - **Two devices through every path** in `src/lib/syncTwoDevices.test.ts`:
@@ -140,6 +162,10 @@ so in Settings and catches up by itself.
   the page is seen making its exit push, and the change still reaches the
   desktop, through the phone's next open. And a phone with a plan of its
   own is asked, on a screen that fits it, and taking writes nothing.
+- **The archive**, in `src/lib/archive.test.ts`: a day written once and
+  again only when changed, a week's file never written over, no connection
+  and a refused token waiting for the next run, and two devices making one
+  file with an older copy never over a newer one.
 - **iOS Safari** could not be run here. Nothing depends on it carrying a
   request past a closing page: the three-second wait on a phone keeps that
   window small, and whatever does not leave with the page is sent on the

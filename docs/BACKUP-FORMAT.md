@@ -23,7 +23,11 @@ down here fails the build. Fields new in v2.31 are marked **v2.31**.
     file held and what the device backing up holds, per entity, so it is
     never older than any device's last backup;
   - `data/history/YYYY-MM-DD.json` - that day's last copy, one file a day;
-  - `data/sync.json` - sync's own machinery, not a plan.
+  - `data/sync.json` - sync's own machinery, not a plan;
+  - `archive/weekly/YYYY-MM-DD.json` - since v2.43, this text once a week,
+    named by the week's Monday and never written over; and beside it
+    `archive/days/`, a file for every lived day in a shape of its own -
+    docs/ARCHIVE-FORMAT.md.
 - **When**: at most every ten minutes while something changed, when the
   evening closes, when a new day starts, and when "Back up now" is pressed.
 
@@ -114,6 +118,7 @@ to the date it starts on** (section 4).
 | `id` | Unique. |
 | `title` | What it is. |
 | `done` | Ticked. |
+| `doneAt` | **v2.43.** When it was ticked, an instant: the moment a hand ticked it, or the end of a block the clock marked done. Absent on a task not done, and on one ticked before v2.43. |
 | `time` | `HH:MM` on its date's clock. Absent: no time - it floats on the day. |
 | `minutes` | How long it is planned to take. Absent is unsized, not zero. |
 | `actualMinutes` | How long it took, where somebody measured it. |
@@ -331,3 +336,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.39 | `author` on a library item: who wrote it, where somebody said so - a shelf pasted at once writes it from "A title - An author". |
 | v2.40 | `afterNight` on a kind's mark: the kind it is on a date after a night, so the roster carries one letter for a rest day whichever shift came before it. |
 | v2.41 | `waitingLibrary` on a block: a list named by a templates file before the Library had it, read from as soon as a list of that name arrives. |
+| v2.43 | `doneAt` on a task: when it was ticked, for the archive of lived days (docs/ARCHIVE-FORMAT.md). |

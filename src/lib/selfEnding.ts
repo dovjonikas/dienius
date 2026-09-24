@@ -82,7 +82,8 @@ export function selfEnded(data: AppData, now: Date, onDone?: (task: Task, date: 
     const tasks = day.tasks.map(t => {
       if (!endsNow(t, date, now, data.categories)) return t
       onDone?.(t, date)
-      return { ...t, done: true }
+      // Done when it ended, not when the app was next opened to see it.
+      return { ...t, done: true, doneAt: endOf(t, date)!.toISOString() }
     })
     days = { ...(days ?? data.days), [date]: { ...day, tasks } }
   }

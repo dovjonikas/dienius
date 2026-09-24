@@ -6,6 +6,7 @@ import { registerServiceWorker } from './pwa'
 import { watchInstallPrompt } from './lib/install'
 import { startSync } from './lib/syncClient'
 import { startCloudBackup } from './lib/cloudBackup'
+import { startArchive } from './lib/archive'
 import './styles.css'
 
 // Before React is handed the page. The browser fires beforeinstallprompt
@@ -30,3 +31,7 @@ startSync()
 // The third copy, on GitHub - lib/cloudBackup.ts. A no-op with no repo set;
 // on the first open of a new day it fixes yesterday in its final state.
 startCloudBackup()
+// The archive beside it, in the same repo - lib/archive.ts: every lived day,
+// and the whole plan once a week, on the first open of a day and after each
+// backup.
+startArchive()

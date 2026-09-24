@@ -157,6 +157,11 @@ of them is in a backup. The ones that hold something worth knowing about:
   ([`unreadable.ts`](../src/lib/unreadable.ts), DECISIONS "A plan that
   cannot be read is kept, and said"). In no backup and never synced: it is
   the one copy of something the app could not read, for a person to look at.
+- **`dienius:archive`** - which lived days this device has archived, each as
+  a mark of the day's own state - its newest stamp and how many tasks and
+  notes it holds - and which weeks' files it has written or found ([`archive.ts`](../src/lib/archive.ts)). The files in the repo are
+  the truth; this only spares a run the reading of a day that has not
+  changed, and a device without it reads the repo again.
 
 And a few device-local preferences under their own keys for the same
 reason, each explained where it lives: the evening close's and the yesterday
@@ -285,6 +290,7 @@ src/
     syncMerge.ts       the per-entity last-write-wins merge
     syncClient.ts      pull, debounced push, retry, and the status a person sees
     cloudBackup.ts     the third copy: the plan as JSON in a private GitHub repo, through the Contents API
+    archive.ts         beside it in the same repo: a file for every lived day, and the whole plan once a week - docs/ARCHIVE-FORMAT.md
     search.ts          the palette's linear scan and its date parsing
     snapshots.ts       the IndexedDB daily copies
     undo.ts            one app-wide undo offer, five seconds
@@ -544,6 +550,7 @@ Three copies, and each covers a loss the other two do not:
 | **Sync** (`syncClient.ts`, section below) | The private GitHub repo (`data/sync.json` there) or a server you host | Two devices agreeing, live, all day | Survive both devices and the meeting place going at once |
 | **Snapshots** (`snapshots.ts`) | IndexedDB on this device, seven kept | This device's own last week - the mistake you did not see coming | Leave the device |
 | **Cloud backup** (`cloudBackup.ts`) | A private GitHub repo you own | Off-site, readable with a browser, on any device that reaches github.com - with sync off, on a phone with no VPN | Sync: it merges into its own file and never into a device's plan |
+| **Archive** (`archive.ts`) | The same repo, under `archive/` | Every lived day as it was, for reading the progress back, and the whole plan once a week, never written over - docs/ARCHIVE-FORMAT.md | Bring anything back by itself: a week's file is taken back through Settings, Export and import |
 
 The cloud copy is written through GitHub's Contents API with nothing in
 between: `data/state.json` is the latest plan, `data/history/YYYY-MM-DD.json`

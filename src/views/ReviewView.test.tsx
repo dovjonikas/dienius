@@ -281,9 +281,10 @@ function cellsOf(table: HTMLElement): string[][] {
 }
 
 /** A saved plan read back without the stamps sync writes on every change. */
+/** The plan without the instants the app writes by itself: the sync stamps, and the moment of a tick (v2.43). */
 function withoutStamps(json: string): unknown {
   return JSON.parse(json, (key, value) =>
-    key === 'updatedAt' || key === 'settingsUpdatedAt' || key === 'tombstones' ? undefined : value,
+    key === 'updatedAt' || key === 'settingsUpdatedAt' || key === 'tombstones' || key === 'doneAt' ? undefined : value,
   )
 }
 

@@ -252,6 +252,8 @@ const TASK = record({
   id: string,
   title: string,
   done: boolean,
+  // v2.43: when it was ticked, an instant.
+  doneAt: optional(string),
   time: optional(string),
   fromTemplate: optional(boolean),
   pushCount: optional(wholeNumber(0)),
