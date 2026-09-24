@@ -96,6 +96,7 @@ export function SyncSettings() {
     saved.enabled ? (saved.via ?? 'server') : canSyncThroughGitHub() ? 'github' : 'server',
   )
   const repo = getCloudBackupConfig().repo
+  const [keepArmed, setKeepArmed] = useState(false)
   // The status text is a relative time, so it goes stale sitting on screen.
   // A minute is as often as it can change.
   const [, setTick] = useState(0)
@@ -160,7 +161,7 @@ export function SyncSettings() {
         {via === 'github' ? (
           <p className="setting-desc sync-via-note">
             {repo
-              ? `Through ${repo}, in a file of its own beside the backup, with the same token. Put the same repo and token into Backup on your other device and it joins.`
+              ? `Through ${repo}, in a file of its own beside the backup, with the same token. Backup alone does not join the other device: turn sync on here and there, first on the device whose plan is the right one.`
               : 'Set the repo and token in Backup first, just above. Sync uses the same two.'}
           </p>
         ) : (
@@ -240,19 +241,35 @@ export function SyncSettings() {
             </p>
             <p className="backup-preview-line">This device: {describeSide(status.choice.here)}.</p>
             <p className="backup-preview-line">
-              Take puts the shared plan on this device in place of this one - the answer for a device that is
-              joining. Today&apos;s snapshot in Settings keeps this one as it was on its first open today.
+              Take puts the shared plan on this device in place of this one - the answer on the device that should
+              show what the other one has. Today&apos;s snapshot in Settings keeps this one as it was on its first
+              open today.
+            </p>
+            <p className="backup-preview-line">
+              Keep this one puts this device&apos;s plan in place of the shared one, here and on your other devices at
+              their next sync, and takes off them what only they have - the answer on the device whose plan is the
+              right one.
             </p>
             <p className="backup-preview-line">
               Merge keeps both, one thing at a time - where both changed the same thing, the later change wins - and
-              sends the result to your other devices: the answer for the device whose plan you keep working in.
+              sends the result to your other devices.
             </p>
             <div className="sync-actions">
               <button type="button" className="btn-secondary" onClick={() => void chooseFirstSync('merge')}>
                 Merge
               </button>
+              {/* It deletes what only the other devices have, so it asks
+                  twice, the way Replace everything in Backup does. */}
+              <button
+                type="button"
+                className={keepArmed ? 'btn-danger is-armed' : 'btn-secondary'}
+                onClick={() => (keepArmed ? void chooseFirstSync('keep') : setKeepArmed(true))}
+                onBlur={() => setKeepArmed(false)}
+              >
+                {keepArmed ? 'Keep this one?' : 'Keep this one'}
+              </button>
               <button type="button" className="primary" onClick={() => void chooseFirstSync('take')}>
-                {where === 'GitHub' ? 'Take from GitHub (recommended)' : 'Take from the server (recommended)'}
+                {where === 'GitHub' ? 'Take from GitHub' : 'Take from the server'}
               </button>
             </div>
           </div>

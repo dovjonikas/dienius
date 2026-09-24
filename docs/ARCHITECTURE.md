@@ -653,11 +653,16 @@ sync undid the edit on both devices (docs/SYNC-AUDIT.md, path 6).
 
 ### The first connection, and the first pull
 
-A device records when it joined (`dienius:sync-device`). Until then its first
-round trip writes nothing over a shared plan that exists: with nothing of its
-own it takes that plan whole, through `replaceState` so nothing is stamped;
-with a plan of its own it sets `status.choice`, and `chooseFirstSync` takes
-or merges when answered. The first device there goes up as it is.
+A device records when it joined (`dienius:sync-device`), and switching sync
+on again clears it (`setSyncConfig`): a device that was off is joining again.
+Until it has joined, its first round trip writes nothing over a shared plan
+that exists: with nothing of its own it takes that plan whole, through
+`replaceState` so nothing is stamped; with a plan of its own it sets
+`status.choice`, and `chooseFirstSync` takes, keeps or merges when answered.
+Keeping (`keepHere`) puts what a merge would hold in place unstamped and
+commits this device's plan over it, so the difference is stamped deleted and
+the device's own versions stamped now - they win on every device at its next
+sync. The first device there goes up as it is.
 
 On a page that has just loaded, the store's own writes - a day stamping its
 template as it opens - wait for the first pull (`holdAutomaticWrites` in

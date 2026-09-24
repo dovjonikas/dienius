@@ -41,13 +41,20 @@ function serverHolding(state: AppData | null) {
   return posted
 }
 
+/**
+ * Sync switched on for a device that has synced before: what these hold is a
+ * round trip's judgement, not the first connection's question, which
+ * syncTwoDevices.test.ts walks with two devices. Marked after the switch,
+ * since switching on is joining again.
+ */
+function turnOnAsBefore(next: Parameters<typeof setSyncConfig>[0]): void {
+  setSyncConfig(next)
+  markJoinedForTests()
+}
+
 beforeEach(() => {
   localStorage.clear()
   resetSyncForTests()
-  // Every device here has synced before: what these hold is a round trip's
-  // judgement, not the first connection's question, which
-  // syncTwoDevices.test.ts walks with two devices.
-  markJoinedForTests()
   resetGitHubSyncForTests()
   actions.resetForTests(defaultData())
   fetchMock = vi.fn()
@@ -80,7 +87,7 @@ test('turning it on stores the address and the token, so the next open is alread
 
 test('the token rides in the Authorization header and never in the URL', async () => {
   serverHolding(null)
-  setSyncConfig({ url: URL, token: 'secret-token', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'secret-token', enabled: true })
   await syncNow()
 
   const [calledUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -93,7 +100,7 @@ test('an empty server gets this device pushed to it, and nothing local changes',
   actions.addTask(DATE, 'Gym')
   const before = getData()
   const posted = serverHolding(null)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
 
   await syncNow()
 
@@ -113,7 +120,7 @@ test('what the other device did arrives, and what this one did survives it', asy
   } as AppData['days'][string]
   const posted = serverHolding(remote)
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   const titles = getData().days[DATE].tasks.map(t => t.title).sort()
@@ -143,7 +150,7 @@ test('a line deleted on another device before this one folded it does not come b
   remote.tombstones = { 'inbox:phone-line': '2026-09-02T08:00:00.000Z' }
   const posted = serverHolding(remote)
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getData().backlog).toEqual([])
@@ -160,7 +167,7 @@ test('a remote that still carries an inbox arrives folded into Later', async () 
   remote.inbox = [{ id: 'phone-line', text: 'On the phone', captured: '2026-09-01T08:00:00.000Z', updatedAt: '2026-09-01T08:00:00.000Z' }]
   const posted = serverHolding(remote)
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getData().inbox).toEqual([])
@@ -185,7 +192,7 @@ test('a remote that still has active goals arrives with them as the picture, and
   remote.picture = { text: 'FIRST HEADING\na line under it', updatedAt: '2026-09-01T08:00:00.000Z' }
   const posted = serverHolding(remote)
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getData().picture?.text).toBe('A goal title\na reason for it\n\nFIRST HEADING\na line under it')
@@ -201,7 +208,7 @@ test('a poll that brings active goals retires them the same way', async () => {
   remote.goals = [{ id: 'g1', title: 'A goal title', createdAt: DATE, updatedAt: '2026-09-01T08:00:00.000Z' }]
   serverHolding(remote)
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await pullOnly()
 
   expect(getData().picture?.text).toBe('A goal title')
@@ -218,7 +225,7 @@ test('a reply that is not a plan changes nothing here, and says so', async () =>
   const before = getData()
   fetchMock.mockResolvedValue(new Response('{"error":"who are you"}', { status: 200 }))
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getData()).toBe(before)
@@ -230,7 +237,7 @@ test('a reply that is not a plan changes nothing here, and says so', async () =>
 
 test('a refused token is reported as a refused token, not as a number', async () => {
   fetchMock.mockResolvedValue(new Response('{"error":"bad token"}', { status: 401 }))
-  setSyncConfig({ url: URL, token: 'wrong', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'wrong', enabled: true })
   await syncNow()
 
   expect(getSyncStatus().phase).toBe('error')
@@ -240,7 +247,7 @@ test('a refused token is reported as a refused token, not as a number', async ()
 test('an unreachable server is a sentence about the PC, not a TypeError', async () => {
   actions.addTask(DATE, 'Gym')
   fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getSyncStatus().phase).toBe('error')
@@ -250,7 +257,7 @@ test('an unreachable server is a sentence about the PC, not a TypeError', async 
 
 test('offline is not an error - it is a wait', async () => {
   vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(fetchMock).not.toHaveBeenCalled()
@@ -259,7 +266,7 @@ test('offline is not an error - it is a wait', async () => {
 
 test('turning it off stops it dead', async () => {
   serverHolding(null)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
   fetchMock.mockClear()
 
@@ -280,7 +287,7 @@ test('syncing twice against an unchanged server settles rather than ping-ponging
     return Promise.resolve(new Response(JSON.stringify(held), { status: 200 }))
   })
 
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
   const after = getData()
   await syncNow()
@@ -333,7 +340,7 @@ test('a push that lands on top of another device sorts itself out on the next sy
   } as AppData['days'][string]
 
   const posted = serverHolding(theirs)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(getData().days[DATE].tasks.map(t => t.title).sort()).toEqual(['Mine', 'Theirs'])
@@ -356,7 +363,7 @@ test('a restored snapshot survives the sync that follows it', async () => {
 
   actions.restoreState(snapshot)
   serverHolding(server)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   expect(Object.keys(getData().days)).toEqual(['2026-08-20'])
@@ -372,7 +379,7 @@ test('a restored snapshot survives the sync that follows it', async () => {
 test('an http server on an https page is named as the problem, not blamed on the PC', async () => {
   vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, protocol: 'https:' } as Location)
 
-  setSyncConfig({ url: 'http://100.64.0.1:8787', token: 'abc', enabled: true })
+  turnOnAsBefore({ url: 'http://100.64.0.1:8787', token: 'abc', enabled: true })
   await syncNow()
 
   expect(fetchMock).not.toHaveBeenCalled()
@@ -384,7 +391,7 @@ test('an https server on an https page is left alone', async () => {
   vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, protocol: 'https:' } as Location)
   serverHolding(null)
 
-  setSyncConfig({ url: 'https://pc.tail1234.ts.net', token: 'abc', enabled: true })
+  turnOnAsBefore({ url: 'https://pc.tail1234.ts.net', token: 'abc', enabled: true })
   await syncNow()
 
   expect(fetchMock).toHaveBeenCalled()
@@ -395,7 +402,7 @@ test('an https server on an https page is left alone', async () => {
 // trip the guard.
 test('localhost over http is fine from an http page', async () => {
   serverHolding(null)
-  setSyncConfig({ url: 'http://localhost:8787', token: 'abc', enabled: true })
+  turnOnAsBefore({ url: 'http://localhost:8787', token: 'abc', enabled: true })
   await syncNow()
   expect(getSyncStatus().phase).toBe('idle')
 })
@@ -443,7 +450,7 @@ function repoHolding(state: AppData | null, putAnswers: number[] = []) {
 function turnOnThroughGitHub() {
   localStorage.setItem('dienius:cloud-backup', JSON.stringify({ repo: 'someone/dienius-data', token: 'github_pat_secret', lastBackupAt: null }))
   setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'github_pat_secret' })
-  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  turnOnAsBefore({ url: '', token: '', enabled: true, via: 'github' })
 }
 
 test('through the repo, what this device holds ends up in the file', async () => {
@@ -486,7 +493,7 @@ test('a repo that keeps refusing is reported rather than hammered', async () => 
 
 test('the repo route says so when Backup has no repo in it yet', async () => {
   setCloudBackupConfig({ repo: '', token: '' })
-  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  turnOnAsBefore({ url: '', token: '', enabled: true, via: 'github' })
   await syncNow()
 
   expect(getSyncStatus().phase).toBe('error')
@@ -523,7 +530,7 @@ test('a day cleared here does not come back from a remote that still holds it', 
   expect(getData().days[DATE].tasks).toHaveLength(0)
 
   const posted = serverHolding(remote)
-  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  turnOnAsBefore({ url: URL, token: 'abc', enabled: true })
   await syncNow()
 
   // Still cleared here...

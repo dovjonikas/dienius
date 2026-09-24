@@ -205,9 +205,18 @@ test('a phone with a plan of its own is asked which plan to keep, on its own scr
   await expect(choice).toContainText('This device: 1 task')
   // It fits the phone: nothing on the page scrolls sideways.
   expect(await phonePage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  // And its three answers stand one to a line, the card's width, rather
+  // than two on a line and one left alone under them.
+  const answers = await Promise.all(
+    ['Merge', 'Keep this one', 'Take from GitHub'].map(name => choice.getByRole('button', { name, exact: true }).boundingBox()),
+  )
+  expect(new Set(answers.map(box => Math.round(box!.x))).size).toBe(1)
+  expect(new Set(answers.map(box => Math.round(box!.width))).size).toBe(1)
+  expect(answers[0]!.y).toBeLessThan(answers[1]!.y)
+  expect(answers[1]!.y).toBeLessThan(answers[2]!.y)
   expect(repo.files.get('data/sync.json')!.sha).toBe(writes)
 
-  await choice.getByRole('button', { name: 'Take from GitHub (recommended)' }).click()
+  await choice.getByRole('button', { name: 'Take from GitHub' }).click()
   await expect(choice).toBeHidden()
   expect(repo.files.get('data/sync.json')!.sha).toBe(writes)
 

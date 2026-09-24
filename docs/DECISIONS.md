@@ -5307,3 +5307,46 @@ where a test kept one alive (a behaviour worth holding moved onto the path
 the app really takes), and twenty classes the stylesheet kept for screens
 that are gone - the reminder toast, the morning line, the month's summary,
 the Library's old schedule buttons - with the comments that explained them.
+
+## Sync turned on again asks again, and the right plan can be kept
+
+The owner's report of 2026-09-24: everything set up on the computer and
+backed up, sync switched on on the phone - and the phone did not take the
+computer's plan. It joined the two, and whatever the phone already held
+stayed in beside it.
+
+Three things made that, and none of them was a person doing it wrong.
+
+**A backup does not join.** Backup and sync share a repo and a token, and a
+backup writes `data/state.json`, which sync never reads: backing up on the
+computer put nothing where the phone's sync looks. The Sync section said
+"put the same repo and token into Backup on your other device and it
+joins", which read as though it did. It says now that a backup alone does
+not join the other device, and that sync goes on first on the device whose
+plan is the right one.
+
+**A device that had joined once never asked again.** The first connection
+asks a device with a plan of its own which to keep - "An older copy is
+never written over a newer one" - but only the first: the record that it
+had joined outlived the switch, so a phone switched off, used, and switched
+back on merged whatever it held, without a word. A device that was off may
+have gone its own way in between; switching it back on is joining again,
+and it is asked again. The cost is one question on a device that was only
+off for a minute, and it is the right question anyway.
+
+**The right plan had no answer that kept it.** The question offered Take,
+which puts the shared plan here, and Merge, which keeps both. On the phone
+that is enough. On the computer, when GitHub already held another plan - an
+older one, or the phone's, there first - neither was the answer: Take lost
+the computer's plan and Merge kept the other. **Keep this one** is the
+third: this device's plan in place of the shared one, here and on the other
+devices at their next sync, with what only they had taken off them. It is
+built from what the app already does - what a merge would hold goes in
+unstamped and this device's plan is committed over it, so the difference is
+stamped deleted and this device's versions stamped now, the way Replace
+everything stamps a backup - and a change made on another device after it
+still wins over it. It deletes, so it asks twice.
+
+"(recommended)" came off Take, which it was only on the phone: the same
+question can now be asked of the computer, where Take is the wrong answer.
+Each answer says instead which device it is for.

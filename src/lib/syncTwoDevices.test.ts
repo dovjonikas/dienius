@@ -375,6 +375,72 @@ test('merging keeps both plans, and both devices end up with both', async () => 
   expect(titlesOn(m.store.getData())).toEqual(['Book the dentist', 'Water the plants'])
 })
 
+// The owner's report of 2026-09-24: sync turned on again on the phone did not
+// put the computer's plan there - it joined the two. A device that had
+// joined once never asked again, so whatever it held after a spell with sync
+// off went into the shared plan without a word.
+test('a device that turns sync on again is asked again, and taking puts the shared plan there', async () => {
+  const desk = device('desk')
+  const phone = device('phone')
+  let m = await openOn(desk)
+  m.store.actions.addTask(DAY, 'Book the dentist')
+  await turnOnSync(m)
+
+  later(60)
+  m = await openOn(phone)
+  await turnOnSync(m)
+  expect(titlesOn(m.store.getData())).toEqual(['Book the dentist'])
+  m.sync.setSyncConfig({ url: '', token: '', enabled: false, via: 'github' })
+  m.store.actions.addTask(DAY, 'Water the plants')
+
+  later(10)
+  m = await openOn(desk)
+  await startApp(m)
+  m.store.actions.addTask(DAY, 'Renew the passport')
+  await m.sync.syncNow()
+
+  later(10)
+  m = await openOn(phone)
+  const writes = repo.writes.length
+  await turnOnSync(m)
+  expect(m.sync.getSyncStatus().choice).not.toBeNull()
+  expect(repo.writes.length).toBe(writes)
+
+  await m.sync.chooseFirstSync('take')
+  await settle()
+  expect(titlesOn(m.store.getData())).toEqual(['Book the dentist', 'Renew the passport'])
+  expect(titlesOn(repo.plan())).toEqual(['Book the dentist', 'Renew the passport'])
+})
+
+// The other half: the device whose plan is the right one, when the shared
+// copy already holds another - an older one, or the phone's, there first.
+// Take would lose this plan and Merge would keep the other; Keep this one
+// puts this one in place of it, on the other device too.
+test('the device whose plan is the right one keeps it, and the other device follows', async () => {
+  const desk = device('desk')
+  const phone = device('phone')
+  let m = await openOn(phone)
+  m.store.actions.addTask(DAY, 'Water the plants')
+  await turnOnSync(m)
+  expect(titlesOn(repo.plan())).toEqual(['Water the plants'])
+
+  later(60)
+  m = await openOn(desk)
+  m.store.actions.addTask(DAY, 'Book the dentist')
+  await turnOnSync(m)
+  expect(m.sync.getSyncStatus().choice).not.toBeNull()
+
+  await m.sync.chooseFirstSync('keep')
+  await settle()
+  expect(titlesOn(m.store.getData())).toEqual(['Book the dentist'])
+  expect(titlesOn(repo.plan())).toEqual(['Book the dentist'])
+
+  later(5)
+  m = await openOn(phone)
+  await startApp(m)
+  expect(titlesOn(m.store.getData())).toEqual(['Book the dentist'])
+})
+
 // --- 5. Two clocks ------------------------------------------------------------------
 
 test('a change made after seeing the other device wins, even on a clock that is behind', async () => {

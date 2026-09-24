@@ -290,8 +290,11 @@ means: set it up separately on each device you use.
 Optional. Sync goes through the same GitHub repo as the backup - nothing to
 run - or through a small server of your own (`server/sync-server.mjs`).
 **Settings → Sync → Your GitHub repo → Turn on**, on the computer first, then
-on the phone; a phone with nothing of its own takes the computer's plan, and
-one with a plan of its own asks which to keep. How it works, and what to do
+on the phone - a backup alone does not join the other device. A phone with
+nothing of its own takes the computer's plan, and one with a plan of its own
+asks which to keep: on the phone, **Take from GitHub**; if the computer is
+asked, because GitHub already held a plan, **Keep this one**. Switching sync
+off and on again asks again. How it works, and what to do
 if a device shows an older copy: [SYNC.md](SYNC.md). Skip this entirely if
 one browser is where you plan; nothing degrades.
 

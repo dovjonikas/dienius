@@ -107,7 +107,8 @@ test('the first connection of a device with a plan of its own asks, with both si
   const choice = screen.getByRole('group', { name: 'Which plan this device keeps' })
   expect(within(choice).getByText(/GitHub: 1 task/)).toBeInTheDocument()
   expect(within(choice).getByText(/This device: 2 tasks/)).toBeInTheDocument()
-  expect(within(choice).getByRole('button', { name: 'Take from GitHub (recommended)' })).toBeInTheDocument()
+  expect(within(choice).getByRole('button', { name: 'Take from GitHub' })).toBeInTheDocument()
+  expect(within(choice).getByRole('button', { name: 'Keep this one' })).toBeInTheDocument()
   expect(within(choice).getByRole('button', { name: 'Merge' })).toBeInTheDocument()
 })
 
@@ -118,10 +119,37 @@ test('Take from GitHub puts GitHub’s plan here, and the question goes', async 
   await syncNow()
   render(<SyncSettings />)
 
-  await userEvent.click(screen.getByRole('button', { name: 'Take from GitHub (recommended)' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Take from GitHub' }))
   await vi.waitFor(() => expect(getData().days[DATE].tasks.map(t => t.title)).toEqual(['Water the plants']))
   expect(getSyncStatus().choice).toBeNull()
   expect(screen.queryByRole('group', { name: 'Which plan this device keeps' })).toBeNull()
+})
+
+// The other device's answer: the one whose plan is the right one keeps it,
+// and GitHub's goes - on the other devices too. It deletes what only they
+// have, so it asks twice, the way Replace everything does.
+test('Keep this one asks for a second press, then puts this plan on GitHub in place of the other', async () => {
+  held = theirPlan('Water the plants')
+  actions.addTask(DATE, 'Book the dentist')
+  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  await syncNow()
+  render(<SyncSettings />)
+
+  const choice = screen.getByRole('group', { name: 'Which plan this device keeps' })
+  await userEvent.click(within(choice).getByRole('button', { name: 'Keep this one' }))
+  expect(held!.days[DATE].tasks.map(t => t.title)).toEqual(['Water the plants'])
+
+  await userEvent.click(within(choice).getByRole('button', { name: 'Keep this one?' }))
+  await vi.waitFor(() => expect(held!.days[DATE].tasks.map(t => t.title)).toEqual(['Book the dentist']))
+  expect(getData().days[DATE].tasks.map(t => t.title)).toEqual(['Book the dentist'])
+  expect(screen.queryByRole('group', { name: 'Which plan this device keeps' })).toBeNull()
+})
+
+// Backup and sync share a repo and a token, and backing up on one device did
+// not bring the other one in: the owner's report of 2026-09-24.
+test('the note under the repo says a backup alone does not join the other device', () => {
+  render(<SyncSettings />)
+  expect(screen.getByText(/Backup alone does not join/)).toBeInTheDocument()
 })
 
 test('with sync off here and another device backing up to the same repo, the section says so in red', async () => {

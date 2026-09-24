@@ -18,21 +18,35 @@ thing, the later change wins. A deletion is a change like any other.
 
 ## Setting it up
 
+Backup and sync share the repo and the token, and they are two switches: a
+backup made on one device does not bring the other one in. Sync has to be
+on, on both.
+
 1. **Backup first**, on each device: the repo (`you/dienius-data`) and a
    fine-grained token with Contents read and write on that one repo. The
    token stays on the device; it is in no export and no sync file.
-2. **Sync, on the main device first** - the computer: Settings, Sync, Your
-   GitHub repo, Turn on. It is the first one there, so its plan goes up as
-   it is.
+2. **Sync, on the device whose plan is the right one first** - the
+   computer: Settings, Sync, Your GitHub repo, Turn on. If it is the first
+   one there, its plan goes up as it is. If GitHub already holds a plan - an
+   older one, or the phone's, there first - it asks which to keep: **Keep
+   this one** (it asks twice) puts the computer's plan on GitHub in place of
+   that one, and on the other devices at their next sync.
 3. **Then the phone**: Settings, Sync, Your GitHub repo, Turn on.
    - A phone with nothing of its own takes the computer's plan whole,
      settings included, and writes nothing.
    - A phone that has a plan of its own is asked which to keep, with both
      described - how many tasks, when last changed - and nothing is written
-     anywhere until you answer. **Take from GitHub (recommended)** puts the
-     shared plan on the phone in place of its own; today's snapshot keeps
-     the phone's as it was on its first open today. **Merge** keeps both,
-     one thing at a time. On the phone, take.
+     anywhere until you answer. **Take from GitHub** puts the shared plan
+     on the phone in place of its own; today's snapshot keeps the phone's as
+     it was on its first open today. **Merge** keeps both, one thing at a
+     time. On the phone, take.
+
+**Sync turned off and on again asks again.** A device that was off may have
+gone its own way in between, so switching it back on is joining again: the
+same question, whenever it has a plan of its own. Until 2026-09-24 a device
+that had joined once merged whatever it held when it was switched back on,
+without asking - which is how a phone could show the computer's plan and
+its own together.
 
 A device that synced before v2.34 is asked the same question once, on its
 first open after it: it cannot tell by itself whether it is the main device.
@@ -70,7 +84,7 @@ so in Settings and catches up by itself.
    that is set by GitHub's clock whenever GitHub's differs by more than two
    seconds (`lib/clock.ts`).
 3. **The first connection asks** before a device with a plan of its own
-   writes anything.
+   writes anything - and so does a device that turns sync on again.
 4. **A day waits for the first pull.** On a page that has just loaded, the
    day's template is stamped only after the first pull has come back - at
    most five seconds, not at all offline - so a phone picked up in the
@@ -96,16 +110,22 @@ so in Settings and catches up by itself.
    says it is behind, press Pull. Pull reads before it writes; it cannot put
    this device's older copy over the other one.
 2. **If it is waiting for the first connection's answer**, answer it. On the
-   phone: Take from GitHub.
-3. **If the change is missing on this device but was made on the other**,
+   phone: Take from GitHub. On the device whose plan is the right one: Keep
+   this one.
+3. **If a device shows the other one's plan and its own together**, it
+   merged. On the device whose plan is the right one: Settings, Sync, Turn
+   off, Turn on, Keep this one. Then on the other: Turn off, Turn on, Take
+   from GitHub. If the right one has taken the other's things in as well,
+   first restore it, in Settings, Snapshots, to a day before the merge.
+4. **If the change is missing on this device but was made on the other**,
    look at the other device's Waiting to send. Anything there goes up when
    that device is opened, or on Sync now there.
-4. **If the line is red**, it names what to check: the token, the repo name,
+5. **If the line is red**, it names what to check: the token, the repo name,
    or the connection.
-5. **If something is really gone**: Settings, Snapshots, has a week of this
+6. **If something is really gone**: Settings, Snapshots, has a week of this
    device's own daily copies; Backup, Restore from cloud, Bring back what is
    missing adds back what the backup has, and touches nothing newer.
-6. **Never Replace everything to get the other device's changes.** That is
+7. **Never Replace everything to get the other device's changes.** That is
    what Pull is for. Replace everything is for rolling every device back to
    the backup, on purpose.
 

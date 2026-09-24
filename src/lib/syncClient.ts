@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { AppData } from './types'
-import { getData, holdAutomaticWrites, onStateCommitted, replaceState } from './store'
+import { actions, getData, holdAutomaticWrites, onStateCommitted, replaceState } from './store'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
@@ -237,7 +237,7 @@ let started = false
 let stopCommitWatch: (() => void) | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 /** The answer to the first connection's question, until the round trip it asked for has used it. */
-let joining: 'take' | 'merge' | null = null
+let joining: 'take' | 'merge' | 'keep' | null = null
 
 function startPolling(): void {
   if (pollTimer || typeof document === 'undefined') return
@@ -315,7 +315,15 @@ export function getSyncConfig(): SyncConfig {
 }
 
 export function setSyncConfig(next: SyncConfig): void {
+  // A device switched on again has not agreed a plan with the shared copy
+  // since it was switched off, and may have gone its own way in between: it
+  // is joining again, and is asked again. It used to have joined once for
+  // good, so sync turned back on merged whatever it held without a word -
+  // the owner's report of 2026-09-24, a phone that joined the computer's
+  // plan to its own instead of taking it.
+  const turningOn = next.enabled && !config.enabled
   config = { ...next, url: next.url.trim().replace(/\/+$/, '') }
+  if (turningOn) updateDevice({ joinedAt: null })
   try {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config))
   } catch {
@@ -698,7 +706,9 @@ async function runSync(attempt: number, leaving: boolean): Promise<void> {
         take(theirs, now)
         return
       }
-      // 'merge': the ordinary round trip below, and joined once it has written.
+      if (how === 'keep') keepHere(theirs, now)
+      // 'merge' and 'keep': the ordinary round trip below, and joined once it
+      // has written.
     }
 
     const local = getData()
@@ -790,15 +800,34 @@ function take(theirs: AppData, now: string): void {
 }
 
 /**
+ * This device's plan, put in place of the shared one - the answer on the
+ * device whose plan is the right one, when the shared copy holds another.
+ *
+ * What a merge would hold goes in first, unstamped, and this device's own
+ * plan is committed over it: the difference between the two is exactly what
+ * the shared copy has that this device does not, and the commit stamps it
+ * deleted, now - the way Replace everything stamps a backup. What both hold
+ * is this device's version, stamped now where the two differed. So it wins
+ * on every device at its next sync, and a change made there after it still
+ * wins over it. The round trip that follows writes it up.
+ */
+function keepHere(theirs: AppData, now: string): void {
+  const mine = getData()
+  replaceState(mergeStates(mine, theirs, now).data)
+  actions.restoreState(mine)
+}
+
+/**
  * The answer to the first connection's question.
  *
  * `take` replaces this device's plan with the shared one and writes
- * nothing; `merge` joins the two one entity at a time, the later change
- * winning where both changed the same thing, and sends the result up. The
- * shared copy is read again for either, so the answer is applied to what is
- * there now rather than to what was there when the question was asked.
+ * nothing; `keep` puts this device's plan in place of the shared one, on the
+ * other devices too; `merge` joins the two one entity at a time, the later
+ * change winning where both changed the same thing, and sends the result up.
+ * The shared copy is read again for each, so the answer is applied to what
+ * is there now rather than to what was there when the question was asked.
  */
-export async function chooseFirstSync(how: 'take' | 'merge'): Promise<void> {
+export async function chooseFirstSync(how: 'take' | 'merge' | 'keep'): Promise<void> {
   if (device.joinedAt && !status.choice) return
   joining = how
   setStatus({ choice: null })

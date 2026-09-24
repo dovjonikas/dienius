@@ -207,6 +207,18 @@ a month later. Seven points, each with every gate green.
 | **6. Documents** | STATE, ARCHITECTURE, CONVENTIONS and DECISIONS against the code and each other; BACKLOG item by item | 262 findings, and 97 names or files the four pointed at that the repo no longer has | All: STATE split into STATE and HISTORY, the other three corrected, BACKLOG sorted | - |
 | **7. Deploy** | Each point as its own commit, pushed, the deploy watched | - | - | - |
 
+**After the seven, the same day: the owner's sync report.** The computer
+set up and backed up, the phone switched on - and the phone joined the
+computer's plan to its own instead of taking it. Two causes, both fixed with
+tests that failed first: a device that had joined once never asked again,
+so sync switched back on merged whatever it held without a word; and a
+device whose plan is the right one had no answer that kept it when the
+shared copy already held another - Take lost it and Merge kept both. Sync
+turned on again now asks again, and the question has a third answer, Keep
+this one, asked twice. And Settings says what the owner could not have
+known: a backup alone does not join the other device (DECISIONS "Sync
+turned on again asks again, and the right plan can be kept").
+
 ---
 
 ## 1. What Dienius is
@@ -294,7 +306,7 @@ timer, Notes, the journal and Search on every page.
 | Export and import | Plain JSON both ways, by hand - docs/BACKUP-FORMAT.md |
 | A plan that could not be read | Kept aside, as it was, before anything is saved over it; a line over every page says so, and Settings saves it as a file |
 | Backup to GitHub | The plan as JSON in the owner's private repo, written when a day closes, when a new one opens and on Back up now; Restore from cloud compares both copies, then brings back what is missing or replaces everything; the token stays on the device |
-| Sync | Optional, between devices, through GitHub or a server of your own; per entity, the later write wins, a delete is kept; a device joining with a plan of its own chooses Take or Merge first, and a line over every page says when sync fails or waits - docs/SYNC.md |
+| Sync | Optional, between devices, through GitHub or a server of your own; per entity, the later write wins, a delete is kept; a device joining with a plan of its own - or turning sync on again - chooses Take from GitHub, Keep this one or Merge first, and a line over every page says when sync fails or waits - docs/SYNC.md |
 | External calendars | An imported .ics file, or a subscribed address fetched through a sync server of your own, drawn as a read-only layer on Today and the week; free time counts their timed events |
 | Screens that fail alone | A page, a sheet the shell opens, or a panel of the header that cannot draw says so in its own place, and everything else goes on; a sheet a page opens itself fails with its page |
 | Offline and updates | Installs as an app, opens and works with no network, and the next open after a deploy is the new version |
@@ -376,7 +388,7 @@ after that a version is found by its number in the commit messages
 ### Nothing is half-built
 
 Checked, not assumed, at the end of the freeze preparation (2026-09-24):
-**3580 unit tests in 239 files** (and 8 skipped on purpose: a backup from
+**3584 unit tests in 239 files** (and 8 skipped on purpose: a backup from
 before v2.29 is the same file back only after one import, not at once -
 `lib/backupVersions.test.ts`), **147 browser tests** on a desktop and a
 phone (16 more skip on purpose, where a walk has nothing to say on one of
