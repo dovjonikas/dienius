@@ -5,7 +5,9 @@ import { actions, getData } from './store'
 import { defaultData } from './storage'
 import { readTemplatesJson, templatesJson } from './templateJson'
 import { routineNotes } from './shiftDay'
-import { kindOnDate } from './dayKinds'
+import { dayKinds, isNightKind, kindOnDate, resolveAfterNight } from './dayKinds'
+import { addDays } from './dates'
+import type { AppData, Template } from './types'
 
 /**
  * The owner's own templates file, read against a fresh app - the overnight
@@ -15,9 +17,13 @@ import { kindOnDate } from './dayKinds'
  * the repo is public and carries none of the owner's words
  * (docs/OPEN-QUESTIONS.md has the reasoning). So this file's tests read it
  * where it is and are skipped anywhere it is not - on the deploy's runner,
- * on another machine. What they hold is the shape the brief describes -
- * three kinds D, L and N, three gym routines a different length on each
- * kind, a week's roster - and nothing here names what the file says.
+ * on another machine. What they hold is the file's shape - kinds of day,
+ * some of them standing in for another on a date after a night; gym
+ * routines a different length and time on each kind; a roster written the
+ * way the shifts are worked - and nothing here names what the file says.
+ * The file changes with the owner's weeks, so nothing here counts it either:
+ * how many templates, routines and dates there are is read out of it, and
+ * so is the kind each date is read as.
  */
 
 /**
@@ -42,6 +48,35 @@ function ownersText(): string {
   return readFileSync(OWNERS_FILE, 'utf8')
 }
 
+/** What these tests read of the file. */
+interface OwnersFile {
+  templates: unknown[]
+  routines: { title: string; minutes: Record<string, number>; times: Record<string, string>; weekdays: number[] }[]
+  roster: Record<string, string>
+}
+
+function ownersFile(): OwnersFile {
+  return JSON.parse(ownersText()) as OwnersFile
+}
+
+/**
+ * The kind each date of the roster is read as, in a plan that holds the
+ * file's templates: the kind written on it, read against the kind the date
+ * before it is read as (`resolveAfterNight`) - so a date after a night is
+ * the kind its own kind's afterNight names, and a second night written as
+ * a night like the first is the night after a night. A fresh app has no
+ * kind on any other date, so a date whose day before is not in the roster
+ * follows no night.
+ */
+function kindsAsRead(data: AppData, roster: Record<string, string>): Map<string, Template> {
+  const byLetter = new Map(dayKinds(data.templates).map(k => [k.dayKind!.letter, k]))
+  const read = new Map<string, Template>()
+  for (const date of Object.keys(roster).sort()) {
+    read.set(date, resolveAfterNight(data.templates, byLetter.get(roster[date])!, read.get(addDays(date, -1))))
+  }
+  return read
+}
+
 describe.skipIf(!here)('the owner\'s templates file', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -57,28 +92,33 @@ describe.skipIf(!here)('the owner\'s templates file', () => {
   test('the preview names every template, every routine and every date, and reads with nothing skipped', () => {
     const read = readTemplatesJson(ownersText(), getData(), TODAY)
     expect(read.error).toBeUndefined()
-    expect(read.templates.map(r => r.action)).toEqual(['create', 'create', 'create'])
-    expect(read.routines.map(r => r.action)).toEqual(['create', 'create', 'create'])
-    expect(read.roster.map(r => r.action)).toEqual(['set', 'set', 'set', 'set', 'set', 'set', 'set'])
+    const file = ownersFile()
+    expect(read.templates.map(r => r.action)).toEqual(file.templates.map(() => 'create'))
+    expect(read.routines.map(r => r.action)).toEqual(file.routines.map(() => 'create'))
+    // Every date set, each named as the kind it is read as.
+    const kinds = kindsAsRead(read.data, file.roster)
+    expect(read.roster.map(r => [r.date, r.action, r.letter])).toEqual([...kinds].map(([date, kind]) => [date, 'set', kind.dayKind!.letter]))
     // Recipes Kitchen has not got yet wait on their blocks rather than
     // stopping anything: every note about one says so, and no note says
-    // anything else.
+    // anything else. Whether the file names recipes at all is the file's
+    // business, and changes with it.
     const notes = read.templates.flatMap(r => r.notes)
-    expect(notes.length).toBeGreaterThan(0)
     for (const note of notes) expect(note).toMatch(/in Kitchen yet - the block waits for it/)
     expect(read.routines.flatMap(r => r.notes)).toEqual([])
     expect(read.notes).toEqual([])
   })
 
-  test('applied, the week is laid: each date its kind, the gym at that kind\'s time and length, core, and none on a Sunday', () => {
+  test('applied, the week is laid: each date the kind it is read as, the gym at that kind\'s time and length, core, and none on a Sunday', () => {
     const { read } = actions.importTemplatesJson(ownersText())
     expect(read.error).toBeUndefined()
     const data = getData()
-    const byLetter = Object.fromEntries(data.templates.filter(t => t.dayKind).map(t => [t.dayKind!.letter, t]))
-    const file = JSON.parse(ownersText()) as { roster: Record<string, string>; routines: { title: string; minutes: Record<string, number>; times: Record<string, string>; weekdays: number[] }[] }
+    const file = ownersFile()
 
-    for (const [date, letter] of Object.entries(file.roster)) {
-      expect(kindOnDate(data, date)?.id, date).toBe(byLetter[letter].id)
+    for (const [date, kind] of kindsAsRead(data, file.roster)) {
+      expect(kindOnDate(data, date)?.id, date).toBe(kind.id)
+      // The gym's length and time are those of the kind the date is read
+      // as, which after a night is not the letter written on it.
+      const letter = kind.dayKind!.letter
       const tasks = data.days[date].tasks
       const weekday = new Date(`${date}T12:00:00`).getDay()
       const gyms = tasks.filter(t => t.routineId)
@@ -102,13 +142,11 @@ describe.skipIf(!here)('the owner\'s templates file', () => {
   test('the night\'s hours after midnight land on the morning after, once', () => {
     actions.importTemplatesJson(ownersText())
     const data = getData()
-    const file = JSON.parse(ownersText()) as { roster: Record<string, string> }
-    const nights = Object.entries(file.roster).filter(([, letter]) => letter === 'N').map(([date]) => date)
+    // Every date read as a night: the second of two in a row as well.
+    const nights = [...kindsAsRead(data, ownersFile().roster)].filter(([, kind]) => isNightKind(kind)).map(([date]) => date)
     expect(nights.length).toBeGreaterThan(0)
     for (const night of nights) {
-      const after = new Date(`${night}T12:00:00`)
-      after.setDate(after.getDate() + 1)
-      const key = after.toISOString().slice(0, 10)
+      const key = addDays(night, 1)
       const carried = (data.days[key]?.tasks ?? []).filter(t => t.nightOf === night)
       expect(carried.length, `${night} into ${key}`).toBeGreaterThan(0)
       const titles = carried.map(t => t.title)

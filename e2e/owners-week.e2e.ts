@@ -12,12 +12,14 @@ import { openFreshAt, quickAdd, reopenAt, tick } from './app'
  * says.
  *
  * What is walked: the file pasted and applied; each date of its roster
- * opened, its kind on it; on the first day a block ticked, one pushed to
+ * opened, the kind it is read as on it - after a night, the kind standing
+ * in for the one written; on the first day a block ticked, one pushed to
  * tomorrow and one moved by hand; a day shift made a night by hand and made
  * a day again; the blocks that end by themselves done once their end has
  * passed and not before; the morning after a night, the night's shift done
  * on the night's own date; a night's meal walking its recipes by the night's
- * date; and at the end nothing gone and nothing doubled.
+ * date; and at the end nothing gone and nothing doubled. The file changes
+ * with the owner's weeks, so what it holds is counted out of it as well.
  */
 
 /** Where the file is: a line in owners-file.local at the repo's root, which git ignores, or the environment. Never written here. */
@@ -44,11 +46,42 @@ interface Block {
   recipes?: string[]
   category?: string
 }
+interface Kind {
+  name: string
+  kind: string
+  type: string
+  afterNight?: string
+  blocks: Block[]
+}
 interface File {
-  templates: { name: string; kind: string; blocks: Block[] }[]
+  templates: Kind[]
   routines: { title: string; minutes: Record<string, number>; times: Record<string, string>; weekdays: number[] }[]
   roster: Record<string, string>
 }
+
+/** The date before a date of the roster. */
+const dayBefore = (date: string) => new Date(Date.parse(`${date}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10)
+
+/**
+ * The kind each date of the roster is read as. The roster is written the way
+ * the shifts are worked, and a date after a night is the kind its own kind's
+ * afterNight names, when that is another kind - docs/RESEARCH-SHIFTS.md
+ * section 2.6, `resolveAfterNight` in the app. Worked out here from the file
+ * alone, so the walk does not ask the app what to expect of it.
+ */
+function kindsAsRead(file: File): Record<string, Kind> {
+  const byLetter = new Map(file.templates.map(t => [t.kind, t]))
+  const read: Record<string, Kind> = {}
+  for (const date of Object.keys(file.roster).sort()) {
+    const written = byLetter.get(file.roster[date])!
+    const afterNight = read[dayBefore(date)]?.type === 'night' && written.afterNight !== written.kind ? byLetter.get(written.afterNight ?? '') : undefined
+    read[date] = afterNight ?? written
+  }
+  return read
+}
+
+/** A count and its word, the way the preview says it. */
+const counted = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Vilnius, on a date of the roster, at an hour. */
 const at = (date: string, hours: number, minutes = 0) => {
@@ -87,6 +120,7 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
   test.slow()
   const file = JSON.parse(readFileSync(OWNERS_FILE, 'utf8')) as File
   const dates = Object.keys(file.roster).sort()
+  const read = kindsAsRead(file)
   const first = dates[0]
   const byLetter = Object.fromEntries(file.templates.map(t => [t.kind, t]))
   const dayLetter = Object.entries(byLetter).find(([, t]) => t.blocks.some(b => b.ongoing && !b.afterMidnight && (b.time ?? '') < '12:00'))?.[0] ?? 'D'
@@ -101,26 +135,27 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
   await tab(page, 'Settings')
   await page.getByRole('textbox', { name: 'Templates and roster as JSON' }).fill(readFileSync(OWNERS_FILE, 'utf8'))
   await page.getByRole('button', { name: 'Preview', exact: true }).click()
-  await expect(page.getByText(/^3 new templates\. 3 new routines\. 7 dates set/)).toBeVisible()
+  const summary = `${counted(file.templates.length, 'new template')}. ${counted(file.routines.length, 'new routine')}. ${counted(dates.length, 'date')} set`
+  await expect(page.getByText(new RegExp(`^${summary.replace(/\./g, '\\.')}`))).toBeVisible()
   await page.getByRole('button', { name: 'Apply', exact: true }).click()
   await expect(page.getByText(/^Applied\./)).toBeVisible()
 
-  // Every date of the roster, opened: its kind on it, and its blocks.
+  // Every date of the roster, opened: the kind it is read as on it, and that kind's blocks.
   let current = first
   for (const date of dates) {
     await goTo(page, first, date)
     current = date
-    const letter = file.roster[date]
-    await expect(page.locator('.day-template', { hasText: byLetter[letter].name }).first()).toBeVisible()
+    const kind = read[date]
+    await expect(page.locator('.day-template', { hasText: kind.name }).first()).toBeVisible()
     const data = await plan(page)
     const own = data.days[date].tasks.filter(t => !t.nightOf && !t.routineId)
-    expect(own.length, date).toBe(byLetter[letter].blocks.filter(b => !b.afterMidnight).length)
+    expect(own.length, date).toBe(kind.blocks.filter(b => !b.afterMidnight).length)
   }
 
   // The first day: a block ticked, one pushed to tomorrow, one moved by hand.
   await goTo(page, first, first)
   current = first
-  const firstKind = byLetter[file.roster[first]]
+  const firstKind = read[first]
   const [tickOne, moveOne] = firstKind.blocks.filter(b => !b.afterMidnight && b.time && !b.ongoing).slice(0, 2)
   // A block with a time is never pushed from its menu - it is placed or
   // un-anchored - so the thing pushed is a line written by hand, with no
@@ -151,7 +186,7 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
 
   // A day shift made a night by hand in the middle of the week, and a day
   // again: the night's blocks only, then the day's only, nothing doubled.
-  const aDay = dates.find(d => file.roster[d] === dayLetter)!
+  const aDay = dates.find(d => read[d] === dayKind)!
   await goTo(page, first, aDay)
   current = aDay
   async function stampByHand(name: string) {
@@ -200,24 +235,28 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
   expect((await plan(page)).days[aDay].tasks.find(t => t.title === dayShift.title && t.fromTemplate)?.done).toBe(true)
 
   // The morning after a night: the night's shift done on the night's own
-  // date, and the next date's own shift not.
-  const nights = dates.filter(d => file.roster[d] === nightLetter)
+  // date, and the next date's own shift not. A night is a date read as one,
+  // the second of two in a row as well.
+  const nights = dates.filter(d => read[d].type === 'night')
   const night = nights[0]
   const morning = dates[dates.indexOf(night) + 1] ?? dates[dates.length - 1]
-  const nightShift = shift(nightKind)
+  const nightShift = shift(read[night])
   await reopenAt(page, at(morning, 8))
   await goTo(page, morning, night)
   {
     const data = await plan(page)
     expect(data.days[night].tasks.find(t => t.title === nightShift.title && t.fromTemplate)?.done).toBe(true)
-    if (file.roster[morning] === nightLetter) {
-      expect(data.days[morning].tasks.find(t => t.title === nightShift.title && t.fromTemplate && !t.nightOf)?.done).toBeFalsy()
+    if (read[morning].type === 'night') {
+      const ownShift = shift(read[morning])
+      expect(data.days[morning].tasks.find(t => t.title === ownShift.title && t.fromTemplate && !t.nightOf)?.done).toBeFalsy()
     }
   }
 
   // A night's meal walks its recipes by the night's date: with the recipes
-  // in Kitchen, two nights in a row take two different ones from the block.
-  const meal = nightKind.blocks.find(b => b.afterMidnight && (b.recipes?.length ?? 0) > 1)
+  // in Kitchen, two nights of one kind take two different ones from its
+  // block. A second night in a row is read as another kind, with a block of
+  // its own, so only the nights read as the first one's kind are walked.
+  const meal = read[night].blocks.find(b => b.afterMidnight && (b.recipes?.length ?? 0) > 1)
   if (meal && nights.length > 1) {
     await tab(page, 'Kitchen')
     await page.getByRole('button', { name: 'Paste many' }).click()
@@ -225,7 +264,7 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
     await page.getByRole('textbox', { name: 'Recipes' }).fill(text)
     await page.getByRole('button', { name: 'Save', exact: true }).click()
     // Each morning after a night, opened, takes its night's recipe.
-    const mornings = nights.slice(0, 2).map(n => dates[dates.indexOf(n) + 1] ?? null).filter((d): d is string => !!d && d in file.roster)
+    const mornings = nights.filter(n => read[n] === read[night]).slice(0, 2).map(n => dates[dates.indexOf(n) + 1] ?? null).filter((d): d is string => !!d && d in file.roster)
     const taken: string[] = []
     let from = night
     for (const m of mornings) {
@@ -248,7 +287,7 @@ test('the owner\'s week: pasted, lived a day at a time, changed by hand in the m
     const own = data.days[date].tasks.filter(t => t.fromTemplate && !t.nightOf)
     const titles = own.map(t => t.title)
     expect(new Set(titles).size, `${date} doubled`).toBe(titles.length)
-    const expected = byLetter[file.roster[date]].blocks.filter(b => !b.afterMidnight).map(b => b.title)
+    const expected = read[date].blocks.filter(b => !b.afterMidnight).map(b => b.title)
     const missing = expected.filter(t => !titles.includes(t))
     expect(missing, `${date} missing`).toEqual([])
     const carried = data.days[date].tasks.filter(t => t.nightOf)
