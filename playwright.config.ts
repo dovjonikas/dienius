@@ -44,7 +44,9 @@ export default defineConfig({
     // A reading block's list named in the templates file, and the file pasted
     // again, because the shelf and the file are pasted on whichever screen is
     // in hand.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy|library-json|reimport)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // The app opened in the middle of a night shift, because at half past two
+    // the phone is the screen in hand.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy|library-json|reimport|night-open)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',
