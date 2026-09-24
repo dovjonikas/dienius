@@ -54,6 +54,16 @@ function overlay(p: Loose, stamp: string): void {
     if (since('d3e4411')) blocks.push({ id: 'fx-m3', title: 'Breakfast', time: '07:30', minutes: 15, category: 'meal', mealType: 'breakfast', waitingRecipes: ['Porridge'] })
     p.templates.push({ id: 'fx-meals', name: 'Meals', color: '#b07a4f', blocks, ...u })
   }
+  if (since('9ebe280')) {
+    // A reading block bound to a list, and one waiting for a list by name.
+    p.templates.push({
+      id: 'fx-reading', name: 'Reading', color: '#5e8f8a', ...u,
+      blocks: [
+        { id: 'fx-r1', title: 'Lesson', time: '20:00', minutes: 30, libraryListId: 'fx-list' },
+        { id: 'fx-r2', title: 'Read', time: '21:00', minutes: 30, waitingLibrary: 'Evening shelf' },
+      ],
+    })
+  }
   if (since('09836b8')) {
     ;(p.recipes ??= []).push(
       { id: 'fx-recipe', title: 'Lentil soup', text: 'Lentils, a carrot, an onion.\nSimmer for half an hour.', mealTypes: ['lunch', 'dinner'], kcal: 420, protein: 24, carbs: 60, fat: 8, servings: 4, minutes: 40, ...(since('d13a192') ? {} : { cooked: 2 }), ...u },
