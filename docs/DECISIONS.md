@@ -5040,10 +5040,68 @@ counted.
 - **What is in a page's body keeps its own height** (`.review-body > *`,
   `.library-body > *`, `.kitchen-body > *`): the body scrolls, its parts do
   not give way to it. The Library's jump bar over its lists is the same
-  kind of strip, and would have gone the same way on a longer page.
+  kind of strip and had gone the same way on three of its screens - a book's
+  panel open, a new list, a list's settings - where the lists grew longer
+  than the window.
+- **What the pictures show was counted, before and after.** Every control
+  and heading that scrolling reaches, on every screen at both sizes, was
+  listed at v2.40 and again after this fix and compared: nothing that was
+  there before one look is missing now. The same count at stage 8 found the
+  meals and the jump bar missing, and nothing else - the proof the count
+  sees a loss.
+- **Words stay whole in a choice.** The same count, taken with how many
+  lines each label runs to, found ten that were one line at v2.40 and break
+  now. Two were real losses: the Library's quick starts, a grid of 128px
+  cells since stage 5 where "Three reading lanes" broke into three lines
+  with room to spare, and a book's Counted in on a phone, where "seasons and
+  episodes" broke the same way. Both are strips now, as Kitchen's meals are:
+  every choice whole on one line, the strip scrolling sideways where a
+  phone is narrower than all of them. The rest are the replan's cells,
+  which stage 5 chose to line up and let a long choice take two lines, a
+  long press on a phone's Today, and two measures of the count itself.
 - **The sweep sees a box squeezed shut** (`scripts/audit.js`): a box that
   hides or scrolls its overflow, less than a control in one direction,
   holding something a control's size more than itself. It reads every box
   that is drawn, not only those with a size to see - the planted one in the
   self-check went to 0px, and a pass reading only what is on screen never
   met it.
+
+## The phone with no network, and a deploy that takes over
+
+The freeze's point 3, 2026-09-23: the production build on the path it is
+deployed at, a 375px phone and a desktop, the service worker - the app opens
+with no network, the day and the roster work, a backup is saved as a file,
+the same when the network goes in the middle of a session, and a deploy
+takes over without anybody pressing anything. Checked end to end in
+`e2e/offline.e2e.ts` and `e2e/deploy.e2e.ts`, which serves a copy of the
+build the way GitHub Pages does and writes a new version over it.
+
+**Found: the app opened offline as an empty page** under a server that
+answers `Vary: Origin`, which vite's preview does. The page's own request
+for its script carries an Origin the precaching request did not, so every
+precached script and stylesheet was a miss. GitHub Pages answers `Vary:
+Accept-Encoding` today and the live site was spared by that alone. Every
+lookup in the worker ignores Vary now (`public/sw.js`): the cache holds one
+build of one origin, and a URL is the whole of what a response is.
+
+**Found: after every deploy the first open said "An update is ready"** over
+a page that already was the update. The page is fetched from the network
+first and names the new files; the new worker takes charge a moment later,
+before its activate step has cleared the old build's cache, and a lookup
+across every cache found the old build's page first. The worker answers from
+its own build's cache before any other, and a takeover is announced only
+when the page running is not the build now in charge (`servesThisPage` in
+`pwa.ts`, comparing the script and stylesheets each page names).
+
+**Added: a page left open asks for a newer version when it comes back into
+view.** A browser looks for a new worker when a page is opened, and a phone
+keeps an installed app alive in the background for days without opening it
+again. Now the question is asked each time the app is looked at again, and
+the answer is the usual quiet line.
+
+**Kept: no reload the person did not ask for.** Opening the app is enough
+to get the new version - on a phone that is most opens - and "Reload" is
+there for somebody who wants it sooner. A page in use is never reloaded
+under them: a template being built or a recipe being written lives in
+memory until it is saved, and a reload at a moment of the app's choosing
+would take it. That is what "without anybody pressing anything" means here.

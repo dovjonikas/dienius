@@ -57,6 +57,27 @@ self.addEventListener('fetch', event => {
   event.respondWith(cacheFirst(request))
 })
 
+// Every lookup ignores Vary. The cache holds one build of one origin's
+// files, so a URL is the whole of what a response is - and a server that
+// answers `Vary: Origin` (vite's preview does) made each precached script
+// and stylesheet a miss for the page's own request, which carries an Origin
+// the precaching request did not: the app opened offline as an empty page.
+// GitHub Pages answers `Vary: Accept-Encoding` today, which happens to
+// match; this does not rest on that. See the freeze's point 3, and
+// e2e/offline.e2e.ts, which found it.
+const ANY = { ignoreVary: true }
+
+// This build's own files first, then any cache still standing. A worker
+// that has just taken over is in charge before its activate step has
+// cleared the build before it away, and a lookup across every cache found
+// the old build's page first: the app opened after a deploy asked for a
+// reload into what it already was. The old caches are the last resort, for
+// a page of the old build that is still open with no network.
+async function cached(request) {
+  const own = await caches.open(CACHE_NAME)
+  return (await own.match(request, ANY)) || (await caches.match(request, ANY))
+}
+
 async function networkFirst(request) {
   try {
     const response = await fetch(request)
@@ -66,14 +87,13 @@ async function networkFirst(request) {
     }
     return response
   } catch (err) {
-    const cached = await caches.match(request)
-    return cached || (await caches.match(INDEX_URL))
+    return (await cached(request)) || (await cached(INDEX_URL))
   }
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request)
-  if (cached) return cached
+  const hit = await cached(request)
+  if (hit) return hit
   try {
     const response = await fetch(request)
     if (response.ok) {
@@ -82,6 +102,6 @@ async function cacheFirst(request) {
     }
     return response
   } catch (err) {
-    return cached
+    return hit
   }
 }

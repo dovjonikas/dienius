@@ -785,8 +785,19 @@ npm run build     # typecheck, build, generate the service worker
   into it. A cache is therefore named after its own contents: any change means
   a new cache, and an installed copy can never be stuck on stale files.
 - A new worker taking over fires `controllerchange`, which surfaces as the
-  quiet "Reload" notice - never an automatic reload.
-- Everything works with no connection, because there is nothing to connect to.
+  quiet "Reload" notice - never an automatic reload - and only when the page
+  running is not the build now in charge (`servesThisPage` in `pwa.ts`):
+  the app opened after a deploy is already the new version, since pages are
+  fetched from the network first.
+- A page left open asks for a newer version each time it comes back into
+  view (`askForUpdatesOnReturn`), because a phone keeps an installed app
+  alive for days without opening it again.
+- The worker answers from its own build's cache first and ignores `Vary` on
+  every lookup - DECISIONS "The phone with no network, and a deploy that
+  takes over" has the two faults that made both necessary.
+- Everything works with no connection, because there is nothing to connect
+  to. `e2e/offline.e2e.ts` and `e2e/deploy.e2e.ts` hold it on the
+  production build, on a desktop and a phone.
 
 ---
 

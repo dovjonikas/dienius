@@ -65,3 +65,20 @@ devices.
 | 2 | Press the book's door here, on the computer. | Still the file from this disk, in a new tab - not the drive. |
 | 3 | Clear **Also at** here. | After sync: the phone's door is the page icon again, and pressing it says "This file was picked on another computer." |
 | 4 | On the phone, open the same book's detail. | The file's name is there with **Remove** beside it and no **Change**; **Also at** is there to type into. |
+
+## B3 - the phone with no network, and the next deploy
+
+The freeze's point 3 is held by `e2e/offline.e2e.ts` and
+`e2e/deploy.e2e.ts` in Chromium. iOS Safari keeps its own service worker
+rules, and an app on the home screen is not a tab: these are the same steps
+on the phone itself.
+
+| # | On the iPhone | Expect |
+| --- | --- | --- |
+| 1 | Open the app from the home screen with the network on, and leave it open for ten seconds. | The day as usual. |
+| 2 | Close it from the app switcher. Airplane mode on. Open it again. | It opens, on today, with everything that was there. |
+| 3 | Still in airplane mode: add a task, tick it, open Calendar and lay one date of the roster with Apply. | Both stay; nothing says an error. |
+| 4 | Settings, Export backup. | The share sheet offers the file; saved to Files, it opens as text with the new task in it. |
+| 5 | Airplane mode off. Open the app again. | The task and the date are still there. |
+| 6 | After the next deploy: open the app from the home screen. | The change the deploy made is there, and no line asks for a reload. |
+| 7 | Leave the app open in the background across a deploy, then switch back to it. | Within a few seconds "An update is ready." appears; the next open is the new version. |
