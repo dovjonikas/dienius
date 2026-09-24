@@ -179,6 +179,7 @@ export function JournalOverlay({ onClose, date }: { onClose: () => void; date?: 
       <div
         className="journal-overlay"
         role="dialog"
+        aria-modal="true"
         aria-label="Journal"
         data-keeps-keys=""
         onClick={e => e.stopPropagation()}

@@ -22,6 +22,15 @@
  *    the screen is in the Tab order somewhere. (A control taken out of it on
  *    purpose carries tabindex="-1" and is skipped here.)
  *
+ * The pages, and since the freeze the sheets and panels over them too - a
+ * task's detail, replan, the low day, the timer, the header's notes and
+ * journal, the journal's page, the palette, Scratch, the shortcuts, Focus,
+ * a template being edited, a book's panel, a list's settings, North being
+ * written. Point 4 of the owner's brief asked for every screen; until then
+ * a sheet was only ever opened by check 3 and shut again. On a sheet that
+ * holds focus the walk stays in it, and check 4 asks about the sheet's own
+ * controls; check 3 is left to the page the sheet was opened from.
+ *
  * A pass that has not been made to fail is not a pass yet: the ring check
  * and the body check were both planted before the first zero was believed.
  *
@@ -50,7 +59,7 @@ const TEMPLATE_JSON = JSON.stringify({ templates: [{ name: 'Early', kind: 'E', b
 /** Kitchen v2.32's Paste many, filled: two generic recipes and a piece with no name. */
 const PASTED = ['NAME: Lunch: A bean bowl', '520 kcal, 38 g protein', 'INGREDIENTS', 'beans', 'rice', 'STEPS', 'Cook the rice.', 'NAME: A plain porridge', '380 kcal', '---', '450 kcal', 'INGREDIENTS', 'water'].join('\n')
 
-/** @type {{ name: string, go: (p: Page) => Promise<unknown> }[]} */
+/** @type {{ name: string, sheet?: boolean, go: (p: Page) => Promise<unknown> }[]} */
 const SCREENS = [
   { name: 'Today', go: p => tab(p, 'Today') },
   { name: 'Calendar month', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Month', exact: true }).click() } },
@@ -75,6 +84,22 @@ const SCREENS = [
   { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
   { name: 'Settings (templates as JSON)', go: async p => { await tab(p, 'Settings'); await p.getByRole('textbox', { name: 'Templates and roster as JSON' }).fill(TEMPLATE_JSON); await p.getByRole('button', { name: 'Preview', exact: true }).click() } },
+  { name: 'Template editor', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit / }).first().click() } },
+  { name: 'Library (item panel)', go: async p => { await tab(p, 'Library'); await p.locator('.library-item .library-item-open').first().click() } },
+  { name: 'Library (list settings)', go: async p => { await tab(p, 'Library'); await p.getByRole('button', { name: /^Settings for / }).first().click() } },
+  { name: 'Review month', go: async p => { await tab(p, 'Review'); await p.getByRole('button', { name: 'Month', exact: true }).click() } },
+  { name: 'North (writing)', go: async p => { await tab(p, 'North'); await p.getByRole('button', { name: 'Edit', exact: true }).click() } },
+  { name: 'Task detail', sheet: true, go: async p => { await tab(p, 'Today'); await p.getByRole('button', { name: /^More actions for / }).first().click(); await p.getByRole('button', { name: /Details/ }).first().click() } },
+  { name: 'Replan', sheet: true, go: async p => { await tab(p, 'Today'); await p.getByRole('button', { name: 'Replan', exact: true }).click() } },
+  { name: 'Low day', sheet: true, go: async p => { await tab(p, 'Today'); await p.getByRole('button', { name: 'Low day', exact: true }).click() } },
+  { name: 'Timer', sheet: true, go: async p => { await tab(p, 'Today'); await p.getByRole('button', { name: 'Timer and stopwatch', exact: true }).click() } },
+  { name: 'Header: notes', sheet: true, go: async p => { await tab(p, 'Today'); await p.locator('.header-tools').getByRole('button', { name: 'Notes', exact: true }).click() } },
+  { name: 'Header: journal', sheet: true, go: async p => { await tab(p, 'Today'); await p.locator('.header-tools').getByRole('button', { name: 'Journal', exact: true }).click() } },
+  { name: 'Journal (open full)', sheet: true, go: async p => { await tab(p, 'Today'); await p.locator('.header-tools').getByRole('button', { name: 'Journal', exact: true }).click(); await p.getByRole('button', { name: 'Open full', exact: true }).click() } },
+  { name: 'Command palette', sheet: true, go: async p => { await tab(p, 'Today'); await p.keyboard.press('Control+k') } },
+  { name: 'Scratch', sheet: true, go: async p => { await tab(p, 'Today'); await p.locator('.app-header').click({ position: { x: 5, y: 5 } }); await p.keyboard.press('s') } },
+  { name: 'Shortcut card', sheet: true, go: async p => { await tab(p, 'Today'); await p.locator('.app-header').click({ position: { x: 5, y: 5 } }); await p.keyboard.press('?') } },
+  { name: 'Focus', sheet: true, go: async p => { await tab(p, 'Today'); await p.getByRole('button', { name: /^Focus/ }).first().click() } },
 ]
 
 /** @param {Page} p @param {string} name */
@@ -99,7 +124,12 @@ const focused = (/** @type {Page} */ page) => page.evaluate(() => {
   // elevation. Crediting a box-shadow above credited the rail's own shadow
   // to every button in it, and a nav with no rings at all read as fine.
   // Found by planting.
-  let ring = ringOn(cs)
+  // A writing surface that is the only field of its sheet - North's text,
+  // the palette's box, Scratch's note - shows its focus by its caret, and
+  // says so with data-focus="caret" (see the reason beside each in the
+  // stylesheet). Declared rather than guessed, so a field that merely lost
+  // its ring is still a finding.
+  let ring = ringOn(cs) || el.dataset.focus === 'caret'
   for (let a = el.parentElement, up = 0; a && up < 3 && !ring; a = a.parentElement, up++) {
     const ac = getComputedStyle(a)
     ring = ac.outlineStyle !== 'none' && parseFloat(ac.outlineWidth) > 0
@@ -252,7 +282,9 @@ async function main() {
         // 4. Nothing is reachable only with a pointer.
         const unreached = await page.evaluate(() => {
           const out = []
-          for (const el of document.querySelectorAll('main button, main a[href], nav button')) {
+          const modal = document.querySelector('[aria-modal="true"]')
+          const asked = modal ? modal.querySelectorAll('button, a[href]') : document.querySelectorAll('main button, main a[href], nav button, [role="dialog"] button, [role="dialog"] a[href]')
+          for (const el of asked) {
             if (!(el instanceof HTMLElement)) continue
             if (el.tabIndex < 0 || el.hasAttribute('disabled')) continue
             const cs = getComputedStyle(el)
@@ -273,7 +305,7 @@ async function main() {
         // an empty plan, and every screen after it in the walk was measured
         // on nothing - found when Kitchen's recipe page, the first screen
         // that needs a recipe to open, could not find one.
-        const openers = stops.filter(s => s.tag === 'BUTTON' && s.cls !== 'demo-banner-exit').slice(0, 40)
+        const openers = screen.sheet ? [] : stops.filter(s => s.tag === 'BUTTON' && s.cls !== 'demo-banner-exit').slice(0, 40)
         for (const opener of openers) {
           // Refocus that exact stop by walking to it again, from the top.
           await page.evaluate(() => {
@@ -288,9 +320,16 @@ async function main() {
             if (!at || at.key === opener.key) break
           }
           if (!at || at.key !== opener.key) continue
+          // Counted, not merely looked for: a layer already standing - left
+          // by a press before this one - read as this press opening it and
+          // Escape failing to shut it, and one slow close became every
+          // opener after it on the screen. Found when the walk first went
+          // into a template being edited, in the freeze.
+          const layers = () => page.evaluate(() => document.querySelectorAll('[role="dialog"], [role="menu"], [aria-modal="true"]').length)
+          const before = await layers()
           await page.keyboard.press('Enter')
-          await page.waitForTimeout(150)
-          const opened = await page.evaluate(() => !!document.querySelector('[role="dialog"], [role="menu"], [aria-modal="true"]'))
+          await page.waitForTimeout(250)
+          const opened = (await layers()) > before
           if (!opened) {
             // A press that did something on the spot, or navigated away. Only
             // the second needs the screen put back, and only that: a reload
@@ -303,11 +342,11 @@ async function main() {
             continue
           }
           await page.keyboard.press('Escape')
-          await page.waitForTimeout(150)
-          const after = await page.evaluate(() => ({
+          await page.waitForTimeout(250)
+          const after = await page.evaluate(n => ({
             onBody: document.activeElement === document.body || document.activeElement === null,
-            stillOpen: !!document.querySelector('[role="dialog"], [role="menu"], [aria-modal="true"]'),
-          }))
+            stillOpen: document.querySelectorAll('[role="dialog"], [role="menu"], [aria-modal="true"]').length > n,
+          }), before)
           if (after.stillOpen) {
             findings.push(`  [${where}] Escape does not close what "${opener.name}" opened`)
             // Leave it the only way left, so the next opener starts clean.

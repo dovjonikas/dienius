@@ -256,6 +256,7 @@ function ScratchPanel({
       <div
         className="scratch"
         role="dialog"
+        aria-modal="true"
         aria-label={reading ? `Notes on ${formatDayTitle(reading)}` : 'Notes'}
         data-keeps-keys=""
         onClick={e => e.stopPropagation()}
@@ -267,6 +268,7 @@ function ScratchPanel({
             <textarea
               ref={inputRef}
               className="scratch-input"
+              data-focus="caret"
               aria-label="Note"
               placeholder={intent ? 'Something to do. Enter sends it to Later.' : 'Write it down. Enter keeps it.'}
               rows={1}

@@ -92,7 +92,7 @@ test('a time and a length given here are the task the day gets', async () => {
   const time = screen.getByRole('textbox', { name: 'Start time' })
   await user.clear(time)
   await user.type(time, '14:00')
-  await user.click(screen.getByRole('button', { name: '30min' }))
+  await user.click(screen.getByRole('button', { name: '30 min' }))
   await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(today()[0]).toMatchObject({ title: 'Call the bank', time: '14:00', minutes: 30 })

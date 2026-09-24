@@ -89,7 +89,22 @@ export function useRestoreFocus(active = true): void {
     return () => {
       const now = document.activeElement
       if (now && now !== document.body && document.contains(now)) return
-      survivor(from)?.focus()
+      const target = survivor(from)
+      if (!target) return
+      // Under a sheet the page is inert until the sheet has gone - see
+      // modalInert.ts - and it is let go a microtask after the sheet leaves
+      // the page, which is after this runs: focus given back at once landed
+      // on nothing, and on the body (the keyboard pass, in the freeze). So a
+      // target still inert is given focus a microtask later, when it is not.
+      if (target.closest('[inert]')) {
+        queueMicrotask(() => {
+          const later = document.activeElement
+          if (later && later !== document.body && document.contains(later)) return
+          target.focus()
+        })
+        return
+      }
+      target.focus()
     }
   }, [active])
 }

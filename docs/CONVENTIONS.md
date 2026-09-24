@@ -189,6 +189,19 @@ the page. `centring.test.ts` holds it, because jsdom has no layout and
 cannot measure a centre; the measurement itself was taken in a browser at
 1920, 1600 and 1366.
 
+### A sheet is modal, and the page behind it is out of reach
+
+A sheet that covers the page carries `role="dialog"` and `aria-modal="true"`,
+and nothing more is needed: `lib/modalInert.ts` makes everything outside the
+open sheet `inert` while it is open, its scrim aside (a class ending in
+`scrim`), so Tab and a press stay in the sheet. Something that must stay in
+reach over every sheet - the tour is the one - carries `data-over-sheets`.
+A header's panel is not a sheet and is left out. A field that shows its
+focus by its caret alone, as a writing surface that is the only field of its
+sheet may, says `data-focus="caret"`, and gives its reason in the
+stylesheet; `npm run keys` walks every sheet and holds both. DECISIONS "The
+page behind a sheet is out of reach".
+
 ### A block carries its start and its end
 
 One rule for every grid that draws a task as a block. **Every sized block

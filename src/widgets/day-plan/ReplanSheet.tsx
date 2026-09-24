@@ -141,7 +141,7 @@ export function ReplanSheet(props: ReplanSheetProps) {
 
   return (
     <div className="replan-scrim" onClick={props.onClose}>
-      <div className="replan" role="dialog" aria-label="Replan" data-keeps-keys="" onClick={e => e.stopPropagation()}>
+      <div className="replan" role="dialog" aria-modal="true" aria-label="Replan" data-keeps-keys="" onClick={e => e.stopPropagation()}>
         {mode === 'menu' && (
           <Menu away={awayText} onPick={setMode} onClose={props.onClose} />
         )}

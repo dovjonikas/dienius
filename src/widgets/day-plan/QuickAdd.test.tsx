@@ -156,7 +156,7 @@ test('a duration chip tapped against a typed duration rewrites the words too', a
   const field = screen.getByPlaceholderText(/Add a task/)
   await user.type(field, 'Call mom 45min')
   await user.click(screen.getByRole('button', { name: /45 min long/i }))
-  await user.click(screen.getByRole('button', { name: '15min' }))
+  await user.click(screen.getByRole('button', { name: '15 min' }))
 
   expect(field).toHaveValue('Call mom 15min')
 })
@@ -173,7 +173,7 @@ test('the last length chosen is the one the next task starts from', async () => 
   const { unmount } = render(<QuickAdd date={DATE} tasks={[]} />)
 
   await user.click(screen.getByRole('button', { name: /30 min long/i }))
-  await user.click(screen.getByRole('button', { name: '45min' }))
+  await user.click(screen.getByRole('button', { name: '45 min' }))
   await user.type(screen.getByPlaceholderText(/Add a task/), 'Call mom{Enter}')
   expect(tasksOn(DATE)[0].minutes).toBe(45)
 

@@ -493,7 +493,7 @@ function TourOverlay({ onNavigate }: TourProps) {
   const vh = typeof window === 'undefined' ? 768 : window.innerHeight
 
   return (
-    <div className={celebrating ? 'tour is-celebrating' : 'tour'}>
+    <div className={celebrating ? 'tour is-celebrating' : 'tour'} data-over-sheets="">
       {/* The scrim is four solid shades around the hole rather than one
           full-screen path with a hole cut in it. The path was re-rasterised
           across the whole window on every move of the hole, and its `d` was

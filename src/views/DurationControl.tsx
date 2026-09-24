@@ -2,7 +2,6 @@ import { useRef, useState } from 'react'
 import { MinuteStepInput } from './MinuteStepInput'
 import { useClickAway } from '../lib/useClickAway'
 import { durationToText } from '../widgets/day-plan/parse'
-import { formatDuration } from '../widgets/day-plan/capacity'
 
 /**
  * The one duration control: a button that already holds an answer, and a
@@ -53,7 +52,7 @@ export function DurationControl({
   const ref = useRef<HTMLDivElement>(null)
   useClickAway(ref, open, () => setOpen(false))
 
-  const label = minutes === undefined ? 'No length set. Choose how long.' : `${formatDuration(minutes)} long. Change how long.`
+  const label = minutes === undefined ? 'No length set. Choose how long.' : `${shownDuration(minutes)} long. Change how long.`
 
   return (
     <div className={className ? `duration-control ${className}` : 'duration-control'} ref={ref} data-tour={tour}>
@@ -162,6 +161,13 @@ export function DurationChips({
  * number and a unit, because "45min" is a word and the eye takes it as one.
  * So the gap is drawn rather than typed, and the string is untouched.
  *
+ * The minutes carry a space of their own as well, which the flex box they
+ * sit in does not draw: to a screen reader and to somebody speaking to the
+ * screen, "45min" was one word, and the value button's name - "45 min long"
+ * - did not hold what it showed. Lighthouse found it (WCAG 2.5.3). The gap
+ * is still the drawn one, and the name is made of the same words - see
+ * `shownDuration`.
+ *
  * "1h30" keeps its own shape. It is a clock-shaped reading of a length
  * rather than a number with a unit after it, and a gap inside it would make
  * it look like two numbers.
@@ -173,7 +179,13 @@ function DurationText({ minutes }: { minutes: number }) {
   return (
     <>
       {split[1]}
+      {split[2] === 'min' ? ' ' : ''}
       <span className="duration-unit">{split[2]}</span>
     </>
   )
+}
+
+/** A length in the words its control shows - "45 min", "1h", "1h30" - which the value button's name starts with. */
+function shownDuration(minutes: number): string {
+  return durationToText(minutes).replace(/^(\d+)min$/, '$1 min')
 }

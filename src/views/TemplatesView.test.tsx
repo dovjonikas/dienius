@@ -566,7 +566,7 @@ test('block-add fields do not leak between editing sessions', async () => {
   await user.type(screen.getByPlaceholderText('09:00'), '10:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Half-typed')
   await user.click(screen.getByRole('button', { name: '30 min long. Change how long.' }))
-  await user.click(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '15min' }))
+  await user.click(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '15 min' }))
   expect(screen.getByRole('button', { name: '15 min long. Change how long.' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Cancel' }))
   await user.click(screen.getByRole('button', { name: 'Edit B' }))
@@ -578,15 +578,15 @@ test('block-add fields do not leak between editing sessions', async () => {
 
 test('with no templates saved, the empty state offers starter templates instead of a dead end', () => {
   render(<TemplatesView />)
-  expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the overnight shift template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: working day/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: rest day/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: overnight shift/i })).toBeInTheDocument()
 })
 
 test('tapping a starter here adds it to the template list without stamping any day', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: /use the working day template/i }))
+  await user.click(screen.getByRole('button', { name: /use this template: working day/i }))
 
   const templates = getData().templates
   expect(templates).toHaveLength(1)
@@ -594,13 +594,13 @@ test('tapping a starter here adds it to the template list without stamping any d
   expect(Object.keys(getData().days)).toHaveLength(0)
   expect(screen.getByText('Working day')).toBeInTheDocument()
   // The offers are gone now that a real template exists.
-  expect(screen.queryByRole('button', { name: /use the rest day template/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /use this template: rest day/i })).not.toBeInTheDocument()
 })
 
 test('once any template exists, the starter offers no longer show here', () => {
   actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
   render(<TemplatesView />)
-  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /use this template: working day/i })).not.toBeInTheDocument()
 })
 
 // --- stress test: a template with 30 blocks ---------------------------------

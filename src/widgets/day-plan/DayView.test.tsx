@@ -1015,16 +1015,16 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
 
 test('a genuinely fresh install shows the starter offers instead of the plain empty line', () => {
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the overnight shift template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: working day/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: rest day/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use this template: overnight shift/i })).toBeInTheDocument()
   expect(screen.queryByText(/^nothing planned\./i)).not.toBeInTheDocument()
 })
 
 test('tapping a starter creates it as a real template and stamps it onto the day being viewed', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  await user.click(screen.getByRole('button', { name: /use the rest day template/i }))
+  await user.click(screen.getByRole('button', { name: /use this template: rest day/i }))
 
   const templates = getData().templates
   expect(templates).toHaveLength(1)
@@ -1038,13 +1038,13 @@ test('tapping a starter creates it as a real template and stamps it onto the day
 
   // The teaching state is gone now that the day has real tasks on it - the
   // rest of the day view (task list, quick add) takes over.
-  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /use this template: working day/i })).not.toBeInTheDocument()
 })
 
 test('once a template exists anywhere, an empty day falls back to the plain, non-teaching message', () => {
   actions.addTemplate({ name: 'Existing', color: '#a7c4f5', blocks: [] })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /use this template: working day/i })).not.toBeInTheDocument()
   expect(screen.getByText(/nothing planned/i)).toBeInTheDocument()
 })
 
@@ -1052,7 +1052,7 @@ test('a day that already has a hand-typed task never shows the starter offers, e
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Water the plants{Enter}')
-  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /use this template: working day/i })).not.toBeInTheDocument()
 })
 
 // Selecting a task to see where it fits - the inverse of tapping a gap.

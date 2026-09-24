@@ -22,6 +22,7 @@ import { DemoBanner } from './views/DemoBanner'
 import { SyncBanner } from './views/SyncBanner'
 import { UnreadableBanner } from './views/UnreadableBanner'
 import { ScreenBoundary } from './ScreenBoundary'
+import { watchModals } from './lib/modalInert'
 import type { SettingsSection } from './views/SettingsView'
 import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
@@ -99,6 +100,9 @@ export function App() {
   // until v2.24 the first open of each calendar day opened the North page.
   const [view, setView] = useState<View>('day')
   const northAfterSleep = useNorthAfterSleep()
+  // The page behind an open sheet out of reach of Tab and of a press - see
+  // lib/modalInert.ts.
+  useEffect(() => watchModals(), [])
   const [clockOpen, setClockOpen] = useState(false)
   const [clockTab, setClockTab] = useState<ClockTab | undefined>(undefined)
   // The whole journal, as an overlay rather than a seventh tab in the rail:

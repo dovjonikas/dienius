@@ -43,7 +43,7 @@ export function StarterOffers({ onUse }: StarterOffersProps) {
             type="button"
             className="btn-secondary"
             data-tour={`starter-${starter.id}`}
-            aria-label={`Use the ${starter.name} template`}
+            aria-label={`Use this template: ${starter.name}`}
             onClick={() => onUse(starter)}
           >
             Use this template

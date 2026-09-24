@@ -25,7 +25,7 @@ export async function goToDay(page: Page, key: string): Promise<void> {
 
 /** The one starter template the tour and the smoke test both stamp. */
 export async function stampWorkingDay(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Use the Working day template' }).click()
+  await page.getByRole('button', { name: 'Use this template: Working day' }).click()
   await page.getByRole('checkbox', { name: 'Get up, shower, coffee' }).waitFor({ state: 'attached' })
 }
 

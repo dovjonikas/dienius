@@ -5105,3 +5105,49 @@ there for somebody who wants it sooner. A page in use is never reloaded
 under them: a template being built or a recipe being written lives in
 memory until it is saved, and a reload at a moment of the app's choosing
 would take it. That is what "without anybody pressing anything" means here.
+
+## The page behind a sheet is out of reach
+
+The freeze's point 4, 2026-09-24: every screen passable by keyboard alone,
+focus visible. The keyboard pass (`scripts/keys.mjs`) walked the pages; it
+walks the sheets and panels over them now too - a task's detail, replan,
+the low day, the timer, the header's notes and journal, the journal's page,
+the palette, Scratch, the shortcuts, Focus, a template being edited, a
+book's panel, a list's settings, North being written.
+
+**Found: Tab ran off the end of a sheet into the page under its scrim.**
+Most sheets were marked `aria-modal`, which tells a screen reader the page
+behind is not there; nothing told the keyboard, and replan, Scratch and the
+journal's page were not even marked. Now every sheet that covers the page
+is `aria-modal`, and while one is open everything outside it is `inert`
+(`lib/modalInert.ts`, watching the page from App): not focusable, not
+pressable, not read. Kept in reach: the sheet's own scrim, which is how a
+press beside a sheet closes it, and the tour, which asks for a task's sheet
+to be opened and then for Next on its own card (`data-over-sheets`). A
+header's panel is not a sheet - it covers nothing and closes on any press
+outside it - and leaves the page in reach.
+
+**Three writing surfaces show their focus by the caret**: North's text, the
+palette's box and Scratch's note, each the only field of its sheet, drawn
+without a halo on purpose (the reason is beside each in the stylesheet).
+They say so with `data-focus="caret"`, and the pass takes that as their
+ring - declared rather than guessed, so a field that merely lost its ring
+is still a finding.
+
+**The pass counts the layers a press opens**, rather than looking for one:
+a layer already standing read as this press opening it and Escape failing
+to shut it, and one slow close on a template being edited became ten
+findings after it.
+
+## A control is named by the words on it
+
+Also point 4: Lighthouse's accessibility audit found the duration control's
+button showing "45min" - one word to a screen reader and to somebody
+speaking to the screen - and named "45 min long. Change how long.", a name
+that does not hold what it shows (WCAG 2.5.3). The minutes carry a space of
+their own now, which the flex box they sit in does not draw, and the name
+is made of the same words: "45 min", "1h", "1h30". The chips are named "15
+min" and so on, where they were "15min". The empty day's three starters
+showed "Use this template" and were named "Use the Working day template":
+they are "Use this template: Working day" now - the words on the button
+first, then whose template it is.

@@ -120,6 +120,7 @@ export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratc
         <input
           ref={inputRef}
           className="palette-input"
+          data-focus="caret"
           type="text"
           role="combobox"
           aria-expanded

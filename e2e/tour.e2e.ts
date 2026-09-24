@@ -31,7 +31,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
 
   // Stamp a day
   await expect(card).toContainText(`${verb} Use this template under Working day`)
-  await page.getByRole('button', { name: 'Use the Working day template' }).click()
+  await page.getByRole('button', { name: 'Use this template: Working day' }).click()
   await expect(card).toContainText('Your whole day')
   await card.getByRole('button', { name: 'Next' }).click()
 

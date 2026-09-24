@@ -28,7 +28,7 @@ test('tapping a card calls onUse with exactly that starter, and no other', async
   const user = userEvent.setup()
   const onUse = vi.fn()
   render(<StarterOffers onUse={onUse} />)
-  await user.click(screen.getByRole('button', { name: /use the rest day template/i }))
+  await user.click(screen.getByRole('button', { name: /use this template: rest day/i }))
   expect(onUse).toHaveBeenCalledTimes(1)
   expect(onUse).toHaveBeenCalledWith(expect.objectContaining({ id: 'rest-day' }))
 })
@@ -36,6 +36,19 @@ test('tapping a card calls onUse with exactly that starter, and no other', async
 test('every card exposes an accessible name naming its own template, not a repeated bare label', () => {
   render(<StarterOffers onUse={() => {}} />)
   for (const starter of STARTER_TEMPLATES) {
-    expect(screen.getByRole('button', { name: new RegExp(`use the ${starter.name} template`, 'i') })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: new RegExp(`use this template: ${starter.name}`, 'i') })).toBeInTheDocument()
+  }
+})
+
+// Somebody speaking to the screen says what they see - "use this template" -
+// and the button has to answer to it: its name starts with its own words and
+// then says whose template it is (WCAG 2.5.3, the label in the name).
+// Lighthouse found the three named "Use the Working day template" and so on,
+// names that did not hold the words on them.
+test("each card's button is named by the words on it first, and then by its template", () => {
+  render(<StarterOffers onUse={() => {}} />)
+  for (const starter of STARTER_TEMPLATES) {
+    const button = screen.getByRole('button', { name: `Use this template: ${starter.name}` })
+    expect(button.getAttribute('aria-label')!.toLowerCase()).toContain((button.textContent ?? '').trim().toLowerCase())
   }
 })

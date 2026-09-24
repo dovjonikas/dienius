@@ -346,6 +346,7 @@ function NorthEditor({
         <textarea
           ref={ref}
           className="north-editor-text"
+          data-focus="caret"
           aria-label="North"
           aria-describedby={ruleId}
           data-tour="picture-field"
