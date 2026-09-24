@@ -240,4 +240,14 @@ describe('a day opened after its template changed', () => {
     expect(own('2030-01-10')).toContain('15:00 Coffee, changed')
     expect(own('2030-01-11')).toContain('12:00 Lunch, changed')
   })
+
+  test('a note written on a block reaches today even where the block has ended: it is words about the block, not what the day did', () => {
+    actions.importTemplatesJson(file(DAY_ONE, ROSTER))
+    at(10, 13)
+    actions.ensureDay('2030-01-10')
+    const day = getData().templates.find(t => t.name === 'Day shift')!
+    actions.updateTemplate({ ...day, blocks: day.blocks.map(b => (b.title === 'Travel in' ? { ...b, note: 'Take the early bus.', time: '05:30' } : b)) })
+    actions.ensureDay('2030-01-10')
+    expect(titled('2030-01-10', 'Travel in')).toMatchObject({ time: '06:00', note: 'Take the early bus.' })
+  })
 })

@@ -117,9 +117,11 @@ export function refreshFromTemplate(
     if (task.done) return task
     // Today is cut at now - `now` is minutes on the day's clock, given for
     // today only: a block that has ended is the day as it was lived, and
-    // keeps what it was, whatever its block says since (the shift brief of
-    // 2026-09-25, stage 2; lib/reimport.ts).
-    if (endedBy(task.time, task.minutes, now)) return task
+    // keeps its place, its title, its length, its recipe and its book,
+    // whatever its block says since (the shift brief of 2026-09-25, stage 2;
+    // lib/reimport.ts). Its note still follows below: a note is words about
+    // the block, not a record of what the day did.
+    const lived = endedBy(task.time, task.minutes, now)
     const origin = originFor(task)
     if (origin.type !== 'template' || !origin.blockId) return task
     const block = templates
@@ -128,7 +130,7 @@ export function refreshFromTemplate(
     if (!block) return task
     let next = task
 
-    if (block.libraryListId) {
+    if (!lived && block.libraryListId) {
       const bound = boundTo(library.find(l => l.id === block.libraryListId))
       // Nothing to point at: the list is gone, or everything in it is
       // finished. The block's own title stands, which is what it does at
@@ -154,7 +156,7 @@ export function refreshFromTemplate(
     // by hand. There is nothing to compare, so nothing is touched, and a
     // re-stamp puts that right in the one place a person has asked for it.
     const echo = task.fromBlock
-    if (echo) {
+    if (echo && !lived) {
       const gave = {
         title: block.title,
         time: block.time,
