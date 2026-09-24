@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { AppData, DayPlan } from '../types'
-import { loadData, planFromOtherTab, saveData } from '../storage'
+import { erasedByOtherTab, loadData, planFromOtherTab, saveData } from '../storage'
 import { stampChanges } from '../syncEntities'
 import { mergeStates } from '../syncMerge'
 import { resetClockForTests, sawPlan, stampNow } from '../clock'
@@ -25,6 +25,8 @@ let data: AppData = loadData()
 sawPlan(data)
 let saveOk = true
 const listeners = new Set<() => void>()
+/** Another tab erased this device, and this one is on its way to starting afresh: it writes nothing. */
+let erased = false
 
 /**
  * The one place state changes, and therefore the one place sync timestamps
@@ -45,7 +47,7 @@ export function commit(next: AppData): void {
   // is on GitHub's where GitHub has said - see clock.ts. The device's own
   // clock let an edit made after seeing the other device's lose to it.
   data = stampChanges(previous, marked, stampNow())
-  saveOk = saveData(data)
+  saveOk = erased ? false : saveData(data)
   listeners.forEach(fn => fn())
   onCommit.forEach(fn => fn())
 }
@@ -74,7 +76,7 @@ export function onStateCommitted(fn: () => void): () => void {
 export function replaceState(next: AppData, options: { owed?: boolean } = {}): void {
   data = next
   sawPlan(next)
-  saveOk = saveData(data)
+  saveOk = erased ? false : saveData(data)
   listeners.forEach(fn => fn())
   if (options.owed) onCommit.forEach(fn => fn())
 }
@@ -100,13 +102,32 @@ export function takeFromOtherTab(other: AppData): void {
   if (merged.applied === 0 && merged.deleted === 0 && !lacking) return
   data = merged.data
   sawPlan(data)
-  if (lacking) saveOk = saveData(data)
+  if (lacking && !erased) saveOk = saveData(data)
   listeners.forEach(fn => fn())
+}
+
+/** How this tab starts afresh after another erased the device; a seam, since a test cannot reload. */
+let reloadPage: () => void = () => window.location.reload()
+
+export function setReloadForTests(fn: (() => void) | null): void {
+  reloadPage = fn ?? (() => window.location.reload())
+  erased = false
 }
 
 // The browser tells a tab when another one saved, and never the tab that wrote.
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', event => {
+    // Another tab erased this device (Settings, Erase all data): this one
+    // starts afresh too, and writes nothing in the meantime. Kept in memory,
+    // the plan went back into storage with the next thing saved here - a
+    // block ending by itself a minute later was enough - and an erase that
+    // undoes itself is no erase (DECISIONS "An erase takes this device's keys
+    // with it").
+    if (erasedByOtherTab(event.key, event.newValue)) {
+      erased = true
+      reloadPage()
+      return
+    }
     const other = planFromOtherTab(event.key, event.newValue)
     if (other) takeFromOtherTab(other)
   })
@@ -159,6 +180,7 @@ export function useAppData(): AppData {
 export function resetForTests(next: AppData): void {
   data = next
   saveOk = true
+  erased = false
   resetClockForTests()
   sawPlan(next)
   listeners.forEach(fn => fn())

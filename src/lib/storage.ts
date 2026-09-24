@@ -387,6 +387,15 @@ export function planFromOtherTab(key: string | null, text: string | null): AppDa
   }
 }
 
+/**
+ * Whether another tab has just erased this device: this tab's plan taken
+ * away, or the whole storage cleared. Nothing else in the app takes the plan's
+ * key away.
+ */
+export function erasedByOtherTab(key: string | null, text: string | null): boolean {
+  return text === null && (key === null || key === activeKey())
+}
+
 export function saveData(data: AppData): boolean {
   // Where an unreadable plan could not be kept aside it is still here, and
   // nothing goes over it until the person has let it go.

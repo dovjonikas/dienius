@@ -285,6 +285,16 @@ of a new one. **The token never leaves this device** - it is not in an
 export, it does not sync, and it is not in the copy it writes. Which also
 means: set it up separately on each device you use.
 
+**The archive comes with it.** In the same repo, with nothing more to set
+up: `archive/days/` keeps a file for every day you have lived - its kind,
+its blocks, what you ticked and when, the meals with their recipe and
+numbers, the notes - written once the day is over and again only if you
+change it afterwards, and `archive/weekly/` the whole plan once a week,
+never written over. Nothing there is ever deleted. The line under the
+backup says how far it reaches - "Archived until September 24." - and what
+went wrong when something did; **Archive now** is beside it. What another
+program can read in it: [ARCHIVE-FORMAT.md](ARCHIVE-FORMAT.md).
+
 ## 8. Two devices, if you have a second one
 
 Optional. Sync goes through the same GitHub repo as the backup - nothing to
@@ -518,6 +528,16 @@ cycle D D F N A R R R.
 
 **Next month is one press.** Open it, press Cycle and Fill to the end of the
 month: the cycle carries on from the day it started, in its place.
+
+**Or the whole thing as a file, pasted again whenever it changes.** Settings
+→ Templates as JSON takes the templates, the routines and the roster written
+somewhere else ([TEMPLATE-JSON.md](TEMPLATE-JSON.md)), and it is made to be
+pasted again: never clear a date to do it. The days behind today stay as
+you lived them; today keeps what has already ended, and the rest of today
+and every day ahead follow the file - a block moved, renamed, taken away or
+added - while what you ticked, moved or wrote yourself stays. Preview says
+how many dates ahead will change, how many behind are left alone and how
+many ticked blocks stay, before Apply does anything.
 
 ## Recipes, in Kitchen
 

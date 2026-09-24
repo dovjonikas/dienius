@@ -91,7 +91,33 @@ describe('another tab saves the plan', () => {
     theirs.days[DAY].tasks[0] = { ...theirs.days[DAY].tasks[0], done: true, updatedAt: '2030-01-07T09:01:00.000Z' }
     window.dispatchEvent(new StorageEvent('storage', { key: 'dienius:demo', newValue: JSON.stringify(theirs) }))
     window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: '{ not a plan' }))
-    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: null }))
     expect(getData()).toBe(before)
+  })
+})
+
+describe('another tab erases this device', () => {
+  test('this tab follows it afresh rather than keeping the plan to write back with its next save', async () => {
+    const { setReloadForTests } = await import('./core')
+    const reload = vi.fn()
+    setReloadForTests(reload)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    localStorage.removeItem(STORAGE_KEY)
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: null }))
+    expect(reload).toHaveBeenCalledTimes(1)
+    // And, until it has, it writes nothing back over the erase.
+    actions.toggleTask(DAY, 'a')
+    expect(setItem.mock.calls.filter(([key]) => key === STORAGE_KEY)).toEqual([])
+    setReloadForTests(null)
+  })
+
+  test('a storage cleared whole is an erase too; another key taken away is not', async () => {
+    const { setReloadForTests } = await import('./core')
+    const reload = vi.fn()
+    setReloadForTests(reload)
+    window.dispatchEvent(new StorageEvent('storage', { key: 'dienius:quick-add-duration', newValue: null }))
+    expect(reload).not.toHaveBeenCalled()
+    window.dispatchEvent(new StorageEvent('storage', { key: null, newValue: null }))
+    expect(reload).toHaveBeenCalledTimes(1)
+    setReloadForTests(null)
   })
 })

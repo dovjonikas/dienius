@@ -5558,3 +5558,14 @@ tab's plan, and a text that does not read as a plan is left alone.
 Rejected: one tab at a time, the second told to close. The installed app
 and a tab left open from yesterday are how people use a planner, and a
 second tab that refuses to work is a worse surprise than one that agrees.
+
+**An erase in one tab is followed by the other.** The same hunt, one step
+on: Settings, Erase all data in one tab took the plan out of storage, and
+the other tab, still holding it in memory, put it back with the next thing
+it saved - a block ending by itself a minute later was enough. An erase
+that undoes itself is no erase ("An erase takes this device's keys with
+it"). A tab that hears its plan taken away, or the whole storage cleared,
+writes nothing more and starts afresh, as the tab that erased did. It is a
+reload nobody pressed in that tab, which this app otherwise never does;
+here the person asked for this device to forget everything, and a tab of
+the device is the device.

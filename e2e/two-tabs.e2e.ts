@@ -37,3 +37,29 @@ test('a tick in one tab survives a change in the other, and both tabs end up wit
   await expect(page.getByRole('button', { name: /^Done 2/ })).toBeVisible()
   await expect(other.getByRole('button', { name: /^Done 2/ })).toBeVisible()
 })
+
+test('an erase in one tab is followed by the other, which does not put the plan back', async ({ context, page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await quickAdd(page, 'Call the bank')
+  const other = await context.newPage()
+  await other.clock.setFixedTime(wednesdayAt(10, 1))
+  await other.goto('./')
+  await expect(other.getByRole('checkbox', { name: 'Call the bank', exact: true })).toBeAttached()
+
+  // The first tab erases this device.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Settings', exact: true }).click()
+  await page.getByRole('button', { name: 'Erase all data' }).click()
+  await page.getByRole('button', { name: 'Erase?' }).click()
+  await page.getByRole('button', { name: 'Take the tour' }).waitFor()
+
+  // The other tab starts afresh with it, and writes nothing back - not even
+  // when something is written in it afterwards.
+  await other.getByRole('button', { name: 'Take the tour' }).waitFor()
+  await expect(other.getByRole('checkbox', { name: 'Call the bank', exact: true })).toHaveCount(0)
+  await quickAdd(other, 'After the erase')
+  const titles = await page.evaluate(() => {
+    const data = JSON.parse(localStorage.getItem('dienius:data') || '{"days":{}}') as { days: Record<string, { tasks: { title: string }[] }> }
+    return Object.values(data.days).flatMap(d => d.tasks.map(t => t.title))
+  })
+  expect(titles).toEqual(['After the erase'])
+})
