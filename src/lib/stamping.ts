@@ -332,7 +332,13 @@ export function applyStamps(
     const manual = existing.tasks.filter(t => {
       if (!t.fromTemplate || lastNight(t)) return true
       const origin = originFor(t)
-      return origin.type === 'template' && !!origin.sourceId && origin.sourceId !== existing.templateId
+      if (origin.type === 'template' && !!origin.sourceId && origin.sourceId !== existing.templateId) return true
+      // A ticked block of the template going out is what the day did, and
+      // stays with it: a kind changed by hand, by the roster, or by the night
+      // arriving before it never takes a tick away - the owner's shift brief
+      // of 2026-09-25, stage 4. The same template stamped again keeps its
+      // ticks through the match below.
+      return t.done && templateId !== existing.templateId
     })
     if (templateId === null) {
       // Only the template comes off: its tasks, its id and the day type it
@@ -371,7 +377,9 @@ export function applyStamps(
     // live later - see the field's doc comment in types.ts. Manual keeps
     // every task the template does not account for - including repeat
     // instances, which are not this template's to replace.
-    const kept = manual.filter(t => !templateTasks.some(s => s.id === t.id))
+    // And a ticked task whose block the template no longer has: it happened.
+    const tickedGone = priorTemplateTasks.filter(t => t.done && !templateTasks.some(s => s.id === t.id) && !manual.includes(t))
+    const kept = [...manual, ...tickedGone].filter(t => !templateTasks.some(s => s.id === t.id))
     // What the day has left for key tasks after the ones this stamp is not
     // touching - see capHighlights.
     const capped = capHighlights(templateTasks, MAX_HIGHLIGHTS - kept.filter(t => t.highlight).length)
@@ -426,7 +434,8 @@ function stampNight(
     return ofNight(t) || (!t.nightOf && !!origin.blockId && ids.has(origin.blockId))
   })
   const tasks = blocks.map(b => ({ ...stampedTask(b, templateId!, pool, date, library, recipes), nightOf: date }))
-  const rest = target.tasks.filter(t => !ofNight(t) && !tasks.some(n => n.id === t.id))
+  // What the night put there goes with it, unless it was ticked: that happened.
+  const rest = target.tasks.filter(t => (!ofNight(t) || t.done) && !tasks.some(n => n.id === t.id))
   const capped = capHighlights(tasks, MAX_HIGHLIGHTS - rest.filter(t => t.highlight).length)
   next[on] = { ...target, tasks: [...capped, ...rest] }
 }

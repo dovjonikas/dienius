@@ -5508,3 +5508,28 @@ Rejected: writing the archive into `data/history/`, the backup's one file a
 day. That file is a plan, merged from every device that backed up that day,
 and the next backup writes over it; an archive has to be a record of the
 day, written for a reader, that stays.
+
+## A tick is never lost to a change of kind
+
+The owner's shift brief of 2026-09-25, stage 4: six weeks of the owner's own
+rota lived in a test, then changed by hand in the middle - a night added, a
+night taken off, a day shift made a night - and the dates after it have to
+follow while nothing ticked is lost. The dates followed. The ticks did not:
+a kind put on a date - by hand, by the roster, or by a night arriving
+before it and turning a free day into the day after nights - stamped the
+new kind and took every task of the old one away, ticked or not. A stamp
+had kept a tick only when the same template was stamped again.
+
+**A ticked task stays through any stamp** (`applyStamps` and the night's
+hours in `stampNight`): the old kind's blocks that were ticked stay on the
+date beside the new kind's, and so does a ticked task whose block the
+template no longer has. It is what the day did, and the day's score, the
+archive and the review read it. What was not ticked goes with its kind, as
+before; the Roster's question still names a date changed by hand, since a
+move or a block taken off by hand is still what a new kind replaces.
+
+Three tests held the old rule and say the new one now: a removed block's
+tick dropped on a re-stamp (`stamping.test.ts`), a free day laid over a
+ticked shift leaving no shift (`handStamp.test.ts`), and the night's-hours
+property, which now asks every task of a night that is not ticked to stand
+for a block of the night as it is (`shiftDay.property.test.ts`).

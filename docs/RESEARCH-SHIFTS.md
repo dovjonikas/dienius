@@ -718,7 +718,10 @@ new kind, which is what was asked.
 
 Changing such a date's kind asks first, the way replan asks, naming what would
 go: "Wednesday was changed by hand: 1 done, 2 moved. Apply Night shift anyway?
-What you added stays." Apply or Leave it, per date, in the preview.
+What you added stays." Apply or Leave it, per date, in the preview. Since
+the shift brief of 2026-09-25 a ticked block of the kind going out stays
+too, at every door - it is what the day did (DECISIONS "A tick is never
+lost to a change of kind").
 
 A kind put on a date by hand - the rail's chip, the month's stamp bar, the
 week's chip - is the same composition as the roster's, one date at a time,

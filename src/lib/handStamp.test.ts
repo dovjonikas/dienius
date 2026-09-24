@@ -193,7 +193,7 @@ test('a night made a free day by hand takes its hours after midnight off the nex
 
 // --- d) the roster over a hand stamp ---------------------------------------------------
 
-test('the roster laid over a date stamped by hand says what will change, and a tick survives the same kind laid again', () => {
+test('the roster laid over a date stamped by hand says what will change, and a tick survives the same kind laid again - and another kind laid over it', () => {
   actions.stamp({ [WED]: DAY.id })
   actions.toggleTask(WED, task(WED, 'Shift')!.id)
 
@@ -207,7 +207,9 @@ test('the roster laid over a date stamped by hand says what will change, and a t
   const back = rosterApplied(getData(), { [WED]: FREE.id }, TUE)
   expect(back.composed.map(c => c.date)).toEqual([WED])
   actions.applyRoster({ [WED]: FREE.id })
-  expect(titles(WED)).toEqual(['Evening walk', 'Gym', 'Late reading', 'Long breakfast', 'Something outside'])
+  // The ticked shift stays, as what the day did - the shift brief of 2026-09-25, stage 4.
+  expect(titles(WED)).toEqual(['Evening walk', 'Gym', 'Late reading', 'Long breakfast', 'Shift', 'Something outside'])
+  expect(task(WED, 'Shift')).toMatchObject({ done: true })
 })
 
 // --- e) the same template twice ---------------------------------------------------------

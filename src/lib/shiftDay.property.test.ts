@@ -370,6 +370,9 @@ test("8. a night's task stands for a block after midnight of the template on the
         for (const task of after.days[date]?.tasks ?? []) {
           if (task.nightOf === undefined) continue
           expect(task.nightOf, `${date} ${task.title}`).toBe(addDays(date, -1))
+          // A ticked one is what that night did, and stays when the night's
+          // kind changes since - the shift brief of 2026-09-25, stage 4.
+          if (task.done) continue
           const night = after.days[task.nightOf]
           expect(originFor(task).sourceId).toBe(night?.templateId)
           const template = after.templates.find(t => t.id === night?.templateId)
@@ -380,7 +383,7 @@ test("8. a night's task stands for a block after midnight of the template on the
         const template = after.templates.find(t => t.id === after.days[date]?.templateId)
         const next = after.days[addDays(date, 1)]?.tasks ?? []
         for (const block of template?.blocks.filter(b => b.afterMidnight) ?? []) {
-          const standing = next.filter(t => t.nightOf === date && originFor(t).blockId === block.id)
+          const standing = next.filter(t => t.nightOf === date && originFor(t).sourceId === template!.id && originFor(t).blockId === block.id)
           expect(standing, `${date} ${block.title}`).toHaveLength(1)
         }
       }

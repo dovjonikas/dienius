@@ -79,3 +79,25 @@ is left as it is, both stay in commits nobody reads, and the guard and the
 test keep them out of every file from here on. Titles of published books
 are not a secret; what they add up to is the owner's, which is why they
 left the app.
+
+## 2026-09-25, the shift: a free day's evening runs into the night before a day shift
+
+Stage 4 of the shift brief laid six weeks of the owner's own file - two
+days, two nights, four free days, from 30 September - and checked every
+date. Every routine had its time on every date, every night's hours landed
+on the morning after once, and no date held anything twice. One thing did
+not hold, five times in the six weeks: on the last free day before a day
+shift, the free day's evening block at 22:00 stands wholly inside the sleep
+of the day shift that follows, which starts at 22:00 (a sleep belongs to
+the day it wakes into, so the night before a day shift is the day shift's).
+The day draws it that way - the evening block under a grey sleep band - and
+it is the file's, not the app's: nothing in the app moved it there.
+
+**Recommendation:** in the journal that writes the file, start that
+evening block before the day shift's bedtime, or end it by then - an hour
+earlier does it for every free day. If the free day before a day shift
+should have an evening of its own, the way the day after a night has one,
+that is a rule the app does not have yet ("the kind a day is before a day
+shift", beside `afterNight`): a small feature, parked in BACKLOG for after
+the freeze. The test that found it (`src/lib/ownersMonth.test.ts`) allows
+exactly this one and fails on any other block in a sleep.

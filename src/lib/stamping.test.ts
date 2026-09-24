@@ -178,15 +178,24 @@ test('re-stamping the same template preserves done state of matching blocks', ()
   expect(tasks.find(t => t.title === 'Deep work')?.done).toBe(false)
 })
 
-test('re-stamping after a block is removed from the template drops its task', () => {
+test('re-stamping after a block is removed from the template drops its task, unless it was ticked', () => {
   const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
-  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t =>
-    t.title === 'Gym' ? { ...t, done: true } : t,
-  )
   const shrunk: Template = { ...workDay, blocks: [workDay.blocks[1]] }
+  expect(applyStamps(stamped, [shrunk], { '2026-09-01': 't1' })['2026-09-01'].tasks.map(t => t.title)).toEqual(['Deep work'])
+  // Ticked, it is what the day did, and stays - the shift brief of 2026-09-25, stage 4.
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => (t.title === 'Gym' ? { ...t, done: true } : t))
   const restamped = applyStamps(stamped, [shrunk], { '2026-09-01': 't1' })
-  const titles = restamped['2026-09-01'].tasks.map(t => t.title)
-  expect(titles).toEqual(['Deep work'])
+  expect(restamped['2026-09-01'].tasks.map(t => t.title).sort()).toEqual(['Deep work', 'Gym'])
+})
+
+test('another template stamped over a day keeps what was ticked of the one going out, and so does taking it off', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => (t.title === 'Gym' ? { ...t, done: true } : t))
+  const other: Template = { id: 't2', name: 'Another day', color: '#a7e3bd', blocks: [{ id: 'o1', time: '10:00', title: 'Walk' }] }
+  const over = applyStamps(stamped, [workDay, other], { '2026-09-01': 't2' })
+  expect(over['2026-09-01'].tasks.map(t => [t.title, t.done])).toEqual([['Walk', false], ['Gym', true]])
+  const off = applyStamps(stamped, [workDay], { '2026-09-01': null })
+  expect(off['2026-09-01'].tasks.map(t => [t.title, t.done])).toEqual([['Gym', true]])
 })
 
 test('re-stamping after a block is added to the template arrives unchecked', () => {
