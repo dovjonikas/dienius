@@ -9805,7 +9805,11 @@ button.task-note-mark.is-open {
   font-size: var(--t-sm);
 }
 
-.note-line { margin: 0; line-height: var(--lh-read); white-space: pre-wrap; }
+/* A word longer than the line - an address pasted in, a string of one letter -
+   breaks where it has to rather than pushing the card, and on a phone the
+   whole page, sideways: the free hunt of 2026-09-25 found a note of 5,000
+   letters with no space scrolling a 375px page 32,765px wide. */
+.note-line { margin: 0; line-height: var(--lh-read); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* A line typed with an indent keeps its columns - see NoteLines.tsx. */
 /* ------------------------------------------------------------------------

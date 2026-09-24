@@ -47,7 +47,8 @@ export default defineConfig({
     // The app opened in the middle of a night shift, and the owner's ordinary
     // day pressed through, because at half past two and at lunch the phone is
     // the screen in hand.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy|library-json|reimport|night-open|owners-day)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // The free hunt, where a phone is narrower than a long note.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy|library-json|reimport|night-open|owners-day|hunt)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',
