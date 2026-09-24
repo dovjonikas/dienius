@@ -299,6 +299,8 @@ src/
     recipeImport.ts    many recipes pasted at once: the text in pieces by NAME: and ---, each a row of what saving it will do
     mealWords.ts       the meals a recipe's name says by its first word, from the list Settings keeps
     templateJson.ts    templates and a roster as JSON: read against the plan into a preview and the plan it makes, and written back the same every time
+    reimport.ts        the file pasted again: today and the dates ahead follow it, the past stays, today cut at now
+    waitingList.ts     a reading block waiting for a Library list by name, bound the moment one arrives
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
     rosterDraft.ts     rotating shifts: the month being laid out, kept on this device and never in the plan

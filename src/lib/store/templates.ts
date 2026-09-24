@@ -5,6 +5,7 @@ import { applyStamps } from '../stamping'
 import { applyRoster, composeDay, followNeighbours } from '../shiftDay'
 import { isDayKind, kindOnDate } from '../dayKinds'
 import { todayKey } from '../dates'
+import { clockMinutesOn } from '../wallClock'
 import { readTemplatesJson, type TemplatesImport } from '../templateJson'
 
 /** Templates: making them, stamping them onto dates, and the weekday map. */
@@ -85,7 +86,9 @@ export const templateActions = {
    */
   importTemplatesJson(text: string): { read: TemplatesImport; undo: () => void } {
     const previous = getData()
-    const read = readTemplatesJson(text, previous, todayKey())
+    const today = todayKey()
+    // Today is cut at now: what has ended today stays as it was lived.
+    const read = readTemplatesJson(text, previous, today, clockMinutesOn(today))
     if (!read.error && read.data !== previous) commit(read.data)
     return { read, undo: () => commit(previous) }
   },

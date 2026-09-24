@@ -6,6 +6,7 @@ import { sameName } from './recipeImport'
 import { mealFields } from './kitchen'
 import { cleanRoutine, routineMinutes, type RoutineInput } from './routines'
 import { currentItem } from './library'
+import { keepTodayAsLived, refreshStampedDays } from './reimport'
 
 /**
  * Templates and the roster as JSON - since v2.33, docs/TEMPLATE-JSON.md.
@@ -240,6 +241,12 @@ export interface TemplatesImport {
   roster: RosterRow[]
   /** Dates around the roster's own, composed again because a kind beside them changed. */
   following: string[]
+  /**
+   * The dates already stamped with a template the file changes - lib/reimport.ts:
+   * today and the dates ahead that follow it, how many dates behind today are
+   * left as they were lived, and how many ticked blocks stay as they were.
+   */
+  refresh: { ahead: string[]; behind: number; kept: number }
   /** The plan Apply commits: the one given, itself, when nothing changes. */
   data: AppData
 }
@@ -488,9 +495,15 @@ function readRoutine(
 /** The fields this format writes on a block, all of them: a matched block's values give way to these. */
 const FORMAT_BLOCK_KEYS = ['time', 'minutes', 'category', 'core', 'highlight', 'unbounded', 'afterMidnight', 'mealType', 'followMeal', 'recipeIds', 'recipeId', 'waitingRecipes', 'note'] as const
 
-/** Reads a text in the contract's format against a plan. Pure. */
-export function readTemplatesJson(text: string, data: AppData, today: string): TemplatesImport {
-  const nothing: TemplatesImport = { notes: [], templates: [], routines: [], roster: [], following: [], data }
+/**
+ * Reads a text in the contract's format against a plan. Pure.
+ *
+ * @param now Minutes on today's clock, where the caller has a clock: today is
+ * cut at it, so what has ended today stays as it was lived (lib/reimport.ts).
+ * Without it today follows the file whole.
+ */
+export function readTemplatesJson(text: string, data: AppData, today: string, now?: number): TemplatesImport {
+  const nothing: TemplatesImport = { notes: [], templates: [], routines: [], roster: [], following: [], refresh: { ahead: [], behind: 0, kept: 0 }, data }
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
@@ -519,6 +532,9 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
       : { ...data, templates, routines, settings: { ...data.settings, sleepProfiles: profiles } }
 
   const rows: TemplateRow[] = []
+  // The templates the file changes, as they were: what the dates already
+  // stamped with them were stamped from.
+  const changedTemplates = new Map<string, Template>()
   const entries: unknown[] = parsed.templates === undefined ? [] : Array.isArray(parsed.templates) ? parsed.templates : []
   if (parsed.templates !== undefined && !Array.isArray(parsed.templates)) notes.push('templates is not a list - left out.')
   // What each template is after a night names a kind by letter, and that
@@ -660,6 +676,7 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
         rows.push({ name: shown, action: 'unchanged', notes: own, ...withReads })
       } else {
         templates = templates.map(t => (t.id === known.id ? next : t))
+        changedTemplates.set(known.id, known)
         rows.push({ name: shown, action: 'update', notes: own, ...withReads })
       }
     } else {
@@ -812,13 +829,22 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
     else roster.push({ date, letter: kind.dayKind!.letter, kindName: kind.name, action: 'set', note })
   }
   roster.sort((a, b) => a.date.localeCompare(b.date))
+
+  // Today, when the roster changed its kind, keeps what it has lived; then
+  // today and the dates ahead stamped with a template the file changed
+  // follow it, and the dates behind are left as they were - lib/reimport.ts.
+  let laid = applied.plan
+  const livedToday = laid.days[today] ? keepTodayAsLived(data.days[today], laid.days[today], now) : undefined
+  if (livedToday && livedToday !== laid.days[today]) laid = { ...laid, days: { ...laid.days, [today]: livedToday } }
+  const refreshed = refreshStampedDays(laid, changedTemplates, today, now)
   return {
     notes,
     templates: rows,
     routines: routineRows,
     roster,
     following: applied.following.map(f => f.date),
-    data: applied.plan,
+    refresh: { ahead: refreshed.ahead, behind: refreshed.behind, kept: refreshed.kept },
+    data: refreshed.data,
   }
 }
 

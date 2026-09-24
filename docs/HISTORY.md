@@ -11,7 +11,7 @@ is today: for that, read STATE, and for why things are the way they are,
 
 Newest first:
 
-- [v2.41 back to v2.17](#v241---a-reading-block-names-its-list-in-the-templates-file), a section each, with
+- [v2.42 back to v2.17](#v242---a-templates-file-pasted-again-brings-today-and-the-dates-ahead-along), a section each, with
   One look and the first real month's dry run between them
 - [The versions before, one line each](#the-versions-before-one-line-each),
   v1.0 to v2.17
@@ -22,6 +22,32 @@ Newest first:
 - [Where steps lived, before they were removed](#where-steps-lived-before-they-were-removed)
 
 ---
+
+## v2.42 - A templates file pasted again brings today and the dates ahead along
+
+The owner's shift brief of 2026-09-25, stage 2: the journal writes the
+file and the owner pastes it again and again, never erasing a date to do
+it.
+
+- **`lib/reimport.ts`**: a date behind today is left as it was lived;
+  today and the dates ahead stamped with a template the file changes follow
+  it where they still hold what it gave them - a changed field arrives, a
+  block taken away goes, a block added arrives; a ticked block, one moved
+  by hand, a note written on the day and a task written by hand stay.
+- **Today is cut at now**: a block that has ended stays as it was lived, one
+  still running or ahead follows the file, and one the file adds arrives
+  only where it has not ended - on a paste, and on an open
+  (`refreshFromTemplate`'s `now`). A file that changes today's kind keeps
+  what today has lived (`keepTodayAsLived`).
+- **The preview says it**: "5 dates ahead refreshed, 12 past dates
+  untouched, 2 ticked blocks kept."
+- **Tests**: `reimport.test.ts` (three days lived, then the file again with
+  a block moved, renamed, taken away, added and a recipe changed, and one
+  date made a night; today cut at now; the same file twice; the preview's
+  sentence; today's kind changed; an open after a template edit), and
+  `e2e/reimport.e2e.ts` on a desktop and a 375px phone. DECISIONS "A
+  templates file pasted again brings today and the dates ahead along" and
+  TEMPLATE-JSON section 6.
 
 ## v2.41 - A reading block names its list in the templates file
 

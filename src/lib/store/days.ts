@@ -150,7 +150,7 @@ export const dayActions = {
     // other device may already have opened this day - see laterIfHeld.
     if (laterIfHeld(() => void dayActions.ensureDay(date))) return false
     const data = getData()
-    const ensured = ensuredDay(data, date)
+    const ensured = ensuredDay(data, date, todayKey(), new Date())
     if (!ensured) return false
     commit({ ...data, days: ensured.days })
     return ensured.changed
@@ -699,7 +699,7 @@ export const dayActions = {
    */
   applyReplan(date: string, plan: ReplanPlan): { undo: () => void } {
     const previous = getData()
-    const ensured = ensuredDay(previous, date)
+    const ensured = ensuredDay(previous, date, todayKey(), new Date())
     const base = ensured ? { ...previous, days: ensured.days } : previous
     const next = applyPlan(base, date, plan, () => crypto.randomUUID(), { replannedOn: todayKey() })
     // An interruption nobody could put a length on - "something this

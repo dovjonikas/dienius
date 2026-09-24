@@ -297,7 +297,7 @@ timer, Notes, the journal and Search on every page.
 | Repeating tasks | Daily, weekdays or weekly, materialised as real tasks |
 | Later | Things to do on no particular day, one list; one press puts one on the day at the next free slot |
 | Links | One address on a task or a library item - or, for a library item in Chrome and Edge, a file on this computer picked once, which can carry the same file's address for the phone - opened from a small door beside it |
-| Templates as JSON | Templates, routines and a roster written somewhere else and read in with a preview first, or written out the same way; a reading block names its Library list, and one not there yet waits for it - docs/TEMPLATE-JSON.md |
+| Templates as JSON | Templates, routines and a roster written somewhere else and read in with a preview first, or written out the same way; a reading block names its Library list, and one not there yet waits for it; pasted again, today and the dates ahead follow it, the past stays as it was lived and today is cut at now - docs/TEMPLATE-JSON.md |
 | Search | The header's Search, or Ctrl-K: one box for the app's commands and for things - tasks and their notes, library items, Scratch notes, recipes - and a date typed to jump to it |
 | Keyboard | Single keys for the common actions, a card behind `?`; every page and sheet passes on a keyboard alone |
 | Words explained | Every word the app invents - Stamp, Low day, a key task, a kind of day - explains itself in a bubble on a rest or a hold |
@@ -327,6 +327,7 @@ after that a version is found by its number in the commit messages
 |---|---|
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
+| **v2.42** | A templates file pasted again brings today and the dates ahead along |
 | **v2.41** | A reading block names its list in the templates file |
 | **v2.40** | A kind after a night: a kind of day names the kind it is after a night |
 | **v2.39** | A whole shelf pasted into the Library at once, and North replaced at once |

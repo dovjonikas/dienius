@@ -5390,3 +5390,60 @@ left out.
 list's first book not finished, bound at the stamp and asked again each
 time a date from today on is opened (`refreshFromTemplate`); a ticked
 sitting and a date behind today keep the book they had.
+
+## A templates file pasted again brings today and the dates ahead along
+
+v2.42, the owner's shift brief of 2026-09-25, stage 2. The owner's journal
+writes the templates file, and the owner pastes it again whenever the rota
+or a day changes - many times a month - and asked never to have to erase a
+date to import it again: today and what is ahead follow the file by
+themselves, and what is behind stays as it was lived, so the progress can
+be read back.
+
+Until now a paste changed the templates and the roster's kinds, and a date
+whose kind stayed was never stamped again ("Composing a date never stamps
+its own kind again", v2.29): a block renamed, added or taken away in the
+file reached a date only if somebody cleared it or put another kind on it
+and back. Opening a date brought a block's time, title, length, recipe and
+note along where the day still held what the block gave it
+(`refreshFromTemplate`), and nothing more.
+
+**What follows the file, and what does not** (lib/reimport.ts). A date
+behind today is left as it was lived. Today and the dates ahead stamped
+with a template the file changes follow it wherever they still hold what
+it gave them: a changed field arrives field by field, as on an open; a
+block the file took away goes; a block the file added arrives. The file
+finds a block by its title, so a renamed block is the old one going and the
+new one arriving - which on a date nobody touched is the rename. Nothing a
+person did is undone: a ticked block stays as it was, even when the file
+took its block away; a block moved by hand keeps its time, while its other
+fields still follow; a note written on the day stays; a task written by
+hand stands for no block and is never touched. A block that was there and
+has no task on a date was taken off by hand and stays off: only a block new
+in the file arrives.
+
+**Today is cut at now.** The brief asked the one question with no answer
+yet - today's unticked blocks whose time is still ahead, and those whose
+time has passed - and recommended the answer taken: a block still ahead, or
+still running, follows the file; one that has ended is the day as it was
+lived and stays, ticked or not; a block the file adds arrives only where it
+has not ended. Ended is the block's end on the clock face, its start and its
+length, so the shift running now is still today's to change. The same cut
+holds for an open now: a template changed in the editor no longer rewrites
+the part of today that has ended (`refreshFromTemplate`'s `now`). And a file
+that changes today's kind keeps what today has lived - the old kind's ended
+and ticked blocks stay beside the new kind's, which arrive where they have
+not ended (`keepTodayAsLived`): the Roster's Apply asks first about a date
+changed by hand, and a paste has nowhere to ask.
+
+**The preview says it**, in the sentence it already had: "5 dates ahead
+refreshed, 12 past dates untouched, 2 ticked blocks kept." - the dates
+ahead that will change, the dates behind that carry a template the file
+changes and are left as they were, and the ticked blocks whose block the
+file changed or took away.
+
+Rejected: stamping every date ahead from the file again. A stamp puts every
+block back at its template's time and takes away what has no block, which
+is the hand's work this has to keep. Rejected: asking about each changed
+date, as the Roster does. A file pasted many times a month that asks every
+time is a file that stops being pasted.

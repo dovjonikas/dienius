@@ -5,6 +5,7 @@ import { addWithoutDuplicates } from './taskIdentity'
 import { applyStamps, columnFor, isNightBlock, onceEach, refreshFromTemplate } from './stamping'
 import { isDayKind, kindOnDate } from './dayKinds'
 import { composeDay, followNeighbours } from './shiftDay'
+import { clockMinutesOn } from './wallClock'
 
 /**
  * Everything a day gets on its own, as a pure function of the state.
@@ -44,8 +45,12 @@ export interface EnsuredDay {
  * until the morning that date goes by. Both callers pass nothing, because for
  * both of them it really is today: the day view opens the day on screen, and
  * the replan sheet opens the day somebody chose in it.
+ * @param now The time now, where the caller has it: today is cut at it, so a
+ * block that has ended today keeps what it was when its template changed
+ * (lib/reimport.ts). Without it today follows its template whole, as every
+ * date ahead does.
  */
-export function ensuredDay(data: AppData, date: string, today: string = todayKey()): EnsuredDay | null {
+export function ensuredDay(data: AppData, date: string, today: string = todayKey(), now?: Date): EnsuredDay | null {
   // Last night's hours arrive with the night - section 10.2a of
   // RESEARCH-SHIFTS. The date before, where the weekday map is about to give
   // it a template with hours after its midnight and nobody has opened it yet,
@@ -53,8 +58,8 @@ export function ensuredDay(data: AppData, date: string, today: string = todayKey
   // opened first. The one date before, today or ahead, and no further: that
   // date's own night-before is its own open's to bring.
   const before = addDays(date, -1)
-  const night = before >= today && nightWaits(data, before) ? ensuredOne(data, before, today) : null
-  const own = ensuredOne(night ? { ...data, days: night.days } : data, date, today)
+  const night = before >= today && nightWaits(data, before) ? ensuredOne(data, before, today, now) : null
+  const own = ensuredOne(night ? { ...data, days: night.days } : data, date, today, now)
   if (!night) return own
   return own ? { days: own.days, changed: true } : { days: night.days, changed: true }
 }
@@ -72,7 +77,7 @@ function nightWaits(data: AppData, date: string): boolean {
 }
 
 /** One date, opened - the whole of what `ensuredDay` did before a night could wait on the date before. */
-function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | null {
+function ensuredOne(data: AppData, date: string, today: string, now?: Date): EnsuredDay | null {
   const existing = data.days[date]
 
   /**
@@ -91,7 +96,8 @@ function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | nu
   // And each block and each routine once - see onceEach - since two devices
   // composing a date apart can leave it with two of everything.
   const folded = existing && date >= today ? onceEach(existing) : existing
-  const rebound = folded && date >= today ? (refreshFromTemplate(folded, data.templates, data.library, data.recipes) ?? (folded !== existing ? folded : null)) : null
+  const lived = now && date === today ? clockMinutesOn(date, now) : undefined
+  const rebound = folded && date >= today ? (refreshFromTemplate(folded, data.templates, data.library, data.recipes, lived) ?? (folded !== existing ? folded : null)) : null
   const withRebind = rebound ? { ...data.days, [date]: rebound } : data.days
 
   if (existing?.autoApplied) return rebound ? { days: withRebind, changed: true } : null

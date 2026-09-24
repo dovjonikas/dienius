@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { readTemplatesJson, templatesJson, type TemplatesImport } from '../lib/templateJson'
 import { todayKey } from '../lib/dates'
+import { clockMinutesOn } from '../lib/wallClock'
 import { offerUndo } from '../lib/undo'
 import { downloadText } from '../lib/download'
 
@@ -46,6 +47,14 @@ export function importSummary(read: TemplatesImport): string {
     said.push(dateParts.map(([n, word], i) => (i === 0 ? `${n} date${n === 1 ? '' : 's'} ${word}` : `${n} ${word}`)).join(', '))
   }
   if (read.following.length > 0) said.push(`${read.following.length} date${read.following.length === 1 ? '' : 's'} around them composed again`)
+  // What pasting the file again does to the dates already stamped - lib/reimport.ts.
+  const { ahead, behind, kept } = read.refresh
+  const again = [
+    ahead.length > 0 ? `${ahead.length} date${ahead.length === 1 ? '' : 's'} ahead refreshed` : '',
+    behind > 0 ? `${behind} past date${behind === 1 ? '' : 's'} untouched` : '',
+    kept > 0 ? `${kept} ticked block${kept === 1 ? '' : 's'} kept` : '',
+  ].filter(Boolean)
+  if (again.length > 0) said.push(again.join(', '))
   return said.length > 0 ? `${said.join('. ')}.` : 'Nothing in the file to import.'
 }
 
@@ -115,7 +124,7 @@ export function TemplateJsonSettings() {
         <p className="template-json-said" aria-live="polite">
           {preview && !preview.error ? importSummary(preview) : done}
         </p>
-        <button type="button" className="btn-secondary" disabled={!text.trim()} onClick={() => setPreview(readTemplatesJson(text, data, todayKey()))}>
+        <button type="button" className="btn-secondary" disabled={!text.trim()} onClick={() => setPreview(readTemplatesJson(text, data, todayKey(), clockMinutesOn(todayKey())))}>
           Preview
         </button>
         <button type="button" className="btn-primary" disabled={!canApply} onClick={apply}>

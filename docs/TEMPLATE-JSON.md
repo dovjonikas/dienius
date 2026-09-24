@@ -105,7 +105,8 @@ An object from dates to kinds of day.
 - A date before today is skipped: a lived day keeps what it was.
 - A letter or a name no kind has, or a template that is not a kind, is
   skipped, and the preview says which.
-- A date not in the file is left as it is.
+- A date not in the file keeps its kind. Where the kind is one the file
+  changes, the date follows the change like any date ahead - section 6.
 
 It is laid on the plan the way the Roster's Apply lays it: each date is
 composed with its kind's blocks, its routines and its sleep; a night's hours
@@ -150,6 +151,31 @@ Paste the text, press Preview, read what it will do, press Apply.
   read.
 - **Apply** writes it all in one step, and one undo takes it all back.
 - The same text imported twice changes nothing the second time.
+
+**Pasted again.** A file is written to be pasted again and again - whenever
+the rota or a day changes - and never by erasing the dates first. A date
+already stamped with a template the file changes follows it by itself:
+
+- **A date behind today is left as it was lived**, whatever its template
+  says now.
+- **Today and the dates ahead follow the file** wherever they still hold
+  what it gave them: a changed time, title, length, recipe or note
+  arrives; a block the file took away goes; a block the file added
+  arrives. A block is found by its title, so a renamed block is the old
+  one going and the new one arriving.
+- **Nothing done by hand is undone.** A ticked block stays as it was, even
+  when the file took its block away; a block moved by hand keeps its time;
+  a note written on the day stays; a task written by hand is never touched.
+  A block taken off a date by hand stays off.
+- **Today is cut at now.** A block that has ended today - its start and its
+  length on the clock - is the day as it was lived and stays, ticked or
+  not; one still running or still ahead follows the file, and a block the
+  file adds arrives only where it has not ended. A file that changes
+  today's kind keeps today's ended and ticked blocks beside the new kind's.
+- **The preview says it**: "5 dates ahead refreshed, 12 past dates
+  untouched, 2 ticked blocks kept." - the dates ahead that will change, the
+  dates behind that carry a template the file changes and are left, and
+  the ticked blocks whose block the file changed or took away.
 
 ## 7. Export
 

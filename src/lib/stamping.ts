@@ -110,10 +110,16 @@ export function refreshFromTemplate(
   templates: Template[],
   library: LibraryList[],
   recipes: readonly Recipe[] = [],
+  now?: number,
 ): DayPlan | null {
   let changed = false
   const tasks = day.tasks.map(task => {
     if (task.done) return task
+    // Today is cut at now - `now` is minutes on the day's clock, given for
+    // today only: a block that has ended is the day as it was lived, and
+    // keeps what it was, whatever its block says since (the shift brief of
+    // 2026-09-25, stage 2; lib/reimport.ts).
+    if (endedBy(task.time, task.minutes, now)) return task
     const origin = originFor(task)
     if (origin.type !== 'template' || !origin.blockId) return task
     const block = templates
@@ -431,7 +437,7 @@ function stampNight(
  * stands for two blocks. `date` is the date the template is on - for a
  * night's block, the night's, which is also the date its recipe walks by.
  */
-function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: string, library: LibraryList[], recipes: readonly Recipe[]): Task {
+export function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: string, library: LibraryList[], recipes: readonly Recipe[]): Task {
   const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
   const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
   const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
@@ -501,6 +507,18 @@ function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: s
     highlight: match?.highlight ?? b.highlight,
     pushCount: match?.pushCount,
   }
+}
+
+/**
+ * Whether a task or a block has ended by `now` - minutes on the clock of its
+ * own date, which for today is the time now - so the part of the day it
+ * stood in has been lived: its start on the clock face, and its length after
+ * it. One with no time floats, and has not ended; with no `now`, nothing has.
+ */
+export function endedBy(time: string | undefined, minutes: number | undefined, now: number | undefined): boolean {
+  if (now === undefined || !time) return false
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m + (minutes ?? 0) <= now
 }
 
 /** Whether a block is one of its night's hours, stamped onto the date after - section 10 of RESEARCH-SHIFTS. */
