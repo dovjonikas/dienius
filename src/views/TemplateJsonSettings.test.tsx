@@ -93,6 +93,19 @@ test('a note is said under its template, and a date that is skipped says why', a
   expect(within(date).getByText('No kind of day has the letter or name "Q".')).toBeInTheDocument()
 })
 
+test('a reading block says under its template which list it reads from and the book on it now', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    library: [{ id: 'shelf', name: 'Main', unit: 'chapter', items: [{ id: 'b1', title: 'A first book' }, { id: 'b2', title: 'A second book' }] }],
+  })
+  render(<TemplateJsonSettings />)
+  await paste(user, JSON.stringify({ templates: [{ name: 'An evening', blocks: [{ time: '21:00', title: 'Read', minutes: 30, library: 'MAIN' }] }] }))
+  await user.click(screen.getByRole('button', { name: 'Preview' }))
+  const day = within(screen.getByRole('list', { name: 'Templates in the file' })).getByRole('listitem')
+  expect(within(day).getByText('Read reads from Main: A first book')).toBeInTheDocument()
+})
+
 test('a text that cannot be read says why, and Apply stays off', async () => {
   const user = userEvent.setup()
   render(<TemplateJsonSettings />)

@@ -61,6 +61,7 @@ file; an update keeps its place.
 | `mealType` | no | `breakfast`, `lunch`, `dinner`, `pre-gym`, `post-gym`, `snack` | A meal's kind of meal, chosen on the day. |
 | `followMeal` | no | `true` or `false` | With `mealType`: the block walks every recipe Kitchen has for that meal, the ones added later too. |
 | `recipes` | no | a list of recipe names | The recipes the meal walks, a date at a time, **by name**: each is looked for in Kitchen - the same words, whatever their case or spacing. A name Kitchen does not have yet is said in the preview and **kept on the block**: it takes that recipe as soon as Kitchen has one of that name - pasted many at once, written one at a time, or renamed into it - and until then the block keeps its `mealType`. So a week may be pasted before its recipes are. Recipes win over `mealType` when both are given and found, and an export names the ones still waiting along with the ones found. |
+| `library` | no | a list's name, or `null` | The Library list the block reads from, **by name** - the same words, whatever their case or spacing, the way a recipe is found. Each date the block lands on names the list's current book, the first one not finished, and the preview says which: "Read reads from Main: A first book". A book finished moves today and the dates ahead on to the next one when each is opened; a date behind today keeps the book it had. A name the Library does not have yet is said in the preview and **kept on the block**: it reads from the list as soon as the Library has one of that name - a shelf pasted at once, a list made by hand, or one renamed into it. Missing: on an update, the list it has; `null` takes it off. An export writes the list's name, or the name still waited for. |
 | `note` | no | text | What the block says when it lands. |
 
 On an update, a block with the same title as one the template has - the
@@ -141,8 +142,9 @@ Paste the text, press Preview, read what it will do, press Apply.
 
 - **Preview** lists every template - new, updated, unchanged, or skipped and
   why - every routine and every date of the roster the same way, and every
-  note: a field left out, a recipe not in Kitchen yet, a letter already
-  taken.
+  note: a field left out, a recipe not in Kitchen yet, a list not in the
+  Library yet, a letter already taken. Under a template, each reading block
+  says the list it reads from and the book on it now.
 - **One bad entry never stops the rest.** A template, a block, a field or a
   date that cannot be read is skipped, with its note; everything else is
   read.

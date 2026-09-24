@@ -5,6 +5,7 @@ import { rosterApplied } from './shiftDay'
 import { sameName } from './recipeImport'
 import { mealFields } from './kitchen'
 import { cleanRoutine, routineMinutes, type RoutineInput } from './routines'
+import { currentItem } from './library'
 
 /**
  * Templates and the roster as JSON - since v2.33, docs/TEMPLATE-JSON.md.
@@ -37,7 +38,7 @@ const LIMITS = { name: 120, title: 200, minutes: 1440 } as const
 const FILE_FIELDS = ['format', 'version', 'templates', 'routines', 'roster']
 const ROUTINE_FIELDS = ['title', 'minutes', 'category', 'core', 'weekdays', 'times']
 const TEMPLATE_FIELDS = ['name', 'type', 'kind', 'afterNight', 'color', 'sleep', 'blocks']
-const BLOCK_FIELDS = ['time', 'title', 'minutes', 'category', 'core', 'key', 'ongoing', 'afterMidnight', 'mealType', 'followMeal', 'recipes', 'note']
+const BLOCK_FIELDS = ['time', 'title', 'minutes', 'category', 'core', 'key', 'ongoing', 'afterMidnight', 'mealType', 'followMeal', 'recipes', 'library', 'note']
 
 // ---- writing ------------------------------------------------------------------------------------
 
@@ -65,6 +66,12 @@ function blockEntry(block: TemplateBlock, data: AppData): Entry {
   // exported before its recipes arrived still names them.
   const recipes = [...found, ...(block.waitingRecipes ?? [])]
   if (recipes.length > 0) out.recipes = recipes
+  // The list it reads from, by its name - or the name it still waits for,
+  // so a file exported before its shelf still names it. A list deleted since
+  // leaves an id that names nothing, and nothing is written.
+  const list = block.libraryListId ? data.library.find(l => l.id === block.libraryListId) : undefined
+  if (list) out.library = list.name
+  else if (block.waitingLibrary) out.library = block.waitingLibrary
   if (block.note) out.note = block.note
   return out
 }
@@ -195,6 +202,13 @@ export interface TemplateRow {
   name: string
   action: 'create' | 'update' | 'unchanged' | 'skip'
   notes: string[]
+  /**
+   * What its reading blocks will name: each block the file binds to a
+   * Library list, the list and the book on it now - "Read reads from Main:
+   * A first book". Not a note: nothing is left out. Absent when the file
+   * binds none.
+   */
+  reads?: string[]
 }
 
 /** What Apply will do to one routine of the file. */
@@ -241,13 +255,20 @@ function isDate(x: string): boolean {
   return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d
 }
 
+/**
+ * The list a block reads from, as the file says it: a list the Library has,
+ * a name it waits for, or - null - none. Undefined where the file says
+ * nothing, which leaves an updated block reading from what it did.
+ */
+type LibraryRead = { listId: string } | { waiting: string } | null
+
 /** One block as the file gives it, read: its fields, and a note for each it leaves out. */
 function readBlock(
   raw: unknown,
   n: number,
   data: AppData,
   notes: string[],
-): { title: string; fields: Partial<TemplateBlock> } | undefined {
+): { title: string; fields: Partial<TemplateBlock>; library?: LibraryRead } | undefined {
   if (!isObject(raw)) {
     notes.push(`Block ${n} is not an object - skipped.`)
     return undefined
@@ -331,13 +352,31 @@ function readBlock(
   }
   Object.assign(fields, mealFields({ ...(recipeIds.length ? { recipeIds } : {}), ...(mealType ? { mealType } : {}), ...(follow ? { follow: true } : {}) }))
   if (waiting.length > 0) fields.waitingRecipes = waiting
+  // The list it reads from, by name - the same words, whatever their case or
+  // spacing, the way a recipe is found. One the Library has not got yet waits
+  // on the block, as a recipe does, and is read from as soon as a list of
+  // that name is made (lib/waitingList.ts).
+  let library: LibraryRead | undefined
+  if (raw.library !== undefined) {
+    const name = typeof raw.library === 'string' ? raw.library.trim() : ''
+    if (raw.library === null) library = null
+    else if (!name || name.length > LIMITS.name) note(`library ${said(raw.library)} is not a list's name - left out.`)
+    else {
+      const list = data.library.find(l => sameName(l.name, name))
+      if (list) library = { listId: list.id }
+      else {
+        library = { waiting: name }
+        note(`no list called ${said(raw.library)} in the Library yet - the block waits for it, and reads from it when a list of that name is made.`)
+      }
+    }
+  }
   if (raw.note !== undefined) {
     if (typeof raw.note === 'string') {
       if (raw.note.trim()) fields.note = raw.note
     } else note('note must be text - left out.')
   }
   for (const k of Object.keys(raw)) if (!BLOCK_FIELDS.includes(k)) note(`${said(k)} is not a field of a block - left out.`)
-  return { title, fields }
+  return { title, fields, ...(library !== undefined ? { library } : {}) }
 }
 
 /**
@@ -571,6 +610,7 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
     for (const key of Object.keys(raw)) if (!TEMPLATE_FIELDS.includes(key)) own.push(`${said(key)} is not a field of a template - left out.`)
 
     let blocks = known?.blocks ?? []
+    const reads: string[] = []
     if (raw.blocks !== undefined) {
       if (!Array.isArray(raw.blocks)) own.push('blocks is not a list - left out.')
       else {
@@ -579,17 +619,23 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
         blocks = raw.blocks.flatMap((b, n) => {
           const read = readBlock(b, n + 1, planned, own)
           if (!read) return []
+          if (read.library && 'listId' in read.library) {
+            const list = planned.library.find(l => l.id === (read.library as { listId: string }).listId)!
+            const book = currentItem(list)
+            reads.push(`${read.title} reads from ${list.name}: ${book ? book.title : 'everything in it is finished'}`)
+          }
           const match = known?.blocks.find(old => !taken.has(old.id) && sameName(old.title, read.title))
           if (match) {
             taken.add(match.id)
             const kept = { ...match } as Record<string, unknown>
             for (const k of FORMAT_BLOCK_KEYS) delete kept[k]
-            return [{ ...(kept as unknown as TemplateBlock), ...withoutUndefined(read.fields), title: read.title }]
+            return [readingFrom({ ...(kept as unknown as TemplateBlock), ...withoutUndefined(read.fields), title: read.title }, read.library)]
           }
-          return [{ id: crypto.randomUUID(), ...withoutUndefined(read.fields), title: read.title } as TemplateBlock]
+          return [readingFrom({ id: crypto.randomUUID(), ...withoutUndefined(read.fields), title: read.title } as TemplateBlock, read.library)]
         })
       }
     }
+    const withReads = reads.length > 0 ? { reads } : {}
 
     const next: Template = {
       ...(known ?? { id: crypto.randomUUID(), name }),
@@ -611,14 +657,14 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
         (known.dayKind?.order ?? -1) === (next.dayKind?.order ?? -1) &&
         JSON.stringify(known.blocks.map(b => b.id)) === JSON.stringify(next.blocks.map(b => b.id))
       if (same) {
-        rows.push({ name: shown, action: 'unchanged', notes: own })
+        rows.push({ name: shown, action: 'unchanged', notes: own, ...withReads })
       } else {
         templates = templates.map(t => (t.id === known.id ? next : t))
-        rows.push({ name: shown, action: 'update', notes: own })
+        rows.push({ name: shown, action: 'update', notes: own, ...withReads })
       }
     } else {
       templates = [...templates, next]
-      rows.push({ name: shown, action: 'create', notes: own })
+      rows.push({ name: shown, action: 'create', notes: own, ...withReads })
     }
     if (afterNight !== undefined) afterNights.push({ name, row: rows[rows.length - 1], letter: afterNight })
   })
@@ -774,6 +820,18 @@ export function readTemplatesJson(text: string, data: AppData, today: string): T
     following: applied.following.map(f => f.date),
     data: applied.plan,
   }
+}
+
+/**
+ * A block reading from the list the file names, waiting for it, or - null -
+ * reading from none. Undefined leaves the block as it is: a file that says
+ * nothing about a list does not take one away from a block that has it.
+ */
+function readingFrom(block: TemplateBlock, library: LibraryRead | undefined): TemplateBlock {
+  if (library === undefined) return block
+  const { libraryListId: _list, waitingLibrary: _waiting, ...rest } = block
+  if (library === null) return rest
+  return 'listId' in library ? { ...rest, libraryListId: library.listId } : { ...rest, waitingLibrary: library.waiting }
 }
 
 /** An object with its undefined values left out, so a block holds only what it says. */

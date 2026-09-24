@@ -102,6 +102,14 @@ export interface TemplateBlock {
    */
   libraryListId?: string
   /**
+   * The Library list this block named before the Library had it - by name,
+   * from a templates file (docs/TEMPLATE-JSON.md, `library`). The block reads
+   * from the list as soon as the Library has one of that name -
+   * lib/waitingList.ts - and the name leaves the block. Absent: nothing
+   * waits.
+   */
+  waitingLibrary?: string
+  /**
    * On a block in the meals category: the recipe this meal is - Kitchen,
    * since v2.27. Copied onto the task it stamps, where the day shows the
    * recipe's name and a press opens it. An id that resolves to nothing - the

@@ -7,6 +7,7 @@ import { readTemplatesJson, templatesJson } from './templateJson'
 import { routineNotes } from './shiftDay'
 import { dayKinds, isNightKind, kindOnDate, resolveAfterNight } from './dayKinds'
 import { addDays } from './dates'
+import { sameName } from './recipeImport'
 import type { AppData, Template } from './types'
 
 /**
@@ -50,13 +51,32 @@ function ownersText(): string {
 
 /** What these tests read of the file. */
 interface OwnersFile {
-  templates: unknown[]
+  templates: { blocks?: { library?: unknown }[] }[]
   routines: { title: string; minutes: Record<string, number>; times: Record<string, string>; weekdays: number[] }[]
   roster: Record<string, string>
 }
 
 function ownersFile(): OwnersFile {
   return JSON.parse(ownersText()) as OwnersFile
+}
+
+/** The Library lists the file's reading blocks name, once each, and how many blocks name one. */
+function listsNamed(): { names: string[]; blocks: number } {
+  const said = ownersFile().templates.flatMap(t => t.blocks ?? []).flatMap(b => (typeof b.library === 'string' ? [b.library] : []))
+  const names = said.filter((name, i) => said.findIndex(other => sameName(other, name)) === i)
+  return { names, blocks: said.length }
+}
+
+/**
+ * A fresh app whose Library has the lists the file names, each with one
+ * book - the way the owner's devices have them. The books are invented; the
+ * lists' names are read out of the file as it runs.
+ */
+function withTheLists(): AppData {
+  return {
+    ...defaultData(),
+    library: listsNamed().names.map((name, i) => ({ id: `list-${i}`, name, unit: 'chapter', items: [{ id: `book-${i}`, title: 'A book to read' }] })),
+  }
 }
 
 /**
@@ -90,6 +110,8 @@ describe.skipIf(!here)('the owner\'s templates file', () => {
   })
 
   test('the preview names every template, every routine and every date, and reads with nothing skipped', () => {
+    // On a device whose Library has the lists the file's reading blocks name.
+    actions.resetForTests(withTheLists())
     const read = readTemplatesJson(ownersText(), getData(), TODAY)
     expect(read.error).toBeUndefined()
     const file = ownersFile()
@@ -106,6 +128,23 @@ describe.skipIf(!here)('the owner\'s templates file', () => {
     for (const note of notes) expect(note).toMatch(/in Kitchen yet - the block waits for it/)
     expect(read.routines.flatMap(r => r.notes)).toEqual([])
     expect(read.notes).toEqual([])
+    // Every reading block names its list and the book on it.
+    const reads = read.templates.flatMap(r => r.reads ?? [])
+    expect(reads).toHaveLength(listsNamed().blocks)
+    for (const line of reads) expect(line).toMatch(/ reads from .+: A book to read$/)
+  })
+
+  test('without its lists, each reading block says it waits for its list, and reads from it once the Library has one of that name', () => {
+    const { names, blocks } = listsNamed()
+    const { read } = actions.importTemplatesJson(ownersText())
+    expect(read.templates.flatMap(r => r.notes).filter(note => note.includes('in the Library yet - the block waits for it'))).toHaveLength(blocks)
+    actions.importLibrary(names.map(name => ({ list: name, title: 'A book to read', state: 'new' as const })))
+    const reading = getData().templates.flatMap(t => t.blocks).filter(b => b.libraryListId || b.waitingLibrary)
+    expect(reading).toHaveLength(blocks)
+    for (const block of reading) {
+      expect(block.waitingLibrary).toBeUndefined()
+      expect(getData().library.some(l => l.id === block.libraryListId)).toBe(true)
+    }
   })
 
   test('applied, the week is laid: each date the kind it is read as, the gym at that kind\'s time and length, core, and none on a Sunday', () => {

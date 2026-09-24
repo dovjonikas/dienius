@@ -41,7 +41,9 @@ export default defineConfig({
     // employer, and is laid out there - docs/RESEARCH-SHIFTS.md section 8.4.
     // And the phone with no network, and a deploy taking over on it - the
     // freeze's point 3, because a phone is where the app is away from Wi-Fi.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // A reading block's list named in the templates file, because the shelf
+    // and the file are pasted on whichever screen is in hand.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|kitchen-many|template-json|shifts|night-hours|self-ending|hand-stamp|owners-week|paste-many|after-night|one-look-fits|offline|deploy|library-json)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

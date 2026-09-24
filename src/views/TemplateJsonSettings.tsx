@@ -148,6 +148,11 @@ export function TemplateJsonSettings() {
                       {note}
                     </span>
                   ))}
+                  {row.reads?.map(line => (
+                    <span key={line} className="template-json-note">
+                      {line}
+                    </span>
+                  ))}
                 </li>
               ))}
             </ul>

@@ -5350,3 +5350,43 @@ still wins over it. It deletes, so it asks twice.
 "(recommended)" came off Take, which it was only on the phone: the same
 question can now be asked of the computer, where Take is the wrong answer.
 Each answer says instead which device it is for.
+
+## A reading block names its list in the templates file
+
+v2.41, the extra stage of the owner's shift brief of 2026-09-25. A block
+could read from a Library list since v1.1 - the day names the list's
+current book - but only a block made in the app's own editor: the
+templates file had no field for it, so the owner's journal, which writes
+the file, could not say that the evening's Read reads from the main shelf.
+It had started writing `"library": "MAIN"` on its reading blocks anyway,
+and every one came back as a field left out.
+
+**By the list's name, the way a recipe is named.** The same words,
+whatever their case or spacing (`sameName`), because the file is written
+by a person or an agent that cannot know an id - and because a shelf
+pasted into the Library makes "MAIN" into Main.
+
+**A list not there yet waits on the block** (`TemplateBlock.waitingLibrary`,
+lib/waitingList.ts), as a recipe not in Kitchen yet does: a file is pasted
+before its shelf as often as after it, and a name dropped with a note would
+have to be put back by hand. The block reads from the list the moment the
+Library has one of that name - pasted, made by hand, or renamed into it -
+and an export names the list still waited for, so a file written before
+its shelf still says what it meant.
+
+**Missing keeps, `null` takes it off.** A file that says nothing about a
+list does not take one away from a block that has it: before this field
+every file said nothing, and a binding made in the editor must survive the
+next paste. This is `afterNight`'s rule, not `recipes`'s - a recipe list is
+the block's own content, and a file that leaves it out means a meal
+without one.
+
+**The preview says the book, not only the list.** "Read reads from Main:
+A first book" - which book tonight is, is the one thing a person pasting a
+week wants to see before Apply, and it is not a note, because nothing is
+left out.
+
+**Nothing new decides which book.** The day asks what it always asked: the
+list's first book not finished, bound at the stamp and asked again each
+time a date from today on is opened (`refreshFromTemplate`); a ticked
+sitting and a date behind today keep the book they had.

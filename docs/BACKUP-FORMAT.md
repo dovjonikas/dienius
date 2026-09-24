@@ -210,6 +210,7 @@ rule; one changed on the day is the person's.
 | `noteExpanded` | Its note shows open. |
 | `steps` | Its steps, `{ id, title, minutes? }`, copied as subtasks. |
 | `libraryListId` | Draws its title from the next unfinished item in a library list. |
+| `waitingLibrary` | **v2.41.** The Library list this block named in a templates file before the Library had it, by name. The block reads from the list as soon as the Library has one of that name, and the name leaves the block. |
 | `recipeIds` | A meal's recipes, walked a date at a time. |
 | `recipeId` | The first of `recipeIds`, for versions before the walk. |
 | `mealType` | A meal's kind of meal. |
@@ -329,3 +330,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.37 | `kindMinutes` and `core` on a routine, and `core` on what its rule gave a task: a routine may be a different length on each kind of day, and may count on a day that is not a full one. |
 | v2.39 | `author` on a library item: who wrote it, where somebody said so - a shelf pasted at once writes it from "A title - An author". |
 | v2.40 | `afterNight` on a kind's mark: the kind it is on a date after a night, so the roster carries one letter for a rest day whichever shift came before it. |
+| v2.41 | `waitingLibrary` on a block: a list named by a templates file before the Library had it, read from as soon as a list of that name arrives. |

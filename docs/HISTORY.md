@@ -11,7 +11,7 @@ is today: for that, read STATE, and for why things are the way they are,
 
 Newest first:
 
-- [v2.40 back to v2.17](#v240---a-kind-after-a-night), a section each, with
+- [v2.41 back to v2.17](#v241---a-reading-block-names-its-list-in-the-templates-file), a section each, with
   One look and the first real month's dry run between them
 - [The versions before, one line each](#the-versions-before-one-line-each),
   v1.0 to v2.17
@@ -22,6 +22,30 @@ Newest first:
 - [Where steps lived, before they were removed](#where-steps-lived-before-they-were-removed)
 
 ---
+
+## v2.41 - A reading block names its list in the templates file
+
+The extra stage of the owner's shift brief of 2026-09-25: the owner's
+journal writes `"library": "MAIN"` on its reading blocks, and the file had
+no such field.
+
+- **`library` on a block** (`lib/templateJson.ts`, docs/TEMPLATE-JSON.md
+  section 3): the list the block reads from, by name, whatever its case or
+  spacing; the preview names the book on it now ("Read reads from Main: A
+  first book"); `null` takes it off, and a file that says nothing leaves
+  it. An export writes it.
+- **A list not there yet waits** (`TemplateBlock.waitingLibrary`,
+  `lib/waitingList.ts`): the block reads from it as soon as the Library has
+  a list of that name - a shelf pasted, a list made by hand or renamed into
+  it.
+- **Tests**: `templateJson.test.ts` (found, waiting, an update, `null`,
+  the round trip, and the days - today and ahead naming the current book, a
+  finished book moving them on, a date behind keeping its own),
+  `waitingList.test.ts` (the three ways a list arrives),
+  `views/TemplateJsonSettings.test.tsx`, `ownersFile.test.ts` (the owner's
+  file reads with no note once its lists are there), and
+  `e2e/library-json.e2e.ts` on a desktop and a 375px phone. DECISIONS "A
+  reading block names its list in the templates file".
 
 ## v2.40 - A kind after a night
 

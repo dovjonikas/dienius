@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { readTemplatesJson, templatesJson } from './templateJson'
 import { joinWaitingRecipes } from './waitingRecipes'
 import { defaultData } from './storage'
 import { kindOnDate } from './dayKinds'
-import type { AppData, Recipe, Template } from './types'
+import { actions, getData } from './store'
+import type { AppData, LibraryList, Recipe, Template } from './types'
 
 /**
  * Templates and the roster as JSON - v2.33, docs/TEMPLATE-JSON.md. A text in
@@ -422,5 +423,149 @@ describe('routines', () => {
     expect(text).toContain('{ "title": "Walk", "minutes": { "D": 30, "R": 60 }, "weekdays": [1, 3, 5], "times": { "D": "20:10" } }')
     // And read again, it is the same plan.
     expect(templatesJson(imported(text, withKinds()).data, TODAY)).toBe(text)
+  })
+})
+
+// --- a block that reads from a list --------------------------------------------------------
+
+/**
+ * A reading block bound to a Library list by the list's name - the extra
+ * stage of the shift brief of 2026-09-25, and the contract's `library`. The
+ * day names the list's current book: the first one not finished. A book
+ * finished moves the dates ahead on to the next, and a date behind today
+ * keeps the book it had.
+ */
+const SHELF: LibraryList = {
+  id: 'shelf',
+  name: 'Evening shelf',
+  unit: 'chapter',
+  items: [
+    { id: 'read-already', title: 'A book read already', finished: '2029-12-01' },
+    { id: 'first', title: 'A first book' },
+    { id: 'second', title: 'A second book' },
+  ],
+}
+
+/** A fresh app whose Library has the one shelf. */
+const withShelf = (): AppData => ({ ...fresh(), library: [SHELF] })
+
+/** A file of one kind of day with a reading block, naming a list - or, undefined, saying nothing about one. */
+function reading(library: unknown, more: Record<string, unknown> = {}): string {
+  const block = { time: '21:00', title: 'Read', minutes: 30, ...(library === undefined ? {} : { library }) }
+  return JSON.stringify({ templates: [{ name: 'An evening', kind: 'E', blocks: [block] }], ...more })
+}
+
+const readBlockOf = (data: AppData) => named(data, 'An evening').blocks[0]
+
+describe('a block that reads from a list', () => {
+  test('a list the Library has is found by its name, whatever its case or spacing, and the preview names the book the block will read', () => {
+    const got = imported(reading('evening  SHELF'), withShelf())
+    expect(got.templates[0]).toMatchObject({ action: 'create', notes: [], reads: ['Read reads from Evening shelf: A first book'] })
+    expect(readBlockOf(got.data).libraryListId).toBe('shelf')
+    expect(readBlockOf(got.data).waitingLibrary).toBeUndefined()
+  })
+
+  test('a list the Library has not got is said, and the block waits for it by name', () => {
+    const got = imported(reading('A shelf for later'), withShelf())
+    expect(got.templates[0].notes).toEqual([
+      'Read: no list called "A shelf for later" in the Library yet - the block waits for it, and reads from it when a list of that name is made.',
+    ])
+    expect(got.templates[0].reads).toBeUndefined()
+    expect(readBlockOf(got.data).libraryListId).toBeUndefined()
+    expect(readBlockOf(got.data).waitingLibrary).toBe('A shelf for later')
+  })
+
+  test('a list with everything in it finished is said as that', () => {
+    const allRead: AppData = { ...fresh(), library: [{ ...SHELF, items: [SHELF.items[0]] }] }
+    expect(imported(reading('Evening shelf'), allRead).templates[0].reads).toEqual(['Read reads from Evening shelf: everything in it is finished'])
+  })
+
+  test('a name that is not text is left out with its note', () => {
+    const got = imported(reading(7), withShelf())
+    expect(got.templates[0].notes).toEqual(["Read: library 7 is not a list's name - left out."])
+    expect(readBlockOf(got.data).libraryListId).toBeUndefined()
+  })
+
+  test('an update takes the list, a file that says nothing about it leaves it, and null takes it off', () => {
+    const plain = imported(reading(undefined), withShelf()).data
+    expect(readBlockOf(plain).libraryListId).toBeUndefined()
+
+    const bound = imported(reading('Evening shelf'), plain)
+    expect(bound.templates[0].action).toBe('update')
+    expect(readBlockOf(bound.data)).toMatchObject({ id: readBlockOf(plain).id, libraryListId: 'shelf' })
+
+    const silent = imported(reading(undefined), bound.data)
+    expect(silent.templates[0].action).toBe('unchanged')
+    expect(silent.data).toBe(bound.data)
+
+    const off = imported(reading(null), bound.data)
+    expect(off.templates[0].action).toBe('update')
+    expect(readBlockOf(off.data).libraryListId).toBeUndefined()
+    expect(readBlockOf(off.data).waitingLibrary).toBeUndefined()
+  })
+
+  test('the file writes the list by its name, a waiting one too, and exported, imported and exported again it is the same text', () => {
+    const got = imported(
+      JSON.stringify({
+        templates: [
+          {
+            name: 'An evening',
+            kind: 'E',
+            blocks: [
+              { time: '21:00', title: 'Read', minutes: 30, library: 'Evening shelf' },
+              { time: '22:00', title: 'Read more', minutes: 15, library: 'A shelf for later' },
+            ],
+          },
+        ],
+      }),
+      withShelf(),
+    )
+    const text = templatesJson(got.data, TODAY)
+    expect(text).toContain('{ "time": "21:00", "title": "Read", "minutes": 30, "library": "Evening shelf" }')
+    expect(text).toContain('{ "time": "22:00", "title": "Read more", "minutes": 15, "library": "A shelf for later" }')
+    const again = imported(text, got.data)
+    expect(again.templates.map(t => t.action)).toEqual(['unchanged'])
+    expect(again.data).toBe(got.data)
+    expect(templatesJson(again.data, TODAY)).toBe(text)
+  })
+})
+
+describe('the days a reading block lands on', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2030, 0, 7, 8, 0))
+    actions.resetForTests({ ...defaultData(), library: [SHELF] })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** The book a date's reading block names. */
+  const bookOn = (date: string) => getData().days[date]?.tasks.find(t => t.libraryRef?.listId === 'shelf')?.title
+
+  test('today and the dates ahead name the current book, a finished book moves the dates ahead on, and a date behind keeps the book it had', () => {
+    actions.importTemplatesJson(reading('Evening shelf', { roster: { '2030-01-07': 'E', '2030-01-08': 'E', '2030-01-09': 'E' } }))
+    expect(['2030-01-07', '2030-01-08', '2030-01-09'].map(bookOn)).toEqual(['A first book', 'A first book', 'A first book'])
+
+    // The next morning the book is finished; the 7th is a day behind now.
+    vi.setSystemTime(new Date(2030, 0, 8, 8, 0))
+    actions.toggleLibraryItemFinished('shelf', 'first', '2030-01-08')
+    for (const date of ['2030-01-07', '2030-01-08', '2030-01-09']) actions.ensureDay(date)
+    expect(['2030-01-07', '2030-01-08', '2030-01-09'].map(bookOn)).toEqual(['A first book', 'A second book', 'A second book'])
+  })
+
+  test('a block that was waiting names the book on the dates ahead once the shelf is pasted', () => {
+    actions.resetForTests(defaultData())
+    actions.importTemplatesJson(reading('Evening shelf', { roster: { '2030-01-07': 'E', '2030-01-08': 'E' } }))
+    expect(getData().days['2030-01-08'].tasks.map(t => t.title)).toEqual(['Read'])
+
+    actions.importLibrary([
+      { list: 'EVENING SHELF', title: 'A first book', state: 'new' },
+      { list: 'EVENING SHELF', title: 'A second book', state: 'new' },
+    ])
+    actions.ensureDay('2030-01-08')
+    expect(getData().days['2030-01-08'].tasks.map(t => t.title)).toEqual(['A first book'])
   })
 })

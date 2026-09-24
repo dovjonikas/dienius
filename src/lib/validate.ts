@@ -316,6 +316,8 @@ const TEMPLATE_BLOCK = record({
   unbounded: optional(boolean),
   category: categoryRef,
   libraryListId: optional(string),
+  // v2.41: the list a block named before the Library had it, by name.
+  waitingLibrary: optional(string),
   recipeId: optional(string),
   recipeIds: optional(listOf(string)),
   mealType: optional(oneOf(MEAL_TYPES)),

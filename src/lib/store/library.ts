@@ -3,6 +3,7 @@ import type { PastedItem } from '../library'
 import type { AppData, LibraryItem, LibraryList, LibraryTrack, Task, TemplateBlock } from '../types'
 import { hasAnotherSeason, isItemFinished, itemProgress, nextSeason, parseLibraryItemInput } from '../library'
 import { sameTitle, type PastedRow } from '../libraryPaste'
+import { joinWaitingLists } from '../waitingList'
 
 function withLibrary(library: LibraryList[]): AppData {
   return { ...getData(), library }
@@ -88,12 +89,14 @@ export const libraryActions = {
       color: input.color,
       items: [],
     }
-    commit(withLibrary([...data.library, list]))
+    const library = [...data.library, list]
+    // A reading block waiting for a list of this name reads from it now.
+    commit({ ...data, library, templates: joinWaitingLists(data.templates, library) })
     return list
   },
 
   updateLibraryList(listId: string, patch: Partial<Omit<LibraryList, 'id' | 'items'>>): void {
-    commit(mapList(listId, list => ({
+    const next = mapList(listId, list => ({
       ...list,
       name: patch.name !== undefined ? patch.name : list.name,
       unit: patch.unit !== undefined ? patch.unit.toLowerCase() : list.unit,
@@ -105,7 +108,9 @@ export const libraryActions = {
       // present rather than on the value, because `undefined` is a real
       // choice here: it is what the "No colour" button sends.
       color: 'color' in patch ? patch.color : list.color,
-    })))
+    }))
+    // Renamed into a name a reading block was waiting for, it is that block's now.
+    commit({ ...next, templates: joinWaitingLists(next.templates, next.library) })
   },
 
   /**
@@ -216,7 +221,8 @@ export const libraryActions = {
       if (had) updated++
       else added++
     }
-    if (added + updated > 0) commit({ ...previous, library })
+    // A reading block waiting for a list the paste made reads from it now.
+    if (added + updated > 0) commit({ ...previous, library, templates: joinWaitingLists(previous.templates, library) })
     return { lists, added, updated, undo: () => commit(previous) }
   },
 
