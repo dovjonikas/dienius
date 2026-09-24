@@ -1231,7 +1231,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .note-task,
   .palette,
   .quick-add-time-panel,
-  .reminder-toast,
   .replan,
   .scratch,
   .scratch-note-menu,
@@ -1274,7 +1273,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .note-task,
   .palette,
   .quick-add-time-panel,
-  .reminder-toast,
   .replan,
   .scratch,
   .scratch-note-menu,
@@ -1737,29 +1735,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .day-title { min-width: 0; }
 
-/* The heading and the ghost that measures its box - see DayHeader.tsx - in
-   one rule, so the ghost can only ever be in the heading's own type: a
-   second copy of the size and the weight is a box measured in a face the
-   title is not set in, the day somebody changes one and not the other. The
-   weight is the one a heading has by default, written down because the
-   ghost is a span and has none of its own. */
-.day-title h2,
-.day-title-measure {
+/* The day's title, in the display face at the large step. */
+.day-title h2 {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--t-lg);
   font-weight: var(--w-strong);
-}
-
-/* Out of the flow entirely on a phone: a 360px screen cannot spare the
-   240px the widest day takes, and the title there shrinks and wraps as it
-   always has. The wide header, below, puts it back in. Never selectable,
-   so copying the header does not copy a day that is not showing. */
-.day-title-measure {
-  display: none;
-  visibility: hidden;
-  white-space: nowrap;
-  user-select: none;
 }
 
 .day-subtitle { color: var(--muted); font-size: var(--t-sm); }
@@ -2175,24 +2156,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .timeline-carried-until {
   color: var(--muted);
   font-size: var(--t-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Same quiet register as .timeline-gap-label just below - muted, small,
-   tabular numerals where it matters. left margin clears GUTTER_PX (the
-   hour-label column in TimelineGrid.tsx) so "Sleep" never sits under an
-   hour number; kept in sync by hand the same way that constant's own
-   comment already asks of every other rule that reaches for it. */
-.timeline-sleep-band-label {
-  margin-left: var(--timeline-gutter);
-  padding-left: var(--s2);
-  /* Not plain --muted: this label sits on the greyed band rather than on the
-     card surface --muted was balanced against, and measured 4.14:1 there in
-     Light, just under AA. Pulled a third of the way toward --text, which puts
-     it over in all three themes while still reading as the quietest thing on
-     the grid. */
-  color: color-mix(in srgb, var(--text) 34%, var(--muted));
-  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3253,9 +3216,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 /* ------------------------------------------------------------------------
    Form controls: one definition of what a field looks like.
 
-   This stylesheet used to carry six of them - .template-editor input,
-   .block-add input, .rule-form input, .quick-add, .setting-text-input and
-   .task-size-input - each written for the screen it first appeared on. They
+   This stylesheet used to carry six of them - one for the template editor,
+   the block's add row, the if-then form, quick-add, a text setting and the
+   task's length - each written for the screen it first appeared on. They
    agreed by accident and diverged in the details, and the moment a component
    built for one screen was reused on another it rendered as a bare white
    browser input, because none of those selectors reached it. That is not a
@@ -7266,53 +7229,6 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + var(--s12
   outline-offset: 2px;
 }
 
-/* The nudge. Deliberately the quietest floating thing here: it arrives
-   unasked, so it gets no colour, no ring, and no sound louder than a tap. */
-.reminder-toast {
-  position: fixed;
-  left: 50%;
-  top: calc(var(--s6) + env(safe-area-inset-top));
-  z-index: 46;
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  padding: var(--s2) var(--s2) var(--s2) var(--s4);
-  border-radius: var(--r-pill);
-  background: var(--surface-raised);
-  box-shadow: var(--e2);
-  transform: translateX(-50%);
-  max-width: min(92vw, 420px);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .reminder-toast { animation: reminder-in var(--dur) var(--ease) both; }
-}
-
-@keyframes reminder-in {
-  from { opacity: 0; transform: translate(-50%, -8px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-.reminder-toast-text {
-  color: var(--text);
-  font-size: var(--t-sm);
-}
-
-.reminder-toast-close {
-  width: 28px;
-  height: 28px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--r-round);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-md);
-  line-height: 1;
-}
-
-.reminder-toast-close:hover { color: var(--text); }
-
 /* Which of the two things Enter does - see captureMode in DayView. Above the
    field it changes the meaning of, at the start of the column, and the same
    segmented control as the one in the day's masthead: it was 28px at 11px
@@ -7347,13 +7263,6 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + var(--s12
 .day-sleep.is-soon {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--text);
-}
-
-/* A plain text setting, styled like every other control here rather than left
-   as a bare browser input. */
-.setting-text-input {
-  width: min(260px, 60vw);
-  font-size: var(--t-sm);
 }
 
 /* Focus, as a strip under the header rather than a screen over everything -
@@ -9254,9 +9163,6 @@ button.danger:focus-visible {
 .library-step:hover:not(:disabled) { color: var(--text); background: var(--fill); }
 .library-step:disabled { opacity: var(--faded); }
 
-.library-item-actions { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
-
-.library-item-schedule,
 .library-item-reopen {
   min-height: var(--s6);
   padding: 0 var(--s2);
@@ -9267,32 +9173,7 @@ button.danger:focus-visible {
   font-size: var(--t-xs);
 }
 
-.library-item-schedule:hover,
 .library-item-reopen:hover { color: var(--text); background: var(--fill-strong); }
-
-/* Two named days and nothing else. The whole promise is two taps, and a
-   date picker here would make it four and a decision. Anything further out
-   is a thing to plan on the calendar, where the days are already drawn. */
-.library-schedule {
-  display: flex;
-  align-items: center;
-  gap: var(--s1);
-  padding: var(--s1);
-  border-radius: var(--r-pill);
-  background: var(--fill);
-}
-
-.library-schedule button {
-  min-height: var(--s6);
-  padding: 0 var(--s2);
-  border: none;
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--text);
-  font-size: var(--t-xs);
-}
-
-.library-schedule button:hover { background: var(--fill-strong); }
 
 /* The cross on a row: quiet, the danger ink under the pointer. */
 .library-item-remove {
@@ -9590,11 +9471,6 @@ button.danger:focus-visible {
      and the title, and pushes the count and the actions onto line two. */
   .library-item-main { flex: 1 1 calc(100% - 76px); }
   .library-item-progress { margin-left: var(--touch); }
-  /* The actions keep to the right end of whichever line they land on. At
-     360px "page 213/499" and its two buttons fill line two, and Schedule
-     used to drop to a third line and sit under the grip, indented by the
-     count's own margin - three left edges on one row. */
-  .library-item-actions { margin-left: auto; }
   /* One column: three 1fr columns of a 320px screen are 96px each, which
      holds four characters of a unit. */
   .library-list-settings { grid-template-columns: minmax(0, 1fr); }
@@ -9807,8 +9683,6 @@ button.danger:focus-visible {
 }
 
 .task-detail-toggle:disabled { opacity: var(--faded); }
-
-.task-detail-size { width: 90px; text-align: center; font-variant-numeric: tabular-nums; }
 
 .task-detail-hint { color: var(--muted); font-size: var(--t-sm); }
 
@@ -10603,7 +10477,6 @@ button.task-recipe:focus-visible {
   .library-step,
   .library-item-remove,
   .library-list-edit,
-  .library-item-schedule,
   .library-item-reopen,
   .accent-swatch,
   .switch,
@@ -10647,7 +10520,6 @@ button.task-recipe:focus-visible {
   .library-step::after,
   .library-item-remove::after,
   .library-list-edit::after,
-  .library-item-schedule::after,
   .library-item-reopen::after,
   .accent-swatch::after,
   .switch::after,
@@ -11336,42 +11208,6 @@ button.task-recipe:focus-visible {
 /* A finger's height for the press, the words where they are. */
 @media (pointer: coarse) {
   .north-line-text { min-height: var(--touch); justify-content: center; }
-}
-
-/* The morning line, under the North line: the label in the North line's
-   register - faint, small, uppercase, tracked - and beside it an ordinary
-   field, boxed like every other field in the app. A quieter, boxless line
-   was tried and lost to the base input rule, which outranks any one class;
-   and a box is the right answer anyway, because unlike the North line this
-   is a place to type, and a place to type should look like one. The base
-   rule keeps it a 44px target on a finger. */
-.journal-line {
-  flex: 1 1 100%;
-  order: 10;
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  min-width: 0;
-  margin-top: var(--s1);
-}
-
-.journal-line-label {
-  flex: 0 0 auto;
-  color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: var(--w-medium);
-}
-
-.journal-line-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--t-sm);
-}
-
-.journal-line-input::placeholder { color: var(--faint); }
-
-@media (hover: hover) and (pointer: fine) {
-  .journal-line-input { min-height: 0; padding: var(--s1) var(--s2); }
 }
 
 /* North beside the day - see NorthDay. In the rail, where there is one,
@@ -12282,19 +12118,6 @@ button.north-day-line:focus-visible {
   .calendar-bar .segmented-quiet { order: 2; }
 }
 
-/* The month's one line, between the title and the toggle. Set as quietly as
-   the capacity line - it is the same kind of sentence about a stretch of
-   time, and it is not the reason anybody opened this tab. */
-.calendar-summary {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ------------------------------------------------------------------------
    The cell.
    ------------------------------------------------------------------------ */
@@ -12935,7 +12758,6 @@ main:has(.week) > .calendar {
   font-variant-numeric: tabular-nums;
 }
 
-.week-foot-empty { color: var(--faint); }
 .week-foot-focus { color: var(--faint); font-variant-numeric: tabular-nums; }
 .week-foot-untimed { color: var(--faint); }
 
@@ -13246,8 +13068,6 @@ main:has(.week) > .calendar {
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
 }
-
-.link-button:hover { color: var(--text); }
 
 /* ------------------------------------------------------------------------
    The 44px floor on a touch screen.
@@ -13720,22 +13540,6 @@ main:has(.week) > .calendar {
   .clock-popover button.primary { min-height: var(--touch); }
 }
 
-/* A link inside a sentence is 20px tall by nature. On a phone it reaches the
-   floor through the overlay rather than by growing, which would break the
-   sentence it sits in. */
-@media (pointer: coarse) {
-  .link-button { position: relative; }
-  .link-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: max(100%, var(--touch));
-    height: max(100%, var(--touch));
-    transform: translate(-50%, -50%);
-  }
-}
-
 /* ------------------------------------------------------------------------
    Scratch - the layer under everything. See lib/scratch.ts.
 
@@ -14183,8 +13987,6 @@ main:has(.week) > .calendar {
   padding: var(--s3) var(--s4);
   border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
-
-.replan-foot-note { color: var(--muted); font-size: var(--t-sm); margin-left: auto; }
 
 /* The door in the day header: a quiet text button under the title. */
 
@@ -14891,8 +14693,6 @@ main:has(.week) > .calendar {
 }
 
 .library-chip:hover { background: var(--fill-strong); }
-
-.library-chip-count { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .library-chip-dot {
   width: 8px;
@@ -16465,19 +16265,6 @@ main:has(.week) > .calendar {
   font-size: var(--t-lg);
   line-height: var(--lh-tight);
 }
-
-.evening-close-moment {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  margin: var(--s2) 0 0;
-}
-
-.evening-close-moment input { width: 100%; }
-
-/* The two journal questions sit under the moment with the same shape; the
-   gap between three fields is the small one, so the card stays one card. */
-.evening-close-moment + .evening-close-moment { margin-top: 0; }
 
 .evening-close-foot {
   display: flex;
@@ -18837,7 +18624,6 @@ button.link-out {
   .template-name-row input,
   .library-detail-row input,
   .library-new input,
-  .library-quick-add input,
   .routines-form input,
   .sync-field input,
   .kitchen-search,

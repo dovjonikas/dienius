@@ -10,6 +10,7 @@ const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6]
 
 function withMapping(weekdays: number[], templateId: string) {
   const data = defaultData()
+  data.templates = [{ id: templateId, name: 'Mapped', color: '#6c8cff', blocks: [] }]
   for (const w of weekdays) data.settings.weekdayTemplates[w] = templateId
   return data
 }
@@ -101,4 +102,12 @@ test('the message says how many days, or that there was nothing left to do', () 
   expect(weekStampMessage({ stamps: {}, mapped: 3 })).toBe('Nothing left to stamp this week.')
   expect(weekStampMessage({ stamps: { [MON]: 'work' }, mapped: 3 })).toBe('1 day stamped from your weekday plan.')
   expect(weekStampMessage({ stamps: { [MON]: 'work', [TUE]: 'work' }, mapped: 3 })).toBe('2 days stamped from your weekday plan.')
+})
+
+// A weekday the map gives to a template that was deleted is not mapped: the
+// button that counted it stamped nothing and said it had.
+test('a weekday mapped to a template that is gone is neither counted nor stamped', () => {
+  const data = defaultData()
+  for (const w of ALL_WEEKDAYS) data.settings.weekdayTemplates[w] = 'gone'
+  expect(planWeekStamp(WEEK, data, MON)).toEqual({ stamps: {}, mapped: 0 })
 })

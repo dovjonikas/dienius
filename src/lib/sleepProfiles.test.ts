@@ -146,3 +146,33 @@ test('every schedule survives export and re-import unchanged', () => {
   ]
   expect(importJson(exportJson(data)).settings.sleepProfiles).toEqual(data.settings.sleepProfiles)
 })
+
+// A week template can name a schedule for one of its days, and that was the
+// one reference a delete left behind: the day slept on the first schedule
+// instead of the week's, and the dead id rode along in every backup.
+test('deleting a schedule clears it off a week template\'s own days too', () => {
+  actions.addSleepProfile('Shift')
+  const shift = profiles()[1].id
+  const week = actions.addTemplate({
+    name: 'Rota',
+    color: '#a7c4f5',
+    kind: 'week',
+    blocks: [],
+    weekDays: { 3: { type: 'night', sleepProfileId: shift }, 5: { sleepProfileId: shift }, 6: { type: 'rest' } },
+  })
+
+  actions.deleteSleepProfile(shift)
+
+  expect(getData().templates.find(t => t.id === week.id)!.weekDays).toEqual({ 3: { type: 'night' }, 6: { type: 'rest' } })
+  expect(JSON.stringify(getData())).not.toContain(shift)
+})
+
+test('a week whose days named nothing but that schedule keeps no empty overrides', () => {
+  actions.addSleepProfile('Shift')
+  const shift = profiles()[1].id
+  const week = actions.addTemplate({ name: 'Rota', color: '#a7c4f5', kind: 'week', blocks: [], weekDays: { 5: { sleepProfileId: shift } } })
+
+  actions.deleteSleepProfile(shift)
+
+  expect(getData().templates.find(t => t.id === week.id)!.weekDays).toBeUndefined()
+})

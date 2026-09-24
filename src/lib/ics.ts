@@ -429,55 +429,85 @@ function emit(raw: RawEvent, out: IcsEvent[], ignored: Set<string>, from: string
   const summary = raw.summary?.trim() || '(no title)'
   const start = raw.start
   const uid = raw.uid ?? `${summary}-${start.wall.date}-${start.allDay ? 'all' : start.wall.minutes}`
-  const minutes = lengthOf(raw)
+  const length = lengthOf(raw)
+  const span = daysOf(raw)
   const until = addDays(from, horizonDays)
 
   // Expanded in the event's own frame, then each occurrence read on the
   // viewer's clock - see Wall. The frame's dates can sit a day either side
   // of the viewer's, so the walk is asked for a day more on both ends and
-  // the local date is what is checked against the window.
+  // the local date is what is checked against the window - and, for an
+  // all-day event that lasts several days, as many days more before it as
+  // it lasts, since one that began before the window can still be in it.
   const dates = raw.rrule
-    ? expand(raw.rrule, start.wall.date, addDays(from, -1), horizonDays + 2, start.zone, ignored)
+    ? expand(raw.rrule, start.wall.date, addDays(from, -span), horizonDays + span + 1, start.zone, ignored)
     : [start.wall.date]
   for (const date of dates) {
-    const local = start.allDay ? { date, minutes: 0 } : toLocal({ date, minutes: start.wall.minutes }, start.zone)
+    const occurrence = raw.rrule ? `${uid}::${date}` : uid
     // Only what is in view. A five-year-old daily standup is a real feed and
     // expanding all of it would be thousands of events nobody will look at.
+    if (start.allDay) {
+      // An all-day event is on every date it covers, each date on its own.
+      for (let i = 0; i < span; i++) {
+        const day = addDays(date, i)
+        if (day > until) break
+        if (day < from) continue
+        out.push({ uid: i === 0 ? occurrence : `${occurrence}::${day}`, summary, date: day, startMinutes: undefined, minutes: undefined, allDay: true })
+      }
+      continue
+    }
+    const local = toLocal({ date, minutes: start.wall.minutes }, start.zone)
     if (local.date < from || local.date > until) continue
     out.push({
-      uid: raw.rrule ? `${uid}::${date}` : uid,
+      uid: occurrence,
       summary,
       date: local.date,
-      startMinutes: start.allDay ? undefined : local.minutes,
-      minutes: start.allDay ? undefined : minutes,
-      allDay: start.allDay,
+      startMinutes: local.minutes,
+      // Cut at this occurrence's own midnight rather than dropped: a shift
+      // from 22:00 to 06:00 is a real thing to plan around, and a version of
+      // it that runs 480 minutes past midnight would draw off the bottom of
+      // every view in the app. Per occurrence, because a repeat written in
+      // another zone starts at another local time once the clocks change.
+      minutes: length === undefined ? undefined : Math.min(length, 24 * 60 - local.minutes),
+      allDay: false,
     })
   }
 }
 
 /**
- * How long an event runs, from whichever of the two ways it was stated.
+ * How long a timed event runs, from whichever of the two ways it was stated:
+ * its whole length, which `emit` cuts at each occurrence's midnight.
  *
  * Start and end are compared as instants, so an end written in a different
- * frame from its start still gives the right length. An event that ends the
- * next day is clipped to the end of its own day rather than dropped: a shift
- * from 22:00 to 06:00 is a real thing to plan around, and a version of it
- * that runs 480 minutes past midnight would draw off the bottom of every
- * view in the app.
+ * frame from its start still gives the right length.
  */
 function lengthOf(raw: RawEvent): number | undefined {
-  if (raw.duration !== undefined) return raw.duration
   if (!raw.start || raw.start.allDay) return undefined
+  if (raw.duration !== undefined) return raw.duration
   if (!raw.end || raw.end.allDay) return undefined
-  const startAt = wallToInstant(raw.start.wall, raw.start.zone)
-  const endAt = wallToInstant(raw.end.wall, raw.end.zone)
-  const length = Math.round((endAt - startAt) / 60_000)
-  if (length <= 0) return undefined
-  const startLocal = localWall(startAt)
-  const endLocal = localWall(endAt)
-  if (endLocal.date !== startLocal.date) return 24 * 60 - startLocal.minutes
-  return length
+  const length = Math.round((wallToInstant(raw.end.wall, raw.end.zone) - wallToInstant(raw.start.wall, raw.start.zone)) / 60_000)
+  return length > 0 ? length : undefined
 }
+
+/**
+ * How many dates an all-day event covers. Its end is the day after its last
+ * (RFC 5545), or its length is stated in whole days; one when it says
+ * neither, or says something that is not a length.
+ */
+function daysOf(raw: RawEvent): number {
+  if (!raw.start?.allDay) return 1
+  const first = raw.start.wall.date
+  if (raw.end?.allDay) {
+    let days = 0
+    while (days < MAX_ALL_DAY_SPAN && addDays(first, days) < raw.end.wall.date) days++
+    return Math.max(days, 1)
+  }
+  if (raw.duration !== undefined) return Math.min(Math.max(Math.floor(raw.duration / (24 * 60)), 1), MAX_ALL_DAY_SPAN)
+  return 1
+}
+
+/** A year: an all-day event longer than that is a mistake in the file, not a holiday. */
+const MAX_ALL_DAY_SPAN = 366
 
 /**
  * Daily, weekly, the plain monthly and the plain yearly, and nothing else.

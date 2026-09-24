@@ -102,6 +102,8 @@ async function cacheFirst(request) {
     }
     return response
   } catch (err) {
-    return hit
+    // Not in the cache and not on the network: nothing can be served, and
+    // the browser is told why rather than handed an empty answer.
+    throw err
   }
 }

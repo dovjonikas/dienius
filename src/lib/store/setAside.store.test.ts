@@ -31,21 +31,6 @@ function dayWith(tasks: Partial<Task>[]) {
 
 const tasks = (date = DATE) => getData().days[date]?.tasks ?? []
 
-test('a block set aside stays on the day, marked, and keeps the time it had', () => {
-  dayWith([{ title: 'Gym', time: '18:00', minutes: 60 }])
-  actions.setTaskAside(DATE, 't1')
-
-  expect(tasks()).toHaveLength(1)
-  expect(tasks()[0]).toMatchObject({ title: 'Gym', time: '18:00', minutes: 60, setAside: true })
-})
-
-test('setting aside one that is already aside changes nothing, so the same press twice is one press', () => {
-  dayWith([{ title: 'Gym', time: '18:00', minutes: 60, setAside: true }])
-  const before = getData()
-  actions.setTaskAside(DATE, 't1')
-  expect(getData().days[DATE]).toEqual(before.days[DATE])
-})
-
 test('coming back today puts it at the offered time and takes the mark off', () => {
   dayWith([{ title: 'Gym', time: '18:00', minutes: 60, setAside: true }])
   actions.returnSetAside(DATE, { taskId: 't1', time: '20:30', minutes: 60, shortened: false, tomorrow: false, line: '20:30 - 21:30' })

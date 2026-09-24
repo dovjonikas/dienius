@@ -223,6 +223,16 @@ test('an event that runs past midnight is clipped to the end of its own day', ()
   expect(events[0].minutes).toBe(120)
 })
 
+// The same shift written with a length instead of an end ran on past
+// midnight: the cut was made for an end and never for a duration.
+test('an event given a duration that runs past midnight is clipped the same way', () => {
+  const { events } = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Night shift\r\nDTSTART:20260902T220000\r\nDURATION:PT8H')),
+    FROM,
+  )
+  expect(events[0].minutes).toBe(120)
+})
+
 test('an end before its own start leaves the length unstated rather than negative', () => {
   const { events } = parseIcs(
     cal(event('UID:a\r\nSUMMARY:Backwards\r\nDTSTART:20260902T140000\r\nDTEND:20260902T130000')),
@@ -613,4 +623,37 @@ test('an Outlook export is read, with its Windows zone name resolved and nothing
     },
   ])
   expect(result.ignored).toEqual([])
+})
+
+// --- days that last more than a day ----------------------------------------
+
+/**
+ * An all-day event's end is the day after its last one, so a conference from
+ * the 3rd with an end on the 6th is three days - and it was shown on the
+ * first of them only, while the other two looked free.
+ */
+test('an all-day event over three days is on each of the three', () => {
+  const { events } = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Conference\r\nDTSTART;VALUE=DATE:20260903\r\nDTEND;VALUE=DATE:20260906')),
+    FROM,
+  )
+  expect(events.map(e => e.date)).toEqual(['2026-09-03', '2026-09-04', '2026-09-05'])
+  expect(events.every(e => e.allDay && e.summary === 'Conference')).toBe(true)
+  expect(new Set(events.map(e => e.uid)).size).toBe(3)
+})
+
+test('the same days, stated as a duration', () => {
+  const { events } = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Conference\r\nDTSTART;VALUE=DATE:20260903\r\nDURATION:P3D')),
+    FROM,
+  )
+  expect(events.map(e => e.date)).toEqual(['2026-09-03', '2026-09-04', '2026-09-05'])
+})
+
+test('an all-day event that began before the window still shows on its days inside it', () => {
+  const { events } = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Conference\r\nDTSTART;VALUE=DATE:20260903\r\nDTEND;VALUE=DATE:20260906')),
+    '2026-09-04',
+  )
+  expect(events.map(e => e.date)).toEqual(['2026-09-04', '2026-09-05'])
 })

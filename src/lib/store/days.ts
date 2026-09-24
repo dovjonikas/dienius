@@ -3,7 +3,8 @@ import { advanceForTask } from './library'
 import type { DayPlan, LibraryRef, MealType, Repeat, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
-import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
+import { sourceCovers, sourceFor } from '../repeats'
+import { mappedTemplateId } from '../weekdayMap'
 import { addWithoutDuplicates, dayHas, hasIdentity, willReceive } from '../taskIdentity'
 import { ensuredDay } from '../ensureDay'
 import { addDays, todayKey } from '../dates'
@@ -432,7 +433,7 @@ export const dayActions = {
 
     const targetDate = addDays(date, 1)
     const target = data.days[targetDate]
-    const mapped = data.settings.weekdayTemplates[weekdayOf(targetDate)]
+    const mapped = mappedTemplateId(data, targetDate)
 
     // A routine task tomorrow is getting anyway. A repeat instance always
     // qualifies: its source generates tomorrow's copy the moment the day is
@@ -727,20 +728,6 @@ export const dayActions = {
     const previous = getData()
     commit(applyLowDayPlan(previous, date, plan))
     return { undo: () => commit(previous) }
-  },
-
-  /**
-   * Takes a block off the day's clock without taking it off the day.
-   *
-   * It keeps the time and the length it had, so the offer to bring it back
-   * can say what it was, and it is out of the timeline, the capacity line
-   * and the score while it waits. See widgets/day-plan/setAside.ts.
-   */
-  setTaskAside(date: string, taskId: string): void {
-    const day = dayOf(date)
-    const task = day.tasks.find(t => t.id === taskId)
-    if (!task || task.setAside) return
-    commit(withDay(date, { ...day, tasks: day.tasks.map(t => (t.id === taskId ? { ...t, setAside: true } : t)) }))
   },
 
   /**

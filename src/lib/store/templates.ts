@@ -98,9 +98,19 @@ export const templateActions = {
     })
   },
 
+  /**
+   * The template goes, and so does every weekday the map gave it - a map
+   * naming a template that is gone stamps nothing. The days it was stamped
+   * on keep it (DECISIONS "A stamped day outlives its template").
+   */
   deleteTemplate(id: string): void {
     const data = getData()
-    commit({ ...data, templates: data.templates.filter(t => t.id !== id) })
+    const weekdayTemplates = Object.fromEntries(Object.entries(data.settings.weekdayTemplates).filter(([, mapped]) => mapped !== id))
+    commit({
+      ...data,
+      templates: data.templates.filter(t => t.id !== id),
+      settings: { ...data.settings, weekdayTemplates },
+    })
   },
 
   /**

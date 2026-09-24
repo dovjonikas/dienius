@@ -1,5 +1,4 @@
 import { commit, dayOf, getData, withDay } from './core'
-import { seedLibrary as librarySeed } from '../librarySeed'
 import type { PastedItem } from '../library'
 import type { AppData, LibraryItem, LibraryList, LibraryTrack, Task, TemplateBlock } from '../types'
 import { hasAnotherSeason, isItemFinished, itemProgress, nextSeason, parseLibraryItemInput } from '../library'
@@ -133,22 +132,6 @@ export const libraryActions = {
     })
   },
 
-  /**
-   * Puts the reading plan in, on request, on an install that has no Books
-   * list or an empty one - see lib/librarySeed.ts, which owns the rule and
-   * the history of why nothing calls this by itself any more.
-   *
-   * Skips the commit entirely when there is nothing to do, so running the
-   * command a second time, or on a device that already got the list by
-   * sync, writes, stamps and syncs nothing: seedLibrary returns the same
-   * object, and an unchanged state is not worth a save.
-   */
-  seedLibrary(): void {
-    const data = getData()
-    const next = librarySeed(data)
-    if (next !== data) commit(next)
-  },
-
   /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
   /**
    * The add line's own door: a title and a shape the controls already hold,
@@ -262,12 +245,6 @@ export const libraryActions = {
     commit(mapList(listId, list => mapItem(list, itemId, item => advanced(item, by, today))))
   },
 
-  setLibraryItemTotal(listId: string, itemId: string, total: number | undefined, today: string): void {
-    commit(mapList(listId, list =>
-      mapItem(list, itemId, item => advanced({ ...item, total, progress: 0 }, itemProgress(item), today)),
-    ))
-  },
-
   /** Marks an item finished outright, or reopens one. The manual override. */
   toggleLibraryItemFinished(listId: string, itemId: string, today: string): void {
     commit(mapList(listId, list =>
@@ -376,7 +353,9 @@ export const libraryActions = {
   ): boolean {
     const data = getData()
     const template = data.templates.find(t => t.id === templateId)
-    if (!template || !data.library.some(l => l.id === listId)) return false
+    // A week gives a date only its own weekday's blocks, and this block has
+    // no weekday to be on: the week's editor is where a week's block is made.
+    if (!template || template.kind === 'week' || !data.library.some(l => l.id === listId)) return false
     if (template.blocks.some(b => b.libraryListId === listId)) return false
     const next: TemplateBlock = { id: crypto.randomUUID(), title: block.title, libraryListId: listId }
     if (block.time) next.time = block.time
@@ -396,7 +375,9 @@ export const libraryActions = {
   ): boolean {
     const data = getData()
     const template = data.templates.find(t => t.id === templateId)
-    if (!template) return false
+    // Not a week's: its list may be on several of its days, and this would
+    // change the first of them only.
+    if (!template || template.kind === 'week') return false
     const existing = template.blocks.find(b => b.libraryListId === listId)
     if (!existing) return false
     const next: TemplateBlock = { ...existing, title: block.title }

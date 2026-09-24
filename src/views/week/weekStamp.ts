@@ -1,6 +1,6 @@
 import type { AppData } from '../../lib/types'
 import { todayKey } from '../../lib/dates'
-import { weekdayOf } from '../../lib/repeats'
+import { mappedTemplateId } from '../../lib/weekdayMap'
 
 /**
  * What "Stamp week" would do, worked out before it does it.
@@ -38,10 +38,9 @@ export interface WeekStampPlan {
  */
 export function planWeekStamp(
   days: string[],
-  data: Pick<AppData, 'days' | 'settings'>,
+  data: Pick<AppData, 'days' | 'settings' | 'templates'>,
   from: string = todayKey(),
 ): WeekStampPlan {
-  const mapping = data.settings.weekdayTemplates
   const stamps: Record<string, string> = {}
   let mapped = 0
   for (const day of days) {
@@ -52,7 +51,7 @@ export function planWeekStamp(
     // and that Review reads back as a week's worth of disagreement. Date keys
     // are YYYY-MM-DD, so this comparison is the app's usual chronological one.
     if (day < from) continue
-    const templateId = mapping[weekdayOf(day)]
+    const templateId = mappedTemplateId(data, day)
     if (!templateId) continue
     mapped += 1
     if (!data.days[day]?.templateId) stamps[day] = templateId

@@ -32,17 +32,6 @@ const MAX_LABEL = 40
  */
 export const categoryActions = {
   /**
-   * Whether a category's blocks end by themselves - see lib/selfEnding.ts.
-   * Stored as said, so Commute told no is no, and any other told yes is yes.
-   */
-  setCategoryEndsItself(id: string, endsItself: boolean): void {
-    const data = getData()
-    const category = data.categories.find(c => c.id === id)
-    if (!category || category.endsItself === endsItself) return
-    commit({ ...data, categories: data.categories.map(c => (c.id === id ? { ...c, endsItself } : c)) })
-  },
-
-  /**
    * A new one, at the end of the list.
    *
    * The colour is required, and that is not an oversight: a category the owner

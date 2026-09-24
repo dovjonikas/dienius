@@ -1,7 +1,7 @@
 import { commit, getData } from './core'
 import { readChimeSettings } from '../chime'
 import { cleanMealWords } from '../mealWords'
-import type { ChimeSettings, MealWord, Settings, SleepWindow, ThemeState } from '../types'
+import type { ChimeSettings, MealWord, Settings, SleepWindow, Template, ThemeState, WeekDayOverride } from '../types'
 
 /** Everything under Settings that is not North or a calendar: theme, density, sleep, the day view's own switches. */
 export const settingsActions = {
@@ -26,9 +26,8 @@ export const settingsActions = {
   /**
    * Writes one token into the override patch for a preset, keyed by that
    * preset's own id so switching to a different room and back leaves this
-   * patch exactly as it was - see docs/THEMES.md section 3. There is no
-   * override UI yet; this exists so the pipeline and storage already
-   * support one when the panel that calls it is built.
+   * patch exactly as it was - see docs/THEMES.md section 3. The accent is
+   * the one token anything writes (AppearanceControls).
    */
   setThemeOverride(presetId: string, token: string, value: string): void {
     const data = getData()
@@ -47,13 +46,10 @@ export const settingsActions = {
 
   /**
    * Removes one token from a preset's override patch, leaving any other
-   * overridden tokens on that preset untouched. Used when a write would
-   * restore exactly the preset's own stock value for that token - see
-   * ThemeOverridePanel.tsx's setToken - so the patch stays sparse rather
-   * than accumulating no-op entries, and the changed-token dot never lights
-   * up on a token that no longer actually differs from the preset. Drops
-   * the preset's own entry out of overrides entirely once its patch is
-   * empty, the same shape resetThemeOverrides below leaves behind.
+   * overridden tokens on that preset untouched - the accent picker's "none"
+   * - so the patch stays sparse rather than accumulating no-op entries.
+   * Drops the preset's own entry out of overrides entirely once its patch is
+   * empty.
    */
   unsetThemeOverride(presetId: string, token: string): void {
     const data = getData()
@@ -67,15 +63,6 @@ export const settingsActions = {
       delete overrides[presetId]
     }
     commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, overrides } } })
-  },
-
-  /** Clears the override patch for one preset - the "Reset to preset" control. */
-  resetThemeOverrides(presetId: string): void {
-    const data = getData()
-    const rest = Object.fromEntries(
-      Object.entries(data.settings.theme.overrides).filter(([id]) => id !== presetId),
-    )
-    commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, overrides: rest } } })
   },
 
   /**
@@ -192,7 +179,11 @@ export const settingsActions = {
    * would have no hours at all. Days and templates that used the deleted one
    * fall back to the default in the same commit rather than being left
    * pointing at an id that resolves to it by accident - the fallback in
-   *  is a safety net, not a storage strategy.
+   * `sleepProfileWindow` is a safety net, not a storage strategy.
+   *
+   * A week template's own days are references too: a weekday that named
+   * the schedule stops naming it, and one left overriding nothing is no
+   * override at all, the way the week editor leaves it.
    */
   deleteSleepProfile(id: string): void {
     const data = getData()
@@ -205,8 +196,27 @@ export const settingsActions = {
     commit({
       ...data,
       days,
-      templates: data.templates.map(t => (t.sleepProfileId === id ? { ...t, sleepProfileId: undefined } : t)),
+      templates: data.templates.map(t => withoutSleepProfile(t, id)),
       settings: { ...data.settings, sleepProfiles: data.settings.sleepProfiles.filter(p => p.id !== id) },
     })
   },
+}
+
+/** A template with a deleted schedule taken off it, and off each of its own days. */
+function withoutSleepProfile(template: Template, id: string): Template {
+  const onWeekDays = Object.values(template.weekDays ?? {}).some(o => o?.sleepProfileId === id)
+  if (template.sleepProfileId !== id && !onWeekDays) return template
+  const next: Template = { ...template }
+  if (next.sleepProfileId === id) next.sleepProfileId = undefined
+  if (onWeekDays) {
+    const weekDays: Partial<Record<number, WeekDayOverride>> = {}
+    for (const [weekday, override] of Object.entries(template.weekDays ?? {})) {
+      if (!override) continue
+      const kept: WeekDayOverride = override.sleepProfileId === id ? { type: override.type } : { ...override }
+      if (kept.type === undefined) delete kept.type
+      if (kept.type !== undefined || kept.sleepProfileId !== undefined) weekDays[Number(weekday)] = kept
+    }
+    next.weekDays = Object.keys(weekDays).length > 0 ? weekDays : undefined
+  }
+  return next
 }

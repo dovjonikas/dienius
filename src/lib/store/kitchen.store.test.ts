@@ -99,19 +99,6 @@ test('there is nothing left to count a cooking with, and removing a recipe takes
   expect(getData().tombstones?.[`recipe:${oats.id}`]).toBeDefined()
 })
 
-test('a removed recipe put back is the same recipe again, and its deletion is forgotten', () => {
-  const soup = actions.addRecipe({ title: 'A simple soup', text: 'a text', kcal: 300 })!
-  const before = getData().recipes[0]
-  actions.removeRecipe(soup.id)
-  actions.restoreRecipe(before)
-  expect(getData().recipes).toHaveLength(1)
-  expect(getData().recipes[0]).toMatchObject({ id: soup.id, title: 'A simple soup', kcal: 300 })
-  expect(getData().tombstones?.[`recipe:${soup.id}`]).toBeUndefined()
-  // Put back twice is put back once.
-  actions.restoreRecipe(before)
-  expect(getData().recipes).toHaveLength(1)
-})
-
 // --- many at once - v2.32 ------------------------------------------------------------------------
 
 /** Thirty generic recipes in Kitchen's own shape, as they would be pasted. */

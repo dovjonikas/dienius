@@ -59,3 +59,22 @@ reversed from this side. The commands, from a clean tree:
 After that the deploy runs again by itself. If the history is left as it
 is, the name stays in two commits nobody reads and the guard keeps it out
 of every file from here on.
+
+## 2026-09-24, the freeze preparation: the reading plan in the history
+
+`src/lib/librarySeed.ts` was the owner's own reading plan - three lists of
+book titles - and "Load my reading plan" in the palette put it into any
+visitor's Library. Both are out of the app now (DECISIONS "Eight defects
+and a reading plan, before the freeze"). The file stays in every commit
+from the one that added it to the one that removed it, in the history of
+the public repo, the same way the path above does.
+
+**Recommendation:** decide the two together. If the history is rewritten
+for the path, take the file out of every commit in the same pass - a
+rewrite of the whole history rather than one night's, with
+`git filter-repo --path src/lib/librarySeed.ts --invert-paths` on a fresh
+clone, then a force push and a fresh clone on every device. If the history
+is left as it is, both stay in commits nobody reads, and the guard and the
+test keep them out of every file from here on. Titles of published books
+are not a secret; what they add up to is the owner's, which is why they
+left the app.

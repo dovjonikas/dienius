@@ -420,6 +420,34 @@ test('add to template builds the block and binds it, and refuses a second for th
   await user.click(screen.getByRole('button', { name: 'Change that one' }))
   expect(getData().templates.find(t => t.id === template.id)!.blocks).toHaveLength(1)
 })
+test('add to template offers the day templates, and never a week, which has no day to put it on', async () => {
+  const user = userEvent.setup()
+  seed()
+  actions.addTemplate({ name: 'Rota', color: '#a7c4f5', kind: 'week', blocks: [] })
+  actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+  render(<LibraryView />)
+
+  await user.click(screen.getByRole('button', { name: /^Daring Greatly,/ }))
+  await user.click(screen.getByRole('button', { name: 'Add to template' }))
+
+  const choice = screen.getByRole('combobox', { name: 'Template' })
+  expect(within(choice).getAllByRole('option').map(o => o.textContent)).toEqual(['Weekday'])
+  expect(choice).toHaveValue(getData().templates.find(t => t.name === 'Weekday')!.id)
+})
+
+test('with only week templates, add to template says a day template is needed', async () => {
+  const user = userEvent.setup()
+  seed()
+  actions.addTemplate({ name: 'Rota', color: '#a7c4f5', kind: 'week', blocks: [] })
+  render(<LibraryView />)
+
+  await user.click(screen.getByRole('button', { name: /^Daring Greatly,/ }))
+  await user.click(screen.getByRole('button', { name: 'Add to template' }))
+
+  expect(screen.getByText(/No day templates yet/)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Add a block' })).not.toBeInTheDocument()
+})
+
 // --- what the list moves on to -------------------------------------------
 //
 // The mechanism was always there: a template block binds to the list, so the

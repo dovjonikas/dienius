@@ -1169,16 +1169,21 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
  * whole point of the binding as it already existed: the block says "a reading
  * session", the list says which book, and finishing a book moves the block on
  * to the next one instead of leaving a dead block behind.
+ *
+ * **Day templates only.** A week's block belongs to one of its weekdays,
+ * and this form has no weekday to give it: the week's own editor is where
+ * a list goes onto a week.
  */
 function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void }) {
   const data = useAppData()
-  const [templateId, setTemplateId] = useState(data.templates[0]?.id ?? '')
+  const dayTemplates = data.templates.filter(t => t.kind !== 'week')
+  const [templateId, setTemplateId] = useState(dayTemplates[0]?.id ?? '')
   const [time, setTime] = useState('')
   const [minutes, setMinutes] = useState('30')
   const [clash, setClash] = useState<Template | null>(null)
 
-  if (data.templates.length === 0) {
-    return <p className="muted library-detail-note">No templates yet - build one first, in the Templates tab.</p>
+  if (dayTemplates.length === 0) {
+    return <p className="muted library-detail-note">No day templates yet - build one first, in the Templates tab.</p>
   }
 
   const block = {
@@ -1192,7 +1197,7 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
       <label className="field">
         <span className="field-label">Template</span>
         <select value={templateId} onChange={e => setTemplateId(e.target.value)}>
-          {data.templates.map(t => (
+          {dayTemplates.map(t => (
             <option key={t.id} value={t.id}>
               {templateName(t)}
             </option>

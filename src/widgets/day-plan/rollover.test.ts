@@ -78,3 +78,20 @@ test('the same task on a day tomorrow does not have is pushable like any other',
 test('an empty day splits into nothing rather than into zeroes that mean something', () => {
   expect(rolloverSplit(state(), DATE, [])).toEqual({ pushable: 0, held: 0, covered: 0 })
 })
+
+// A map still naming a template that was deleted: tomorrow will never get
+// that template's tasks, so today's are not "arriving by themselves" - they
+// were being left behind while the push said tomorrow already had them.
+test('a template task is pushable when the map names a template that is gone', () => {
+  const data = state()
+  data.settings = { ...data.settings, weekdayTemplates: { 3: 'tpl' } }
+  const today = [task({ title: 'Commute', origin: { type: 'template', sourceId: 'tpl', blockId: 'b1' } })]
+  expect(rolloverSplit(data, DATE, today)).toEqual({ pushable: 1, held: 0, covered: 0 })
+})
+
+test('while the template is there, tomorrow gets it from the map and it is covered', () => {
+  const data = state({ templates: [{ id: 'tpl', name: 'Work', color: '#6c8cff', blocks: [] }] })
+  data.settings = { ...data.settings, weekdayTemplates: { 3: 'tpl' } }
+  const today = [task({ title: 'Commute', origin: { type: 'template', sourceId: 'tpl', blockId: 'b1' } })]
+  expect(rolloverSplit(data, DATE, today)).toEqual({ pushable: 0, held: 0, covered: 1 })
+})

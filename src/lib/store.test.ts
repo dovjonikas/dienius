@@ -528,6 +528,44 @@ test('deleteTemplate removes the template but keeps stamped days, templateId inc
   expect(getData().days['2026-09-01'].templateId).toBe(t.id)
 })
 
+// The weekday map named a deleted template for good: Stamp week stamped
+// nothing and said it had, and the push left today's tasks for a tomorrow
+// that was never going to get them.
+test('deleting a template takes it off the weekday map, and leaves the rest of the map', () => {
+  const work = actions.addTemplate({ name: 'Work', color: '#f9d48a', blocks: [] })
+  const rest = actions.addTemplate({ name: 'Rest', color: '#a7c4f5', blocks: [] })
+  actions.setWeekdayTemplate(1, work.id)
+  actions.setWeekdayTemplate(3, work.id)
+  actions.setWeekdayTemplate(6, rest.id)
+
+  actions.deleteTemplate(work.id)
+
+  expect(getData().settings.weekdayTemplates).toEqual({ 6: rest.id })
+})
+
+test('deleting a week template clears all seven weekdays it filled', () => {
+  const week = actions.addTemplate({ name: 'Rota', color: '#f9d48a', kind: 'week', blocks: [] })
+  actions.setWeekdayTemplate(1, week.id)
+
+  actions.deleteTemplate(week.id)
+
+  expect(getData().settings.weekdayTemplates).toEqual({})
+})
+
+// A plan that already carries a dead name, from before the delete cleaned up.
+test('the push moves a template task when the map names a template that is gone', () => {
+  const data = defaultData()
+  data.settings.weekdayTemplates = { 3: 'gone' }
+  data.days['2026-09-01'] = {
+    date: '2026-09-01',
+    tasks: [{ id: 't1', title: 'Commute', done: false, origin: { type: 'template', sourceId: 'gone', blockId: 'b1' } }],
+  }
+  actions.resetForTests(data)
+
+  expect(actions.rolloverUnfinished('2026-09-01')).toMatchObject({ moved: 1, skipped: 0 })
+  expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Commute'])
+})
+
 test('state persists to localStorage', () => {
   actions.addTask('2026-09-01', 'Persist me')
   const raw = localStorage.getItem('dienius:data')!
@@ -662,24 +700,6 @@ test('setThemeOverride writes one token under the current preset id without dist
   })
   actions.setThemeOverride('midnight', 'mark', '#ffcc00')
   expect(getData().settings.theme.overrides.midnight).toEqual({ accent: '#e0553b', mark: '#ffcc00' })
-})
-
-test('resetThemeOverrides clears only the named preset\'s patch', () => {
-  actions.resetForTests({
-    ...defaultData(),
-    settings: {
-      ...defaultData().settings,
-      theme: {
-        presetId: 'midnight',
-        overrides: { dark: { accent: '#111111' }, midnight: { accent: '#e0553b' } },
-        mode: 'dark',
-      },
-      timelineExpanded: false,
-      dayLayoutFocus: 'both',
-    },
-  })
-  actions.resetThemeOverrides('midnight')
-  expect(getData().settings.theme.overrides).toEqual({ dark: { accent: '#111111' } })
 })
 
 test('unsetThemeOverride removes one token, leaving the preset\'s other overrides and other presets\' patches alone', () => {

@@ -117,13 +117,6 @@ export const scratchActions = {
     if (orphans.length > 0) await deletePhotos(orphans)
   },
 
-  /** The undo of a delete: the note back exactly as it was, if it is not already there. */
-  restoreScratch(note: ScratchNote): void {
-    const data = getData()
-    if (data.scratch.some(n => n.id === note.id)) return
-    commit({ ...data, scratch: [note, ...data.scratch] })
-  },
-
   /**
    * A note becomes a Later item and leaves the stream in the same commit -
    * the same one-action shape as scheduleLaterItem, for the same reason: a

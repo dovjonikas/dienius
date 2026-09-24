@@ -107,12 +107,12 @@ test('a Commute block ends by itself, and another category only once Settings sa
   expect(task('Drive in').done).toBe(true)
   expect(task('Stretch').done).toBe(false)
 
-  actions.setCategoryEndsItself('health', true)
+  actions.updateCategory('health', { endsItself: true })
   actions.endSelfEndingBlocks(at(DAY, '08:00'))
   expect(task('Stretch').done).toBe(true)
 
   // And Commute can be told not to.
-  actions.setCategoryEndsItself('commute', false)
+  actions.updateCategory('commute', { endsItself: false })
   const commute = getData().categories.find(c => c.id === 'commute')!
   expect(endsItself({ id: 'x', title: 'Drive home', done: false, category: 'commute' }, [commute])).toBe(false)
 })

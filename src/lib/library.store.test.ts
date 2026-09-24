@@ -92,14 +92,6 @@ test('an item can be finished outright and reopened again, whatever the count sa
   expect(isItemFinished(books().items[0])).toBe(false)
 })
 
-test('setting a total below the current count clamps the count to it', () => {
-  const list = seedBooks()
-  actions.stepLibraryItem(list.id, list.items[0].id, 9, TODAY)
-  actions.setLibraryItemTotal(list.id, list.items[0].id, 5, TODAY)
-  expect(books().items[0].progress).toBe(5)
-  expect(books().items[0].finished).toBe(TODAY)
-})
-
 test('moving an item changes the order, which is what next means on this list', () => {
   const list = seedBooks()
   actions.moveLibraryItem(list.id, list.items[1].id, 0)
@@ -355,4 +347,31 @@ test('a template or a list that is not there changes nothing', () => {
   expect(actions.addLibraryBlockToTemplate(template.id, 'nope', { title: 'Reading' })).toBe(false)
   expect(actions.replaceLibraryBlockOnTemplate(template.id, list.id, { title: 'Reading' })).toBe(false)
   expect(getData().templates[0].blocks).toEqual([])
+})
+
+// A week gives a date only its own weekday's blocks, so a block added to a
+// week with no weekday was on no day and in no column - and the next try
+// said the week already had one.
+test('a week template is refused a list\'s block, which could land on no day', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const week = actions.addTemplate({ name: 'Rota', color: '#6c8cff', kind: 'week', blocks: [] })
+
+  expect(actions.addLibraryBlockToTemplate(week.id, list.id, { title: 'Reading', time: '21:00' })).toBe(false)
+  expect(getData().templates.find(t => t.id === week.id)!.blocks).toEqual([])
+})
+
+test('nor is a week\'s block changed from the Library, which would change one of its days', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const week = actions.addTemplate({
+    name: 'Rota',
+    color: '#6c8cff',
+    kind: 'week',
+    blocks: [
+      { title: 'Reading', time: '21:00', libraryListId: list.id, weekday: 1 },
+      { title: 'Reading', time: '21:00', libraryListId: list.id, weekday: 3 },
+    ],
+  })
+
+  expect(actions.replaceLibraryBlockOnTemplate(week.id, list.id, { title: 'Reading', time: '22:00' })).toBe(false)
+  expect(getData().templates.find(t => t.id === week.id)!.blocks.map(b => b.time)).toEqual(['21:00', '21:00'])
 })

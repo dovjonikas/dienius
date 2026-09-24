@@ -992,3 +992,41 @@ test("a week started from a day template with a block on the next day keeps ever
   expect(week.blocks).toHaveLength(14)
   expect(week.blocks.every(b => b.afterMidnight === undefined)).toBe(true)
 })
+
+// A column typed shift, night or rest counts only its core blocks, and the
+// week editor had no way to mark one - so such a day scored nothing however
+// much of it was done. The day editor's Core, on the open block.
+test('a block on a shift column can be marked core, and the mark is saved', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Rota',
+    color: '#a7c4f5',
+    kind: 'week',
+    weekDays: { 1: { type: 'shift' } },
+    blocks: [{ title: 'Handover', time: '07:00', minutes: 30, weekday: 1 }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Rota' }))
+
+  await openBlock(user, 'Monday', 'Handover')
+  await user.click(openBlockPanel().getByRole('button', { name: 'Mark Handover on Monday as core' }))
+  expect(openBlockPanel().getByRole('button', { name: 'Handover on Monday is core' })).toHaveAttribute('aria-pressed', 'true')
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].core).toBe(true)
+})
+
+test('on a full column Core is not offered, the way the day editor leaves it off a full day', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Rota',
+    color: '#a7c4f5',
+    kind: 'week',
+    blocks: [{ title: 'Standup', time: '09:00', minutes: 15, weekday: 1 }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Rota' }))
+
+  await openBlock(user, 'Monday', 'Standup')
+  expect(openBlockPanel().queryByRole('button', { name: /as core$/ })).toBeNull()
+})

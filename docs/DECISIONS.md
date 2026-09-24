@@ -5162,3 +5162,63 @@ min" and so on, where they were "15min". The empty day's three starters
 showed "Use this template" and were named "Use the Working day template":
 they are "Use this template: Working day" now - the words on the button
 first, then whose template it is.
+
+## Eight defects and a reading plan, before the freeze
+
+The freeze preparation, 2026-09-24, after point 5. The rotating-shifts
+audit (RESEARCH-SHIFTS.md section 1.3) had found eight things that were not
+that feature's and left them for their own time. Each was checked in the
+code again before the freeze, all eight still held, and all eight are bugs
+under the freeze's own line - the app doing other than it says - so they
+are fixed now, each with a test that failed first.
+
+**A week's column scores again.** A column typed shift, night or rest
+counts only its Core blocks, and the week editor had no way to mark one:
+such a day scored nothing however much of it was done, while the Day type
+explanation said the mark appears the moment one of the three is chosen.
+The open block's header carries Core beside Key now, on those columns and
+not on a full one - the day editor's rule, per column.
+
+**A deleted thing leaves nothing pointing at it.** Deleting a sleep
+schedule clears it off a week's own days as well as off days and
+templates. Deleting a template takes it off the weekday map; and a map
+that still names a deleted template - a plan saved before this, or a map
+synced from an older device - counts as unmapped wherever it is read
+(`lib/weekdayMap.ts`). Before, Stamp week said it had stamped days it
+could not, and the push left today's tasks behind for a tomorrow the map
+promised them to and would never give them. A stamped day still keeps the
+id of the template it came from ("A stamped day outlives its template").
+
+**The Library puts a list on a day template only.** A week gives a date
+only its own weekday's blocks, and the Library's form has no weekday to
+give: a block added to a week was on no day and in no column, and the next
+try said the week already had one. A week's list block is made in the
+week's own editor, and the store refuses the rest.
+
+**A calendar event is cut where it ends on each date.** A length stated as
+a duration ran past midnight where the same length stated as an end was
+cut there; a repeat written in another zone was cut where the first
+occurrence was, so a night shift in UTC was half an hour long all summer;
+and an all-day event over three days showed on the first. Each occurrence
+is cut at its own midnight now, and an all-day event is on every date it
+covers, the ones inside the window only.
+
+**The worker says why.** A file that is neither cached nor reachable
+cannot be served either way, but the worker handed the browser an empty
+answer and threw the network's own error away. It passes the error on.
+
+**The reading plan is out of the app.** `lib/librarySeed.ts` was the
+owner's own reading plan, and "Load my reading plan" in the palette put it
+into anybody's Library - the fix of v1.10 made it wait to be asked, and
+left it one command away for every visitor. Nothing of the owner's belongs
+in a public repo; the owner's devices have the lists already, by sync. The
+command, the seed and their tests are gone, and the test that an ordinary
+open writes no library at all stays. The titles remain in the history of
+the repo, which only a rewrite of it could take out - the owner's call,
+beside the two older commits in OPEN-QUESTIONS.
+
+**And what nothing called.** Six store actions went, with their tests
+where a test kept one alive (a behaviour worth holding moved onto the path
+the app really takes), and twenty classes the stylesheet kept for screens
+that are gone - the reminder toast, the morning line, the month's summary,
+the Library's old schedule buttons - with the comments that explained them.

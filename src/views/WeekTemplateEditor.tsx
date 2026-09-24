@@ -605,6 +605,26 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
                 where a destructive action goes, and the way out is the same
                 cross thirteen other surfaces in this app use. */}
             <div className="wt-note-actions">
+              {/* Core, where the block's column is a shift, a night or a
+                  rest day - the day editor's rule, per column here, since a
+                  week's days have types of their own. Such a day counts its
+                  core blocks and nothing else, so without this a week's
+                  shift scored nothing however much of it was done. */}
+              {(draft.weekDays[noteBlock.weekday ?? -1]?.type ?? draft.type) !== 'full' && (
+                <button
+                  type="button"
+                  className={noteBlock.core ? 'core-toggle active' : 'core-toggle'}
+                  aria-pressed={!!noteBlock.core}
+                  aria-label={
+                    noteBlock.core
+                      ? `${noteBlock.title} on ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'} is core`
+                      : `Mark ${noteBlock.title} on ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'} as core`
+                  }
+                  onClick={() => editBlock(noteBlock, { core: noteBlock.core ? undefined : true })}
+                >
+                  Core
+                </button>
+              )}
               <button
                 type="button"
                 className={noteBlock.highlight ? 'core-toggle active' : 'core-toggle'}

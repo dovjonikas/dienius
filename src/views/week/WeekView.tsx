@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, getData, useAppData } from '../../lib/store'
 import { addDays, formatWeekTitle, shortWeekday, todayKey, weekOf } from '../../lib/dates'
 import { CopyJournalButton } from '../CopyJournalButton'
-import { weekdayOf } from '../../lib/repeats'
+import { mappedTemplateId } from '../../lib/weekdayMap'
 import { dayStat } from '../../lib/dayStats'
 import { carriedInto, sleepOn } from '../../lib/shiftDay'
 import { categoryColor } from '../../lib/categories'
@@ -312,7 +312,7 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             stat={day.date <= today ? dayStat(data.days[day.date]) : undefined}
             events={eventsOn(day.date, data.settings.calendars, calendarCache)}
             draggingId={draggingId}
-            weekdayTemplateId={data.settings.weekdayTemplates[weekdayOf(day.date)]}
+            weekdayTemplateId={mappedTemplateId(data, day.date)}
             replanned={!!data.days[day.date]?.replannedOn}
             journalLine={firstLine(data.days[day.date]?.journal)}
             journalTitle={data.days[day.date]?.journal?.trim() || undefined}

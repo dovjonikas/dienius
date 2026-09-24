@@ -111,6 +111,24 @@ later. Seven points, each with every gate green.
   the Library in their own databases. It deletes all three databases now,
   and a test fails if the code opens one the erase does not know (DECISIONS
   "An erase takes this device's keys with it").
+- **Found on the way, after point 5.** The eight defects the rotating-shifts
+  audit had left for their own time, each checked in the code first and
+  each fixed with a test that failed without it: a week's shift, night or
+  rest column can mark a block Core, so such a day scores again; deleting a
+  sleep schedule clears it off a week's own days; the Library puts a list's
+  block on a day template only, since a week's block needs a weekday;
+  deleting a template takes it off the weekday map, and a map that still
+  names a deleted one (an older plan, an older device) counts as unmapped,
+  so Stamp week no longer says it stamped what it could not and the push
+  no longer leaves today's tasks for a tomorrow that will not get them; an
+  imported event given a length is cut at midnight like one given an end,
+  each repeat at its own midnight, and an all-day event is on every date it
+  covers; the worker tells the browser why a file could not be served.
+  Six store actions nothing called went, with twenty classes the
+  stylesheet kept for screens that are gone. And the owner's own reading
+  plan, which any visitor could load from the palette, is out of the app:
+  nothing of the owner's belongs in a public repo (DECISIONS "Eight
+  defects and a reading plan, before the freeze").
 
 ## v2.40 - A kind after a night
 

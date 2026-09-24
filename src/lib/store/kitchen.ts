@@ -105,16 +105,6 @@ export const kitchenActions = {
   },
 
   /**
-   * A removed recipe put back, whole, by the undo its removal offered - the
-   * commit clears its tombstone. A recipe already there is left as it is.
-   */
-  restoreRecipe(recipe: Recipe): void {
-    const data = getData()
-    if (data.recipes.some(r => r.id === recipe.id)) return
-    commit({ ...data, recipes: [...data.recipes, recipe] })
-  },
-
-  /**
    * Gone, on every device - the commit leaves the tombstone - and off every
    * template block that walked it, so no day ahead is given a recipe that is
    * not there. A day already stamped with it names nothing, as a dangling id

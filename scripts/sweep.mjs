@@ -105,9 +105,10 @@ const DESKTOP = [
 
 /**
  * Controls allowed under 44px on a coarse pointer, each for a reason
- * written down in STATE.md's debt table. Anything else is a finding.
+ * written down in STATE.md, section 5: a week's block, whose height is its
+ * length. Anything else is a finding.
  */
-const SMALL_ON_PURPOSE = ['week-block', 'link-button']
+const SMALL_ON_PURPOSE = ['week-block']
 
 /** @param {Page} page @param {string} name */
 async function tab(page, name) {

@@ -171,26 +171,15 @@ test('the command palette can start the tour', async () => {
 })
 
 /**
- * The reading plan used to arrive by itself on first open, which meant it
- * arrived for anybody who opened the live demo - a stranger handed the
- * owner's actual bookshelf. It is a command now, and nothing else puts it
- * in. The first test is the one that matters: an ordinary open writes no
- * library at all.
+ * The owner's reading plan used to arrive by itself on first open, which
+ * meant it arrived for anybody who opened the live demo, and then as a
+ * palette command anybody could run. It is gone from the app since the
+ * freeze: a list is made by whoever uses it. What stays is the guard: an
+ * ordinary open writes no library at all.
  */
-test('opening the app never puts the reading plan in on its own', () => {
+test('opening the app never puts a library in on its own', () => {
   render(<App />)
   expect(getData().library).toEqual([])
-})
-
-test('the palette command loads the reading plan and opens the library on it', async () => {
-  const user = userEvent.setup()
-  render(<App />)
-  await user.keyboard('{Control>}k{/Control}')
-  await user.click(screen.getByRole('option', { name: /Load my reading plan/ }))
-  // Three lanes since v2.0, each advancing on its own - see librarySeed.ts.
-  expect(getData().library.map(l => l.name)).toEqual(['MIND', 'CRAFT', 'LIGHT'])
-  expect(getData().library.map(l => l.items.length)).toEqual([10, 5, 6])
-  expect(screen.getByRole('heading', { name: 'Library' })).toBeInTheDocument()
 })
 
 /**
