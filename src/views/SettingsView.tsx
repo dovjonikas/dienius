@@ -645,8 +645,7 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
                 already open and being looked at. A reminder that arrives
                 only when you are already there is not a reminder. Real ones
                 need a service worker and a push subscription, which is a
-                piece of work of its own - see STATE's "Asked for, not yet
-                built". The North row that sat under them said what the
+                piece of work of its own - parked in docs/BACKLOG.md. The North row that sat under them said what the
                 North tab says, which is the sixth icon and the 6 key. Bring
                 a goal forward, the switch for the card that brought a goal
                 forward on a Monday and after a day that got away, went with

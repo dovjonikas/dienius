@@ -156,7 +156,7 @@ npm run dev       # dev server at localhost:5173
 npm test          # vitest, watch mode
 npm run e2e       # playwright against the production build (npx playwright install chromium, once)
 npm run shots     # the README's screenshots, from the demo under a pinned clock
-npm run sweep     # every screen measured at three sizes in both themes (needs npm run preview)
+npm run sweep     # every screen measured at four desktop sizes in both themes (after npm run build)
 npx tsc --noEmit  # typecheck
 npm run build     # typecheck, build, then generate the service worker
 ```
@@ -166,11 +166,13 @@ Requires Node 22 or newer.
 ## Docs
 
 - [`docs/DAILY.md`](docs/DAILY.md) - for using it rather than building it: setting it up once, and what to do if something looks wrong
-- [`docs/STATE.md`](docs/STATE.md) - where the project is: every feature in a line, what is owed, what will bite you
+- [`docs/STATE.md`](docs/STATE.md) - where the project is: the freeze, every feature in a line, what is owed, what will bite you
+- [`docs/HISTORY.md`](docs/HISTORY.md) - how it got here, version by version
+- [`docs/BACKLOG.md`](docs/BACKLOG.md) - what was asked for: parked, done, and no longer relevant
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - where the code is: the data model, the state flow, which file for which job
 - [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) - how work is done here, and why each rule exists
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) - the harder calls, with what each one costs
-- [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md) - the evidence behind the push rule and the rules under a goal, and what not to build
+- [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md) - the evidence behind the push rule and the score, and what not to build
 - [`docs/AUDIT-v2.9.md`](docs/AUDIT-v2.9.md) - the whole app in one read, for somebody who has not seen it: every screen and where you press, screenshots in both themes, what is known to be imperfect, and what would be decided differently
 
 ## License

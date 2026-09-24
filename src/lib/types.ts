@@ -1207,7 +1207,7 @@ export interface InboxItem extends Timestamped {
  * the only thing "decided" ever tracked was which button had been pressed:
  * the rows looked the same and had the same two ways out. So there is one
  * list now, with the backlog's mechanics and the inbox's cheap way in. See
- * docs/STATE.md, the v2.7 decisions.
+ * docs/HISTORY.md, the v2.7 wave.
  *
  * **There is no `createdAt`, and that is the design.** A list that shows
  * how long something has been sitting there is a list that accuses you every

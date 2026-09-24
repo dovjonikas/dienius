@@ -117,8 +117,10 @@ schedule would have walked into three of them on its first day:
   "Add to template" offers week templates and adds a block with no weekday;
   deleting a template leaves weekday-map entries behind; an imported calendar
   event with a duration is not cut at midnight, one cut is reused for every
-  repeat, and a multi-day all-day event shows on its first day only. They go to
-  STATE's list of things asked for and not built.
+  repeat, and a multi-day all-day event shows on its first day only. They went
+  to STATE's list of things asked for and not built, and all eight were fixed
+  before the freeze (DECISIONS "Eight defects and a reading plan, before the
+  freeze").
 
 ### 1.4 The constraint that shapes the data
 
@@ -1058,8 +1060,8 @@ decision looked at on a phone and on a desktop until it fits both.
   docs/BACKUP-FORMAT.md for a program reading the backup, held to the guard
   field by field by a test, with a backup recorded by the version before this
   one kept byte for byte and its month opened as it was opened then.
-- **The first real month**, walked as a dry run (STATE, "Pirmas realus menuo,
-  dry run"), found three things and each was fixed at once. The roster's
+- **The first real month**, walked as a dry run (HISTORY.md, "Pirmas realus
+  menuo, dry run"), found three things and each was fixed at once. The roster's
   cycle filled only to the end of the month it started in, so a rota could
   not be carried into the next month without working out where the pattern
   stood on its first day: it fills to the end of the month on screen now,

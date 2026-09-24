@@ -174,8 +174,9 @@ export function knowsZone(zone: string): boolean {
  * exists for, and a zone that is not here is still read as local and named
  * in `ignored`, which is where it was for every zone until v2.1. Reading
  * the file's own VTIMEZONE block would be exact for any name and is a much
- * bigger job; this is the honest middle STATE.md named, and the day
- * somebody needs a zone that is not here the fix is one line.
+ * bigger job; this is the honest middle the debt named (HISTORY.md, the
+ * resolved debts), and the day somebody needs a zone that is not here the
+ * fix is one line.
  */
 export const WINDOWS_ZONES: Record<string, string> = {
   'FLE Standard Time': 'Europe/Kiev',

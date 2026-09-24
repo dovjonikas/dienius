@@ -39,12 +39,12 @@ friction before the plan even loads.
 ## No streak on the day view - and one, described rather than kept, on the review
 
 (The review's streak went too, in v2.7 - see "Review says facts, and no
-longer a streak" near the end of this file. The line this entry drew
+longer a streak" further down this file. The line this entry drew
 between a number you can lose and a number you read did not hold, and the
 paragraphs below stand as the record of why it was drawn.)
 
 `dayScore` in `src/widgets/day-plan/score.ts` computes a score from one day's own tasks and
-nothing else. Nothing on the day view, the calendar or the North card counts consecutive days,
+nothing else. Nothing on the day view, the calendar or North counts consecutive days,
 nothing records a longest run, and no notice ever says a run has ended.
 
 This is a considered omission, not an oversight. A streak turns a single bad day into a reason to
@@ -55,7 +55,7 @@ punishes the exact pattern it should be accommodating. The cost of leaving it ou
 are a proven engagement lever, and this app is deliberately worse at pulling someone back in after
 a gap. That is the point, not a gap in the feature set.
 
-The one place a run of days is shown is the Review tab (`highlightStreak` in `src/lib/review.ts`):
+The one place a run of days is shown is the Review tab (highlightStreak in `src/lib/review.ts`):
 how many days in a row, counting back from the end of the range, at least one key task was
 finished. It is computed from the days each time and never stored, so there is no record to
 protect and no longest run to beat; it counts key tasks rather than any task, because "I did
@@ -77,6 +77,8 @@ exchange for not quietly guilt-tripping someone for a day they never engaged wit
 
 ## Four day types, one scoring rule
 
+> **Superseded in v2.4, in part.** A low day is scored on its key tasks alone whatever its type, so the score asks whether the day is low before it asks whether it is full (`score.ts`) - see "A low day is the 40% doctrine as one press".
+
 `Template.type` is `'full' | 'shift' | 'night' | 'rest'`, but `dayScore` only ever asks one
 question: is the day full, or not. Shift, night and rest all count only tasks marked `core` and
 ignore everything else, with no difference in behavior between them. A night shift and a day shift
@@ -91,7 +93,7 @@ ever turns up; today it hangs a label and nothing else.
 
 ## A year strip with no in-between
 
-(The strip went in v2.7 - see "The Year view goes" near the end of this
+(The strip went in v2.7 - see "The Year view goes" further down this
 file. What follows is what it was meant to be, kept because it says how a
 picture becomes a scoreboard without anybody deciding it should.)
 
@@ -103,7 +105,7 @@ cell as a miss, because on GitHub it usually is one. Borrowing the idiom without
 reading took more restraint than building the grid did.
 
 The fix is that a cell only ever has two states worth telling apart, and there is nothing between
-them. `buildYearCells` in `yearGrid.ts` colors a cell by its template the moment the day has one,
+them. buildYearCells in yearGrid.ts colors a cell by its template the moment the day has one,
 whether that day is freshly stamped and completely untouched or nine tasks out of ten done - both
 look identical, a plain colored square. The only thing added on top is a thin ring, and only when
 `dayScore` would call the day fully finished: every counted task done, the same completion `dayScore`
@@ -164,13 +166,15 @@ slate on deletion, while its tasks, its color history, and its score all stay pu
 one out rather than the consistent choice.
 
 The cost is that every place that reads `templateId` - `DayView`, `CalendarView`, and the
-year strip's `yearGrid.ts` while it existed - has to treat a template lookup that comes back empty
+year strip's yearGrid.ts while it existed - has to treat a template lookup that comes back empty
 as "no template" rather than assuming it always resolves. All of them already did, before this was
 ever written down: a dangling `templateId` degrades to an uncolored, unlabeled day rather than
 crashing, which is pinned by tests in `store.test.ts` and `DayView.test.tsx` (and was in
-`yearGrid.test.ts` until the strip went in v2.7).
+yearGrid.test.ts until the strip went in v2.7).
 
 ## Templates instead of recurring tasks - and the small repeat that came later
+
+> **Superseded in v2.29, in part.** A rotating schedule is laid out in the month's roster - dates tapped, or a stretch filled with a cycle of kinds - and Apply stamps it in one commit, so it is still stamps and not a background rule; see "Rotating shifts: a kind is a template, the roster is the stamps, and a sleep belongs to the day it wakes into".
 
 Most planners represent a repeating commitment as a recurring task: "every weekday, 09:00, standup."
 Dienius was built without a recurrence engine. Instead, a `Template` is a named, coloured list of
@@ -270,6 +274,8 @@ was never part of the moment a day starts.
 
 ## Starter templates offer, they never install
 
+> **Superseded in v2.24 and v2.36, in part.** A load writes one device-local moment, dienius:north-seen, for the window after sleep, and still not a byte of the plan; and Erase all data removes what the device holds and reloads rather than writing an empty plan back (see "An erase takes this device's keys with it").
+
 The first-run experience (`docs/RESEARCH-ADHD.md` section 11: a median 70 percent of ADHD-tool users
 discontinue within 100 days, sharpest right after acquisition, with confusing interfaces and setup
 cost among the recurring causes) needed a fix without touching the app's oldest rule: it ships empty,
@@ -316,8 +322,7 @@ warned against: it is one more field to migrate forever, and a person who erases
 Settings' "Erase all data" would have landed on a blank screen instead of the state that actually
 describes an empty install, since a boolean does not un-set itself just because the data it was
 tracking got deleted. Computing it fresh means Settings' reset needed no special case at all - it
-already writes `defaultData()` back to storage and reloads, and the very next read reports a first
-run, for free.
+left the device empty and reloaded, and the very next read reported a first run, for free.
 
 ## An installed copy tells you when it updates, and asks before it reloads
 
@@ -397,6 +402,8 @@ whole feature was built to close would have allowed.
 
 ## Relatedness is a known cost
 
+> **Superseded in v2.7, in part.** The year strip and its ring are gone (see "The Year view goes"), so the fraction and the capacity figures are what show real progress now.
+
 Self-determination theory identifies three needs that sustain motivation, and is the best-evidenced
 account of what motivates people with ADHD specifically (Morsink et al. 2022): autonomy, competence,
 relatedness. This entry was written when the research was, on 2026-09-01, as "the motivator
@@ -457,6 +464,8 @@ time.
 
 ## Eight confirmations - built as documented, kept as built
 
+> **Superseded, in part.** The if-then time bands and the if-then line went with the day view's rule line in v2.0, and rules were retired with goals in v2.28; a float is no longer dragged onto the grid - selecting one for the gap offers is what opens a collapsed grid (`useTaskSelection.ts`); and since v2.7 the first-run screen names no themes, offering the tour, the sample week and the starters instead.
+
 A handful of judgment calls made along the way, confirmed rather than reopened. Each already has its
 full reasoning where the feature itself is documented; this is the short record of the decision.
 
@@ -487,6 +496,8 @@ full reasoning where the feature itself is documented; this is the short record 
   nothing, rather than manufacturing a placeholder.
 
 ## Sleep is a named list of schedules, greyed on the grid, chosen per day
+
+> **Superseded, in part.** The sleep band is drawn `SLEEP_BAND_MIN_MINUTES` (90) deep, and only when the nearest anchor is within `SLEEP_BAND_BRIDGE_CAP_MINUTES` (120) of the boundary (`timelineLayout.ts`); the constant named below is gone.
 
 The fixed 07:00-23:00 waking window in `capacity.ts` was never configured per day, but it was also
 never visible - hours outside it were simply absent from the timeline grid, so neither the free-time
@@ -536,6 +547,8 @@ regardless of how much of the band today's anchors happen to leave room to show.
 ---
 
 ## One screen, zero scroll - the day view rebuilt around what a glance has to answer
+
+> **Superseded in v1.11, v2.28 and one look, in part.** The gap floor follows the pointer - 44px under a finger, 28px under a mouse; every view, not Today alone, is the window's height from 1024px up, each page scrolling inside its own body (see "It fits: the shell is the window's height on every view"); and rules no longer belong to goals, which were retired with them (see "North is one text, goals retired").
 
 The day view worked and was not worth opening. Everything it knew was on the page, and finding any one
 thing meant scrolling past the rest of it. The rebuild is not new features; it is the same day, arranged
@@ -597,17 +610,19 @@ long enough day scrolls its task column, which is the correct trade.
 
 **If-then rules moved to Settings, unchanged.** They surfaced as a line on the day view, and on a day
 with no eligible rule that line was an empty prompt occupying the part of the screen that has to answer
-"what am I doing now" in two seconds. Every rule already written is still there and `IfThenBoard` is
-still the one place they are authored; only where they live moved. `IfThenDayRule` is kept, tested and
+"what am I doing now" in two seconds. Every rule already written is still there and IfThenBoard is
+still the one place they are authored; only where they live moved. IfThenDayRule is kept, tested and
 currently unmounted - parked for a design worth giving it, not deleted.
 
 > **Superseded in v2.0.** The design worth giving it turned out not to be a placement at all: a rule
-> belongs to the goal it protects, and both `IfThenBoard` and `IfThenDayRule` are gone. See "A rule
+> belongs to the goal it protects, and both IfThenBoard and IfThenDayRule are gone. See "A rule
 > with no goal is noise; under a goal it is armour", below.
 
 ---
 
 ## The calm pass: colour that means something, and a screen that says what is happening now
+
+> **Superseded, in part, by what came after.** Categories are the owner's own list since v2.0 - six defaults, no cap, a default's colour a dark and light pair in the stylesheet (`categories.ts`); a ring's gap is drawn in `--ground` (see "The pixel standard"); the edge is 4px on block and card alike; since v2.12 `--mark` also draws a key block's edge; since v2.24 the now line carries a marker that says the minute; a short gap keeps 44px under a finger and 28px under a mouse; and the rollover is a quiet button with an arrow, not a link.
 
 Everything on the day view was the same blue. A timeline where every block is one colour is a timeline
 that only tells you *when*, never *what*, and the eye has to read every label to learn anything. This
@@ -720,7 +735,7 @@ user-visible gain.
 
 **Nothing migrates, and that is by design.** findPreset has always fallen back for an unknown id, so a
 stored presetId of sketchbook renders as Dark from the next load onward without a migration step that
-could itself go wrong. Pinned by a test that walks all eight deleted ids.
+could itself go wrong. Pinned by a test that walks all ten deleted ids.
 
 **Dark is a material, not an absence.** #121417, a dark grey with a trace of warmth, not #000. On a pure
 black page every surface above it reads as a hole punched in the screen. Cards sit six percent lighter
@@ -778,6 +793,8 @@ unreadable, only quiet.
 
 ## Making it feel like something: motion, feedback, and the three kinds of day
 
+> **Superseded in v2.25, in part.** The tick is one path through a mask, drawn on by a clip-path, with no registered properties (see "The day's masthead lies on its columns, and a layer's fills are its own").
+
 **One curve, two durations, everywhere.** Every control in the app now answers the pointer at the same
 speed on the same easing, taken from the motion tokens. That single fact is most of what separates
 software that feels like one piece from software that feels like several - and it is entirely invisible
@@ -824,8 +841,8 @@ and reading its 20 as a length would be worse than not supporting durations at a
 
 **A day has three tenses and they no longer look identical.** Today has a clock, a now-line and a
 countdown. A past day is a record: the same layout at a lower voice, no rollover button, and an empty one
-says "this day went by without a plan - that is allowed" rather than inviting a plan for a day that is
-over. A future day is a plan: no now-line, nothing counting down, and its free gaps read as available
+says "Nothing planned" and "This day went by without a plan." rather than inviting a plan for a day
+that is over. A future day is a plan: no now-line, nothing counting down, and its free gaps read as available
 rather than as missed. Nothing is ever disabled on any of them - a day you cannot fix is a day whose
 mistakes are permanent, and the entire push mechanic depends on being able to reach back.
 
@@ -837,11 +854,13 @@ place people glance at first, which is the single distinction this whole app tur
 
 ## The clock, the inbox and the nudges: nothing that is not the plan is ever a second place where work lives
 
+> **Superseded, in part.** Both nudges went in v2.5 (see "A setting has to earn its place") and the inbox became Later in v2.7, one of the three shelves of CONVENTIONS section 14 (see "Later, where two shelves were"); the sound is one engine with four profiles since v2.15 (`chime.ts`); and in Later mode the line is parsed like a task, a typed time dropped.
+
 Written when these four things shared a dock. They no longer do - the timer and stopwatch are a
 popover behind the clock in the header and a small floating widget while one runs
 (`widgets/clock/`), the inbox is one of the four shelves under the day (CONVENTIONS section 14),
 and the one nudge became two: the interval nudge during focus work described below, and a nudge
-before a timed task (`TaskReminder.tsx`), off by default, once per task per day, never while the
+before a timed task (TaskReminder.tsx), off by default, once per task per day, never while the
 app is closed. The rule they share is unchanged and is what this section is really about: each is
 either invisible or one tap away, and none of them is ever a second place where work lives.
 
@@ -978,6 +997,8 @@ free.
 
 ## A rule with no goal is noise; under a goal it is armour
 
+> **Superseded in v2.28.** Goals and rules were retired and North is one text; old goals and rules stay in the data but nothing shows them (see "North is one text, goals retired").
+
 If-then rules shipped in v1.2 as their own board and stayed unread for eight
 versions. The board moved to Settings; one rule at a time was surfaced onto the
 day view, chosen by day type and time of day; that was unmounted again because
@@ -1064,7 +1085,7 @@ the decision the rest follows from:
   Absent means the template's own answer stands, which is what makes a week
   template that overrides nothing behave exactly like a day one.
 
-**Why not a second entity.** A `WeekTemplate` type would need its own place
+**Why not a second entity.** A WeekTemplate type would need its own place
 in `AppData`, its own table in `validate`, its own sync diff, its own
 stamping path, its own editor and its own answer everywhere a template id is
 resolved - and the thing it would be modelling differently is one filter.
@@ -1130,6 +1151,8 @@ copies rather than converting: the day template is untouched and still
 stampable, because somebody trying this out should not lose the thing that
 already worked.
 ## North is built once and left in peace
+
+> **Superseded in v2.28.** North is one text written in one field - the picture, headings with their lines, and a signature after `---` - with no goals, rules, Compose, Monday card or goal switch (see "North is a text" and "North is one text, goals retired").
 
 Until v2.1 a goal was written in Settings and read in North, on an argument
 ARCHITECTURE section 6 has carried since v1.4: something you can rewrite from
@@ -1203,6 +1226,8 @@ tests passed six days a week since v1.4 and would have failed on the seventh.
 They are pinned to a Wednesday now, with a Monday test of their own.
 ## The phone is walked, not only measured
 
+> **Superseded in v2.7, in part.** The year's cells went with the Year view (see "The Year view goes").
+
 The measuring pass had said for two versions that the phone was "two
 controls": the quarter-hour arrows at 22px and the focus bar's exit at 30px.
 Both are fixed in v2.1 and the pass reads zero on the phone. The walk that
@@ -1247,10 +1272,12 @@ their duration (a documented exception since v1.6); the year's cells stay
 10px marks; the reorder grips stay 32px wide at 44px tall; the duration
 chips stay 40px wide at 44px tall, because widening six of them wraps the
 row; the time picker's rows stay 30px, because it is a scrolling column
-and a taller row shows fewer hours. Each is in STATE section 5 with its
-reason.
+and a taller row shows fewer hours. Each was in the phone checklist of the
+time with its reason (HISTORY.md).
 
 ## Something came up is one sheet, for any day, and it proposes
+
+> **Superseded, in part.** The calendar's door is the day card a press on a date opens (v2.8); nothing an interruption touches leaves the day - a routine block stays and the summary says "The routine stays", a one-off let go is set aside, "Set aside, waiting" (v2.5, see "Set aside, not deleted"); and the phone's bar is the seven views and Settings (v2.27).
 
 Replan v1 answered one situation: a block that starts now, on the day being
 looked at. The situation that actually happens is a phone call about another
@@ -1391,6 +1418,8 @@ once the feature has been used is a control nobody finds.
 
 ## The rail opens on intent only
 
+> **Superseded in v2.6, in part.** Scratch's pen left the rail for the header, so the case below is focus handed back to any rail button after Escape (`NavRail.test.tsx`).
+
 Since v2.0 the navigation rail unfolded to its labels two ways: a mouse
 arriving on it, and any focus landing inside it. Both were argued for at
 the time and both were wrong in the same way - they read a signal the
@@ -1436,6 +1465,8 @@ Escape handing the focus to the pen.
 
 ## A low day is the 40% doctrine as one press
 
+> **Corrected at the freeze.** RESEARCH-ADHD.md no longer states a 40% rule - it was rewritten on 2026-09-01, and its only 40% is a figure it debunks - so the number below is this app's own rule rather than the research's: the key tasks at 40% of their length, and the day scored on them.
+
 RESEARCH-ADHD.md's 40% rule has been in the docs since v1.0 and in the
 evening close's "enough" threshold since v1.9, and until v2.4 nothing let
 a person act on it in the morning. The plan written for a good day sat
@@ -1472,6 +1503,8 @@ sense and cutting lunch is not a plan.
 
 ## A step can carry a timer
 
+> **Superseded in v2.13.** Steps are gone - each became a line of the note beside it (`stepsToNote.ts`) - and nothing starts the timer from a line; it is started from the clock or the palette.
+
 The owner's morning is one block with four steps - water, ten minutes of
 meditation, gratitude, a page of Pressfield - and until v2.4 the one step
 with a length had no way to be timed except by opening the clock, typing
@@ -1499,6 +1532,8 @@ or a task gone by then is nothing to tick. The chime is the timer's own,
 quiet one.
 
 ## The pixel standard
+
+> **Superseded in v2.5, in part.** The self-check counts its shapes rather than stating a number, and checks eleven now (see "A tool that cannot see a thing will say it is fine").
 
 The owner's sentence, from the v2.4 brief: text that looks even slightly
 off, a gap too wide or too narrow, is a defect, not taste. This is what
@@ -1696,7 +1731,7 @@ failure this app exists to avoid, built into the one place meant to be kind.
 day, on its own button in the header beside Notes, reachable from anywhere
 with `J`. It saves while you type and there is no Save button, because
 there is nothing to decide. No questions, no fields, no length, no prompt
-beyond a quiet "...".
+beyond a quiet "Whatever today was".
 
 It was the clock panel's fourth tab when it was built, on the reasoning
 that the clock is the one control on screen from every tab. The reasoning
@@ -1743,6 +1778,8 @@ one wins.
 
 ## A setting has to earn its place
 
+> **Superseded in v2.28, in part.** The one switch for the goal card went with the card, and `afterASlowDay` is still written for older devices while nothing reads it (see "North is one text, goals retired").
+
 Settings accumulate. Every one of them was a good idea on the day it went
 in, and none of them ever comes out on its own, so a settings screen is a
 museum of every question the app has ever wanted to ask. This one had grown
@@ -1759,9 +1796,9 @@ somebody would change is still clutter if the app can simply be right.
 
 - **"Nudge during focus work"** and **"Before a timed task"**: both could
   only fire while the app was already open and being looked at, because
-  there is no service worker and no push subscription. A reminder that
-  arrives only when you are already there is not a reminder. Real ones are
-  in STATE's "Asked for, not yet built".
+  the service worker has no push handler and there is no push
+  subscription. A reminder that arrives only when you are already there is
+  not a reminder. Real ones are parked in BACKLOG.md.
 - **"And on a Monday"**: the Monday goal card and the slow-day goal card
   are the same card in two moments. Nobody has ever wanted one without the
   other. One switch now carries both.
@@ -1870,6 +1907,8 @@ button that stops being filled rather than fading.
 
 ## Once and only once
 
+> **Superseded in v2.24, in part.** The now line carries a small marker in the hour column that says the minute, because the grid's hours are not evenly spaced.
+
 The owner's brief for v2.6 opened with two lines under Today's header:
 "Timed tasks: 6h40. Free: 9h20 across 8 gaps." and "Sleep 23:00-07:00 (8h)
 is not counted as free." - useless, in their word, because every number in
@@ -1907,6 +1946,8 @@ are the trade the principle asks for, and both were checked on the screen
 before being kept.
 
 ## Nothing moves on hover
+
+> **Superseded, in part.** The North line has no peek - it is one line of North's own text and a press opens North (v2.28); there is no Monday card (v2.28); and the single pane grows to 1336px, the shell's 1600 with the rail (v2.7).
 
 The owner's words: a pointer resting on something may show something, but
 may not push anything that is already drawn; a layout shift under the mouse
@@ -1961,6 +2002,8 @@ where the task list was paying for it; alone on a screen, a timeline is
 allowed the width a calendar takes.
 
 ## The arrows come back, and the date stops moving
+
+> **Superseded in v2.9.** On a wide screen both arrows stand together at the left of a block the month's width, with the day's word beside them and the date under it, and the hidden ghost is gone (see "Both arrows stand inside the month they point at").
 
 The arrows either side of the date came off the wide header after v2.5
 because they overflowed: the owner saw them out where they should not be,
@@ -2160,7 +2203,7 @@ note that starts with `!` goes straight there without a second question.
 A new item lands at the end, as it did in the Backlog, because the order is
 the owner's and nothing in this app sorts a list for them.
 
-**What the code keeps, and why.** `LaterItem` is the old `BacklogItem`
+**What the code keeps, and why.** `LaterItem` is the old BacklogItem
 shape; the storage field is still `backlog` and the sync kind is still
 `'backlog'`, because those are the wire, and a device on an older build
 carries tombstones keyed `backlog:<id>` that have to keep matching. Every
@@ -2208,6 +2251,8 @@ of how a picture becomes a scoreboard without anybody deciding it should.
 
 ## Review says facts, and no longer a streak
 
+> **Superseded, in part.** The month's summary line went in v2.20, since the grid under it draws every day; and Review shows no North and no ages, which went with goals in v2.28.
+
 RESEARCH-ADHD section 8 settled the refusal of streaks with a better
 reason than the app had: Lally et al. found a missed day does not
 measurably disrupt habit formation, so a counter that resets to zero
@@ -2218,7 +2263,7 @@ about a week afterwards. The v2.7 brief read Review against section 8
 again and the line did not hold: "Streak: 3 days with a key task done" was
 still the one figure in the app that resets to zero, and a described
 streak is a streak the moment the number is smaller than last week's. It
-is gone, with `highlightStreak` and its seven tests. The calendar's month
+is gone, with highlightStreak and its seven tests. The calendar's month
 line, which said "62% done - 14 active days - longest run 5", said the
 same two figures on a second screen; it says how many days had a plan and
 nothing else.
@@ -2235,6 +2280,8 @@ three tones from the v2.4 month decision; it is the day's own ratio drawn
 once, and it is the owner's to revisit after the week in the app.
 
 ## Where the plan and the week disagreed
+
+> **Superseded in v2.28, in part.** Review has no North section, so the reading sits under the charts and above the block counts and Read and watched.
 
 The one thing v2.7 added, and it is built for the week after the app
 closed: the owner lives in it for a week, and the next brief comes out of
@@ -2279,6 +2326,8 @@ if a later wave ever wants to colour a line, that is the streak coming
 back through a side door and the answer is no.
 
 ## The day card opens, and the hover peek goes
+
+> **Superseded in v2.18, in part.** A hover peek is back, read-only and never over its own day (`DayPeek.tsx`), and a press still opens this card (see "The month says what is on a day again, and this time nothing on it can be pressed").
 
 The owner, on the month: the cell shows the whole day when the pointer rests
 on it, and the pointer cannot then travel to what it shows - the card closes
@@ -2404,6 +2453,8 @@ line it up against but the window.
 
 ## The month's name was moving the arrow
 
+> **Superseded in v2.9, in part.** The day header no longer uses a hidden ghost, so the month's hidden "September" is the only one left.
+
 "Those arrows above the calendar, one has randomly flown out." Neither arrow
 had moved: the name between them sizes the row, so September's is sixty
 pixels wider than May's and the arrow after it stands sixty pixels further
@@ -2431,7 +2482,8 @@ there, one scroll away; it is only not where the column starts.
 bar came out of the column and the candidate went into the timeline. What
 held is the rest of it - the column still opens at the day, still blocks
 nothing, and still says in words what it says in marks. See "The colours
-leave the column" at the end of this file.
+leave the column, and the candidate goes into the timeline" further down
+this file.
 
 **An hour a block covers carries that block's colour**, in the same wash the
 timeline paints, with a bar along the bottom as wide as the share of the hour
@@ -2599,6 +2651,8 @@ down is the wrong direction to even that up in.
 
 ## One link, and nothing that goes to the network
 
+> **Superseded in v2.19 and v2.21, in part.** A library item's link field says one sentence when an address is in a scheme it cannot open (`linkRefusal` in `link.ts`), while a half-typed word and a task's link field stay silent; and a file picked on this computer is a third kind of door, with a tab opened without `noopener` on purpose - see "A file on this computer is pointed at once, not copied and not served".
+
 The owner: "at the details you could put a link in, say if you take a book
 out - if it is Spanish learning, then you see easy, where up next you can
 press and it throws you straight there, but so it throws you into a new tab
@@ -2687,12 +2741,14 @@ against the old hook.
 
 ## The age on a goal was read against the streak rule, and stays
 
+> **Superseded in v2.19 and v2.28.** The age left North's page in v2.19 and goals were retired in v2.28, so nothing computes or shows a goal's age any more, and `Goal` is kept only as data - see "The count of days is gone, one version after it was kept" and "North is one text, goals retired".
+
 v2.18 asked one question about "61 days lived toward this": can it fall?
 
 It cannot, and the reason is worth writing down because the answer is not
-"we checked the screen". `goalAge` is arithmetic on two dates - the day the
+"we checked the screen". goalAge is arithmetic on two dates - the day the
 goal was written and the day being asked about - and `createdAt` is written
-once, by `addGoal` and by the Compose draft, and by nothing else in the
+once, by addGoal and by the Compose draft, and by nothing else in the
 store. Editing a goal does not restamp it. Archiving does not, deliberately,
 so an archived goal still knows how long it was carried. Restoring does not.
 There is no missed-day arm to break and no zero to reset to: a week nobody
@@ -2707,7 +2763,7 @@ it earns.
 What is new is `north.test.ts`, "nothing a person does to a goal can make its
 age smaller": it walks one goal through edit, archive and restore and holds
 the number against each. The property was true by construction and true by
-nobody's decision; a later change to `updateGoal` or `restoreGoal` that
+nobody's decision; a later change to updateGoal or restoreGoal that
 starts stamping a date now has somewhere to fail.
 
 ## The month says what is on a day again, and this time nothing on it can be pressed
@@ -2764,8 +2820,10 @@ flicker the whole design is against.
 
 ## The count of days is gone, one version after it was kept
 
+> **Superseded in v2.28.** The goal's age and its label, Compose's archived fold and Review's goal ages went with goals - see "North is one text, goals retired".
+
 v2.18 asked whether "61 days lived toward this" could fall, found that it
-could not, and kept it: `goalAge` is arithmetic on two dates, `createdAt` is
+could not, and kept it: goalAge is arithmetic on two dates, `createdAt` is
 stamped once and never restamped, and there is no missed-day arm to break.
 That reasoning was correct and it answered the wrong question.
 
@@ -2778,9 +2836,9 @@ the figure can and cannot do to you.** North is where somebody comes to
 remember why, not to check a number, and a number on it invites the check
 whether or not anything hangs on the answer.
 
-So it is gone from the reading page, and `north.test.ts` now holds that
+So it is gone from the reading page, and `NorthView.test.tsx` now holds that
 nothing on that page is a number at all - not the age, not a count, not a
-digit. `goalAge` and `ageLabel` stay, because the archived fold inside
+digit. goalAge and ageLabel stay, because the archived fold inside
 Compose still says how long a goal was carried before it was put away, and
 the review's North line still says an age; both of those are records being
 read rather than a page being lived on.
@@ -2790,6 +2848,8 @@ The v2.18 entry above is not wrong and is left standing. What it establishes
 nothing about it needed to be feared. It simply was not the whole question.
 
 ## A rule has no colour, because the colour did nothing
+
+> **Superseded in v2.28.** If-then rules are no longer shown or written anywhere, and `IfThenEntry` is kept only as data, a stored colour riding along unread - see "North is one text, goals retired".
 
 The owner asked what the nine swatches under an if-then rule were for. The
 honest answer, found by following the value rather than by remembering what
@@ -2826,6 +2886,8 @@ painting.
 
 ## A goal is three sentences until somebody looks at it
 
+> **Superseded in v2.28.** Goals are retired and North is one text, so there is no goal card to fold and no goal screen in the sweep - see "North is one text, goals retired".
+
 Four goals with everything on them is about forty lines of text, and the
 owner's word for the result was a pile. Their ask was to see everything from
 a card on hover, without having to read a heap.
@@ -2859,6 +2921,8 @@ pointer-only because on a phone the same content is measured by `North`
 itself.
 
 ## Three corner steps, not two, and the reason is an 18px checkbox
+
+> **Superseded in one look, stage 2.** Every corner is the one 8px `--r`; the step names all point at it, only `--r-round` is another shape, and a preset no longer reaches any corner (DESIGN.md, "Corners").
 
 The night brief asked for two border radii in the whole app: one small for
 buttons and fields, one larger for cards and modals, on the rule that a
@@ -2939,8 +3003,9 @@ the door opened a tab at a `blob:` URL showing the file from disk.
 Three alternatives, and why not:
 
 - **Store the bytes**, the way `photos.ts` stores a photograph. It would work
-  on an iPhone too. But it puts a book-sized binary in the backup and the
-  sync path, and the owner's case is a file that is already on the disk and
+  on an iPhone too. But those bytes stay on the device that stored them, as
+  a photograph's do, so the other device would still not have the file, and
+  the owner's case is a file that is already on the disk and
   is going to stay there. A copy that goes stale is worse than a reference.
 - **Serve the folder at an address.** Still the right answer for two devices,
   and still what the refusal says where there is no picker. It is the wrong
@@ -2974,6 +3039,8 @@ is passed, and the reference is the entire point. There is nothing to protect
 against: the tab holds a blob this app made, on this app's own origin.
 
 ## Two devices meet in the repo, because it is already there
+
+> **Superseded in v2.34, in part.** The backup no longer writes this device's state over its file: `writeMerged` in `cloudBackup.ts` merges into what the file holds and reads and merges again once on a refusal; and a push through the repo waits eight seconds on a computer and three on a phone, one that cannot leave with the page sent first on the next open - see "An older copy is never written over a newer one".
 
 The owner: how do the computer and the phone see the same plan, without
 pressing much, and knowing when you move from one to the other.
@@ -3218,8 +3285,8 @@ templates with a block of the same name. The low day's one sentence was four
 lines of bold at heading size and read as a warning; it is regular weight. An
 open goal on North lay over the neighbour below it with nothing to say which
 was which in a dark theme, and the neighbour's identity line, showing under
-the open half, read as a card with nothing else on it; the open goal carries
-an inset edge on three sides. The rollover's aside said "tomorrow has it
+the open half, read as a card with nothing else on it; the open goal carried
+an inset edge on three sides, until goals were retired in v2.28. The rollover's aside said "tomorrow has it
 anyway"; it says "tomorrow already has it". And the Return hint, a desktop
 keyboard's word, is not shown on a finger, where at 390px it had cost the
 block editor's title field a third of its width.
@@ -3230,6 +3297,8 @@ wave, on the two devices the owner uses. A clean report from a pass is
 still what it always was: nothing was found, not nothing is there.
 
 ## North is a text
+
+> **Superseded in v2.24, v2.26 and v2.28, in part.** The text is written in one textarea with Save and Cancel and nothing is saved while typing, though leaving the page with the field open saves it; Edit stands at the right of the page's name; the page is the picture with every blank line kept, heading cards and the signature, goals are retired, and the morning brings the picture in a window after sleep rather than opening this page - see "North is one text, goals retired".
 
 The owner asked for one thing in North, in one paragraph: a personal text
 they see every morning. A dozen or so short lines, in blocks, a blank line
@@ -3298,7 +3367,7 @@ a thought it does not pay for.
 
 **One voice.** Four verbs for making a thing - Make a category, Make a list,
 Create a template, Compose - are one now: New category, New list, New
-template, and the goals' button says Edit goals, since beside the text's own
+template, and the goals' button said Edit goals until goals were retired in v2.28, since beside the text's own
 Edit the word Compose read as a second verb for the same thing. Every button
 label on every screen was collected into one list and read as a vocabulary,
 which is the only way a vocabulary can be checked, and these four were the
@@ -3326,8 +3395,8 @@ Something came up, which is how a thing gets onto it.
 buttons before anybody had pressed anything, the loudest thing on a page
 whose one job is New template. Deleting is rarer than opening by a hundred
 to one, and the place a person is sure which template they mean is inside
-it; so the row keeps Edit, and Delete sits at the far end of the editor's
-footer, outlined until armed and filled once armed. The category list in
+it; so the row keeps Edit, and Delete sits at the left end of the editor's
+last row, in the danger ink with no edge until armed and filled once armed. The category list in
 Settings did the same thing with six rows and does the same thing now: Edit
 on the row, Delete inside the editor, then the panel that says what uses the
 category and where that goes. A scratch note carried five controls in a row,
@@ -3365,6 +3434,8 @@ sync check against the real GitHub, is the owner's to run, and its checklist
 is in CHECKS-BY-HAND.
 
 ## A line in capitals is a heading
+
+> **Superseded in v2.24, v2.26 and v2.28, in part.** A heading owns every line to the next heading, North's page is open with nothing on a hover, goals are retired, and on the day the headings stand in the rail with a card of their lines (`NorthDay.tsx`) - see "North is one text, goals retired".
 
 Five things in one message, with a rule over all of them: nothing reworked,
 DECISIONS and CONVENTIONS kept, and North's own law - goals are not
@@ -3448,6 +3519,8 @@ a climb. It measures where a stop is on the screen once focus has brought it
 into view, plus the page's own scroll.
 
 ## The signature stays on the day, the introduction comes after sleep, and now says its minute
+
+> **Superseded in v2.28, in part.** Goals are retired, the page is a picture, heading cards and a signature, and on the day the signature stands under the day's line only from 21:00 while the rail carries the headings alone - see "North is one text, goals retired".
 
 One message replaced everything asked the same day about North, the day's
 timeline and Review's counts, in nine stages, over the rules that hold
@@ -3550,6 +3623,8 @@ given room rather than smaller targets.
 
 ## North is written on a page, and a textarea decides what the page can show
 
+> **Superseded in v2.26, v2.28 and one look, in part.** The field writes at 16px while the page reads the picture a step larger on a plate, the headings on cards with no tracking and the signature with no rule, so pressing Edit changes the picture's size - see "North is one text, goals retired".
+
 The v2.25 design pass, stage 7, from two messages: the pass's own brief for
 North, and a longer one about the editor that the owner queued for after
 the pass - a writing place like iA Writer or Bear rather than a form.
@@ -3592,6 +3667,8 @@ quieter ink. The page's name, North, is smaller and quieter than the words
 under it. Going between reading and writing is a fade of about 150ms.
 
 ## The day's masthead lies on its columns, and a layer's fills are its own
+
+> **Superseded in v2.26 and one look, in part.** The masthead's parts stand in the day's own grid, its first row running across the rail's column too, and its second row carries a line of North's text rather than a goal's.
 
 The v2.25 design pass, stage 10, and four messages the owner sent while it
 ran. Two were about Today on a wide screen: the right-hand side was
@@ -3679,10 +3756,11 @@ tokens are no longer declared. Buttons that were outlined - the Focus
 screen's way out, the timer's Try, the floating clock's, Later's, the task
 sheet's link to its note - are the kinds; boxes that had an edge - the
 evening's card, a calendar's and a restore's rows in Settings, the colour
-and library sheets in a template's block row, the day peek, the reminder -
-do not. What is kept, and why, is at the end of docs/DESIGN-AUDIT.md.
+and library sheets in a template's block row, and the day peek - do not. What is kept, and why, is at the end of docs/DESIGN-AUDIT.md.
 
 ## North holds the eye: a line of its words on the day, and a page that is open
+
+> **Superseded in v2.28, in part.** Where the text has nothing for the day nothing stands in its place, and the tour's North step ends on Save; the rail holds a small North and the headings only, and the page is the picture on a plate, the headings on cards and the signature at its foot - see "North is one text, goals retired".
 
 v2.26, from one brief: North worked and held nobody. Under the date the day
 showed a goal's name, cut off; the rail's headings read like a menu; the
@@ -3747,6 +3825,8 @@ the row keeps its height while the field is open, so going from reading to
 writing still moves no line of the introduction.
 
 ## Kitchen: recipes are their own, read by North's rule, and never added up
+
+> **Superseded in v2.30, in part.** Recipes lie on cards by meal, Cook and its count are gone, a meal block walks a list of recipes by the date (`recipeIds`, with `recipeId` kept as the first), and a meal's recipe is chosen in a small Kitchen rather than a select - see "Kitchen, as it was meant".
 
 v2.27, from one brief queued during the design pass: a recipe library that
 looks and feels like the Library with data of its own, recipes read the way
@@ -3899,11 +3979,12 @@ areas, four components, a card, their tests and some eighteen thousand
 characters of stylesheet went with them, and a test reads the source so that
 no screen says goal again and nothing outside the data layer reads one.
 
-**The page reads in three voices, inside the six sizes.** The picture is the
+**The page reads in three voices, inside the five sizes.** The picture is the
 first thing on it, at the page title's step in the text's ink and the
 reading weight - larger than the lines under the headings, and still prose
 rather than a title. A heading takes the same step in the strong weight: the
-scale has six sizes and the one over it is the timer's numerals, and a
+scale has had five sizes since one look, and the one over it is the display
+size the timer's numerals use, and a
 heading is always in capitals, which at the same step in the strong weight
 reads as the larger of the two. Its lines are a step smaller, at the reading
 size. The signature ends the page a step over those lines, in the quieter
@@ -3954,14 +4035,14 @@ height of a 1080p window when every part stands under the one before. So the
 picture stands on a plate across the top, the first thing seen; the headings
 stand on cards in a grid under it, which is what turns a tall page into a
 wide one; and the signature ends the page on no card, because a card would
-make the words the day ends on one more box to read. The page is 1160px, the
-page width and half the reading width - three cards abreast - and the grid
+make the words the day ends on one more box to read. The page takes the
+frame's whole width, like every page since one look, and the grid
 fits as many cards as keep 17rem each, with fewer cards than fit sharing the
 whole width so no row stops short of the plate's edge and the columns line
 up from row to row.
 
-The cards break one rule of the design on purpose: nothing resting on the
-page casts a shadow anywhere else in the app. Here each card has the lift a
+The cards break one rule of the design on purpose: nothing else resting on
+the page casts a shadow, save Kitchen's cards since v2.30. Here each card has the lift a
 popover has, a hairline ring and a soft fall of dark, because the owner asked
 for it and because on North the cards are the page rather than furniture on
 it. In a dark theme a card is matte metal, its top lit a few percent and a
@@ -3981,7 +4062,7 @@ what was decided and why.
 **A day kind is a day template with a letter.** Rest, day shift, night shift
 and after nights each already have everything a template has - blocks, a day
 type, a sleep schedule, a colour, a name - so a kind is one optional field on
-a template, a letter and a place in the tap cycle. A `DayKind` entity would
+a template, a letter and a place in the tap cycle. A DayKind entity would
 name, colour and order a template a second time. After nights is not a fifth
 day type: a new value there would fail an older device's validation, and the
 type only drives the score, which rest or shift already answers.
@@ -4176,6 +4257,8 @@ opening at midnight for last night's shift: opened at midnight, the scroll
 would open on the night.
 
 ## The morning after a night shift, and a kind by its letter
+
+> **Superseded after v2.29, in part.** On a phone every hour of the week keeps 16px and the grid scrolls inside itself while the page stays still - see "A phone's week keeps a line an hour, and scrolls inside itself".
 
 v2.29 stage 9, from docs/RESEARCH-SHIFTS.md sections 3.3 and 5.
 
@@ -4422,6 +4505,8 @@ belongs to a weekday, and the week's editor is where that is said; a week with
 no meal block says so.
 
 ## Many recipes at once, and a name that says its meals
+
+> **Superseded in v2.36, in part.** A new device starts with a starting map of meal words and then every meal's own name (`mealWords.ts`), which Settings, Kitchen still rewrites - see "The words a name opens with, and the recipes a block waits for".
 
 Kitchen v2.32, docs/RESEARCH-KITCHEN.md section 7. Three choices here look
 unusual.
@@ -5207,7 +5292,7 @@ covers, the ones inside the window only.
 cannot be served either way, but the worker handed the browser an empty
 answer and threw the network's own error away. It passes the error on.
 
-**The reading plan is out of the app.** `lib/librarySeed.ts` was the
+**The reading plan is out of the app.** lib/librarySeed.ts was the
 owner's own reading plan, and "Load my reading plan" in the palette put it
 into anybody's Library - the fix of v1.10 made it wait to be asked, and
 left it one command away for every visitor. Nothing of the owner's belongs

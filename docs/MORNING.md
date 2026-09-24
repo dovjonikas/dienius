@@ -1,5 +1,11 @@
 # Morning
 
+> Written for the first morning of the first real week, 2026-09-09, and kept
+> as it was. Several steps describe screens that changed since - a block's
+> steps became lines of its note in v2.13, and North's goals went in v2.28 -
+> so it is a record, not a guide. The guide to using the app is
+> [`DAILY.md`](DAILY.md).
+
 Do these in order. Every button name is exact.
 
 ## Before anything

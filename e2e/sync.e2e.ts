@@ -8,9 +8,8 @@ import { openFresh, quickAdd, tick, wednesdayAt } from './app'
 /**
  * Two devices, one server, one task.
  *
- * The sync design was verified by hand in a browser and nowhere else - see
- * STATE.md's list of debts - because a second device is the one thing jsdom
- * cannot be. Here the two devices are two browser contexts with their own
+ * The sync design was verified by hand in a browser and nowhere else until
+ * this test, because a second device is the one thing jsdom cannot be. Here the two devices are two browser contexts with their own
  * storage, and the server is the real `server/sync-server.mjs` started on a
  * spare port with a throwaway data directory, whose token the test reads the
  * way a person would, from `token.txt`.

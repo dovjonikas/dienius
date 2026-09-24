@@ -13,8 +13,9 @@ say otherwise. The thirteen before them were answered on 2026-09-01 and are in D
 
 The standing note that the app had never been touched by a real finger is answered by what comes
 next rather than by a decision: the owner lives in the app for a week, on the phone it was written
-for, and the week is the first touch test. Anything that week turns up goes to STATE's "Asked for,
-not yet built" and waits there - see the done contract in STATE section 4.
+for, and the week is the first touch test. Anything asked for since waits in the Parked section of
+BACKLOG.md, and from the freeze of 2026-09-28 that is where every new request goes (STATE, first
+section).
 
 ## 2026-09-23, overnight: the owner's own templates file and the public repo
 

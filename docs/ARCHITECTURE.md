@@ -22,8 +22,9 @@ the week's geometry, iCalendar - is a plain function in `src/lib` or beside its
 widget, tested directly.
 
 Two optional layers sit on top and neither is a dependency: **sync** between
-your own devices, through a server of under three hundred lines you host (section 7), and
-**external calendars**, read-only and laid over the plan (section 12). With
+your own devices, through the private GitHub repo the backup writes to or a server of under
+three hundred lines you host (section 7), and
+**external calendars**, read-only and laid over the plan (section 11). With
 both off - the default - nothing degrades.
 
 ---
@@ -47,7 +48,7 @@ AppData
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
 │       │                        repeatSkips?, routineSkips?, autoApplied?,
-│       │                        away?, bestMoment?, replannedOn?, journal?
+│       │                        away?, replannedOn?, journal?, lowDay?
 │       └── tasks: Task[]        the one type most of the app is about;
 │                                routineId? and fromRoutine? on a routine's task,
 │                                nightOf? on a night's task, naming its night
@@ -68,7 +69,7 @@ AppData
 ├── inbox: InboxItem[]           empty since v2.7; folded into Later on load
 ├── scratch: ScratchNote[]       the stream under everything, text and an instant
 ├── settings: Settings           theme, sleepProfiles, weekdayTemplates,
-│                                reminders, eveningClose, density, ...
+│                                eveningClose, density, textScale, chime, ...
 ├── settingsUpdatedAt            per-field stamps for the sync merge - section 7
 └── tombstones                   what was deleted, and when, so a delete sticks
 ```
@@ -89,7 +90,7 @@ that data written before it existed still loads:
 | `core` | Counted on a non-full day. Set by a template, never by quick-add. |
 | `unbounded` | Exempt from the two-push bound. |
 | `pushCount` | How many days it has been carried. |
-| `note`, `subtasks`, `highlight`, `repeat` | The task detail sheet (v1.1). |
+| `note`, `highlight`, `repeat` | The task detail sheet (v1.1); its steps became lines of the note in v2.13. |
 | `libraryRef` | Which library item this is a session of. |
 | `repeatOf` | The series source this was generated from (v1.3). |
 | `origin` | Where it came from - template, repeat or manual (v1.4). |
@@ -110,8 +111,9 @@ tested.
 `category` joined that list when categories became the owner's to author. It
 used to be a closed union of six ids that `validate` could refuse anything
 outside; an id from `crypto.randomUUID()` cannot be checked against a list
-nobody wrote, so the three fields that point at one - on `Task`,
-`TemplateBlock` and `LaterItem` - are `optional(text(1, 64))` now. That is a
+nobody wrote, so every field that points at one - on `Task`,
+`TemplateBlock`, `LaterItem` and `Routine`, and a task's `fromBlock` and
+`fromRoutine` echoes - is `optional(text(1, 64))` now. That is a
 loosening, and it is the deliberate one: a number, an object or an empty
 string in that field still fails the whole payload.
 
@@ -128,7 +130,7 @@ of them is in a backup. The ones that hold something worth knowing about:
 - **IndexedDB `dienius-snapshots`** - a week of daily full-state copies
   ([`snapshots.ts`](../src/lib/snapshots.ts)). A backup sharing a quota with the
   thing it backs up disappears exactly when the data grows enough to need it.
-- **`dienius:sync`** - the sync server's address, token and on/off
+- **`dienius:sync`** - the sync route (the GitHub repo or a server), the server's address and token, and on/off
   ([`syncClient.ts`](../src/lib/syncClient.ts)). Syncing the address of the
   sync server is circular, and a token is a device's own credential.
 - **`dienius:quick-add-duration`** - how long the next quick-added task is
@@ -159,7 +161,7 @@ of them is in a backup. The ones that hold something worth knowing about:
 And a few device-local preferences under their own keys for the same
 reason, each explained where it lives: the evening close's and the yesterday
 banner's dismissals for the day, the quick-add draft, which library lists are
-folded and what each was last counted in, where the scratch button sits, the
+folded and what each was last counted in, whether the rail is pinned open, the timer's last length, the
 tour's progress, and the three moments North reads on this screen - when the
 app was last in view and when the window after sleep was last shown, which
 decide the window, and when the app last came back after a break long enough
@@ -194,16 +196,18 @@ localStorage ──loadData()──> validate() ──> normalizeLoaded() ──
                                                     saveData() + notify listeners
 ```
 
-- [`storage.ts`](../src/lib/storage.ts) owns the boundary with `localStorage`.
-  Nothing else touches it. `validate()` - in
-  [`validate.ts`](../src/lib/validate.ts), as one table per entity - is a
-  deep type guard: a payload that fails it is discarded whole rather than
-  partly trusted, because this is also the import path for a file a person
-  may have edited.
+- [`storage.ts`](../src/lib/storage.ts) owns the plan's boundary with
+  `localStorage`: nothing else reads or writes `AppData` there, and the
+  device-local keys in section 2 are each kept by their own module.
+  `validate()` - in [`validate.ts`](../src/lib/validate.ts), as one table
+  per entity - is a deep type guard: a payload that fails it is refused
+  whole rather than partly trusted - kept aside under `dienius:unreadable`
+  when it is the stored plan (section 2), refused when it is an import -
+  because this is also the import path for a file a person may have edited.
   `normalizeLoaded()` backfills every field added since, which is what makes an
   old backup still load.
 - [`store.ts`](../src/lib/store.ts) is the facade over that object: one `actions`
-  object spread together from eleven area modules under [`store/`](../src/lib/store),
+  object spread together from twelve area modules under [`store/`](../src/lib/store),
   each reading through `getData()` and writing through `commit()` in `store/core.ts`.
   Every one is `commit(next)`: replace the whole object, save, notify. There
   are no reducers and no action types - the function *is* the action.
@@ -227,17 +231,18 @@ anything outside React.
 src/
   App.tsx              the shell: tabs, the keyboard layer, everything that
                        must outlive a tab change (focus bar, timer, palette,
-                       undo toast, reminders, the replan sheet)
+                       undo toast, the replan sheet, Scratch, the journal, the tour)
   main.tsx             mount, service worker, install prompt, sync, the cloud copy
   pwa.ts               registers the worker in production, raises the update notice
   UpdateNotice.tsx     the quiet Reload line; never reloads on its own
-  ErrorBoundary.tsx    the one screen that says something broke, with the way out
+  ErrorBoundary.tsx    the app-wide backstop: the screen that says something broke, with the way out
+  ScreenBoundary.tsx   a page, a sheet or a panel that cannot draw says so in its own place
 
   lib/                 no React except where a hook is the API
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, load/save, migrations, export/import
     validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
-    store.ts           the facade: `actions` spread from the eleven areas below core.ts
+    store.ts           the facade: `actions` spread from the twelve areas below core.ts
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
@@ -247,9 +252,9 @@ src/
       later.ts         Later, the one undated shelf, and the door from it onto a day
       scratch.ts       the scratch stream and its two ways out
       calendars.ts     external calendar subscriptions
-      settings.ts      theme, density, sleep schedules, reminders, the day view's switches
+      settings.ts      theme, density and text size, sleep schedules, the evening close, the chime, meal words, the day view's switches
       categories.ts    the category list, and the delete that moves what it would orphan
-      kitchen.ts       recipes: written, rewritten, cooked once more, let go
+      kitchen.ts       recipes: written, rewritten, pasted many at once, their meals set, added to a template, let go
       shifts.ts        kinds of day marked on templates, and routines written, changed, removed
       lifecycle.ts     import, snapshot restore, the tour's two endings
     later.ts           the fold: an older payload's inbox into the top of Later, once, with tombstones
@@ -259,7 +264,7 @@ src/
     review.ts          week/month statistics, all derived, nothing recorded
     north.ts           North's text written or removed, the day number its line is picked by, and goals retired once at every door
     eveningClose.ts    how a day ends, and what may be said about it
-    journal.ts         three lines a day, none required, and the week or month as markdown
+    journal.ts         one free text a day, none required, found by a word, and a day, week or month as markdown
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
     ics.ts             a small iCalendar reader; no library, and none wanted
@@ -294,7 +299,6 @@ src/
     recipeImport.ts    many recipes pasted at once: the text in pieces by NAME: and ---, each a row of what saving it will do
     mealWords.ts       the meals a recipe's name says by its first word, from the list Settings keeps
     templateJson.ts    templates and a roster as JSON: read against the plan into a preview and the plan it makes, and written back the same every time
-    librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
     rosterDraft.ts     rotating shifts: the month being laid out, kept on this device and never in the plan
@@ -311,7 +315,7 @@ src/
     dates.ts           date-key helpers, month grid
     onboarding.ts      what a first run is: a pure read, no flag
     starterTemplates.ts  the three starter templates, offered and never installed
-    colors.ts          the one palette templates and a rule's tag pick from
+    colors.ts          the one palette templates, library lists and external calendars pick from
     explain.ts         every word this app invented, and the sentence for each
     calendarCell.ts    what a month cell says: a past day's numbers, a future day's first lines
     theme-color.ts     keeps <meta name="theme-color"> with the active theme
@@ -326,17 +330,17 @@ src/
     viewport.ts        the 1024px wide breakpoint
 
   views/               a tab, or a control shared between tabs
-    scratch/           the scratch overlay, opened from the pen in the rail
+    scratch/           the scratch overlay, opened by S or the backtick, Open notes in the header's Notes, or the palette
     tour/              the tour engine: a spotlight, a card, a predicate
                        (cardPlacement.ts is its geometry, tested on its own -
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
-    north/             North: the page that reads the text, the one field that writes it, and the window after sleep
+    north/             North: the page that reads the text, the field that edits it, Replace for a whole text pasted in, and the window after sleep
     shifts/            rotating shifts: the routines under the templates, timed per kind of day
     kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page with Add to template, the form, and the recipes field every meal shares - Kitchen in small; Paste many, Select, and the meals changed in place on a card (MealsPicker)
     CommandPalette, ShortcutsOverlay
-    NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
-    BlockNote.tsx      a template block's note and steps, in either editor
+    NavRail, NavIcons  the way between the seven views and Settings: a rail on a desktop, a bar on a phone
+    BlockNote.tsx      a template block's note, in either editor
     NoteLines.tsx      a note as the lines somebody typed - no markdown engine
     blockHighlights.ts whether a block may be KEY, and what to say when it may not
     CategoryQuickAdd   a category made from the swatch row rather than in Settings
@@ -363,11 +367,11 @@ src/
 
   widgets/
     day-plan/          the day view and everything on it
-    clock/             timer popover, floating widget, focus bar, nudges
+    clock/             timer popover, floating widget, focus bar, and the header's Notes and Journal panels
     UndoToast.tsx      the one undo offer
     registry.ts        which widgets the day view mounts
 
-  styles.css           the whole stylesheet. One file on purpose - see §6.
+  styles.css           the whole stylesheet. One file on purpose - see §8.
 
   test/
     setup.ts           what jsdom does not implement, stubbed once
@@ -375,7 +379,7 @@ src/
 
 e2e/                   Playwright against the production build - CONVENTIONS §10
   app.ts               a first open, the starter stamp, a quick-add line
-  smoke.e2e.ts         a first day end to end, and the reading plan from the palette
+  smoke.e2e.ts         a first day end to end
   tour.e2e.ts          the naive walk, on a desktop and on a phone
   sync.e2e.ts          two browser contexts through the real server: one task, then a tick against an edit with a delete between them
   sync-github.e2e.ts   a desktop and a phone through a repo held in the test: the phone closed straight after a change, and the first connection asked on a phone
@@ -383,7 +387,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
   lowday.e2e.ts        a low day: the key task at 40%, the mark under the date, the routine where it was
   interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
-  journal.e2e.ts       the evening questions fitting a phone without a scroll, and the week read back off the clipboard
+  journal.e2e.ts       the journal written on a phone without a scroll, the evening card asking nothing, and a month read back off the clipboard
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
   shelves.e2e.ts       a Later pull onto the day; a note's "!" and a note kept as typed
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
@@ -440,8 +444,7 @@ it delegates:
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `Later.tsx` | The undated shelf: in the owner's order, pulled onto the day at the next free slot |
 | `laterSlot.ts` | The next free slot a Later item lands in, the same arithmetic quick-add's time control opens on |
-| `EveningClose.tsx` | The end of the day, said once - tone is the feature - and the journal's two questions |
-| `JournalLine.tsx` | The morning line under the North line: what this day is for, or nothing |
+| `EveningClose.tsx` | The end of the day, said once - tone is the feature: one sentence, Close the day and the push offer; nothing asked |
 | `YesterdayBanner.tsx` | What yesterday left |
 
 `DayView.tsx` itself is now only about the day: what it is made of and how its
@@ -467,8 +470,10 @@ will exist. It does two things, once, and records `autoApplied` so it never
 does them again for that day:
 
 1. **The weekday map.** `settings.weekdayTemplates[weekday]` names a template;
-   the day is stamped from it - unless the day already has a `templateId`,
-   because a deliberate stamp outranks a standing rule.
+   a day from today on is stamped from it - a kind of day composed with its
+   routines - unless it already has a `templateId`, because a deliberate
+   stamp outranks a standing rule. A map that names a deleted template names
+   nothing (`lib/weekdayMap.ts`).
 2. **Repeats.** `materialiseRepeats` finds every task with `repeat` and no
    `repeatOf` dated before this day, and adds an instance for each series the
    day applies to and does not already have.
@@ -534,7 +539,7 @@ Three copies, and each covers a loss the other two do not:
 
 | Copy | Where | What it is for | What it cannot do |
 |---|---|---|---|
-| **Sync** (`syncClient.ts`, section below) | A server you host, reached from your devices | Two devices agreeing, live, all day | Survive both devices and the server going at once; work with no server |
+| **Sync** (`syncClient.ts`, section below) | The private GitHub repo (`data/sync.json` there) or a server you host | Two devices agreeing, live, all day | Survive both devices and the meeting place going at once |
 | **Snapshots** (`snapshots.ts`) | IndexedDB on this device, seven kept | This device's own last week - the mistake you did not see coming | Leave the device |
 | **Cloud backup** (`cloudBackup.ts`) | A private GitHub repo you own | Off-site, readable with a browser, on any device that reaches github.com - with sync off, on a phone with no VPN | Sync: it merges into its own file and never into a device's plan |
 
@@ -557,7 +562,7 @@ in `AppData`, so in no export, no sync payload and no snapshot, and a test
 holds each absence. Restore reads the copy, describes it beside what is here
 ("340 tasks across 41 days, newest 4 Sept" against "empty"), and offers two
 presses: Bring back what is missing, which merges the copy in per entity and
-touches nothing newer, and - armed, second - Replace everything.
+touches nothing newer, and - armed, second - Replace everything here.
 
 ### Sync
 
@@ -569,14 +574,17 @@ the app simply does not sync.
 
 ### The shape
 
-One dumb server, owned by the person using it (a PC on a home network, reached
-from a phone over Tailscale). It stores state and hands it back. It does not
-merge, does not validate the plan, and has no idea what a task is.
+Two meeting places, and neither merges: one file in the private GitHub repo
+the backup writes to (`data/sync.json` there, `githubSync.ts`), or one dumb
+server owned by the person using it (a PC on a home network, reached from a
+phone over Tailscale). Either stores state and hands it back. It does not
+merge, does not validate the plan, and has no idea what a task is. The
+server, drawn:
 
 ```
-  PC browser ─┐                         ┌─ GET  /state    read what is there
-              ├──> sync-server.mjs <────┤
-  phone PWA ──┘      state.json         └─ POST /state    write the merge back
+  PC browser ─┐                                ┌─ GET  /state    read what is there
+              ├──> server/sync-server.mjs <────┤
+  phone PWA ──┘      dienius-state.json        └─ POST /state    write the merge back
 ```
 
 A client's sync is one round trip: read the server's state, merge it into the
@@ -587,9 +595,9 @@ Sending only the entities that changed since the last sync would be less
 traffic, and it was the first design. It was dropped because it needs each
 client to remember what the server has already seen, and that bookkeeping is a
 second kind of state that can go wrong - one missed acknowledgement and an
-entity silently never travels. The whole state is a few hundred kilobytes on a
-home network, and a client that sends everything every time cannot get out of
-step. The merge is idempotent, so re-sending what the server already has costs
+entity silently never travels. The whole state is around a megabyte after a
+few months of use, and a client that sends everything every time cannot get out
+of step. The merge is idempotent, so re-sending what the server already has costs
 nothing but bytes.
 
 ### Why per-entity last-write-wins
@@ -613,7 +621,8 @@ erases the other's morning. Every entity therefore carries its own
 | Later item | `backlog:<id>` | The list is called Later on screen since v2.7; the kind keeps the wire name an older device's tombstones carry |
 | Inbox item | `inbox:<id>` | Nothing writes one since v2.7; the kind stays so a tombstone for a folded line still matches on an older device |
 | Scratch note | `scratch:<id>` | |
-| Recipe | `recipe:<id>` | Cooking one on the phone and editing another on the PC are two edits to two things |
+| Recipe | `recipe:<id>` | Editing one recipe on the phone and another on the PC are two edits to two things |
+| Routine | `routine:<id>` | One routine changed on the phone and another on the PC are two edits to two things |
 | Category | `category:<id>` | Renaming Health on the laptop and recolouring Meals on the phone are two edits to two things. This is exactly why the list is in `AppData` rather than in `Settings`: at a settings field's grain one of those two would simply vanish |
 | Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
 
@@ -623,9 +632,9 @@ what anybody would expect. Nothing more elaborate is earned.
 
 ### Timestamps are written by diffing, not by hand
 
-Sixty actions across `store/` all change something. Asking each of them to stamp
-the right entity is sixty chances to forget, and the sixty-first action added
-next year forgets by default.
+A hundred and twenty actions across `store/` all change something. Asking each
+of them to stamp the right entity is a hundred and twenty chances to forget, and
+the next action added forgets by default.
 
 Instead `commit()` - the one function every action ends in - diffs the state
 going out against the state coming in, and stamps whatever actually changed.
@@ -682,8 +691,10 @@ absent after is a deletion, whoever caused it.
   and since when a change is owed - under `dienius:sync-device`. GitHub's
   clock, as far as this device has learned it, is `dienius:clock-offset`.
 
-The North card's dismissal *does* sync - `settings.northDismissedOn` -
-because "I have read this today" is a fact about the person, not the device.
+`settings.northDismissedOn` still syncs, though nothing reads it: the North
+card it recorded went with goals in v2.28, and the field is kept for older
+devices and the files that carry them. It synced because "I have read this
+today" was a fact about the person, not the device.
 The field existed and was in `SYNCED_SETTINGS` from v1.4, and the card kept
 reading a local key anyway until v1.11, when the docs audit noticed that
 nothing wrote it.
@@ -721,20 +732,22 @@ field added to settings either travels or is explicitly named as local.
 
 ## 8. Styling
 
-**One stylesheet**, `src/styles.css`, about ten and a half thousand lines,
+**One stylesheet**, `src/styles.css`, about nineteen thousand lines,
 organised by area with a comment block per section. No CSS modules, no
 CSS-in-JS, no utility classes. Everything is built from tokens declared once
-on `:root`, two of them derived at runtime in `applyResolvedTheme`, and
-density and text size are two attributes on `<html>` that redefine the
-scales at source. The token list, the derived pair, the three theme presets
+on `:root`, five of them derived at runtime in `applyResolvedTheme` (`--rule-h`,
+`--rule-v`, `--safe-ink`, `--on-accent`, `--on-danger`), and density and text
+size are two attributes on `<html>` that redefine the scales at source. The
+token list, the derived ones, the three theme presets
 and the pre-paint script in `index.html` - and the rule that a theme token
 changes in two places - are in [CONVENTIONS section 5](CONVENTIONS.md#5-design-tokens),
 which is where the rule is kept so it is written once.
 
 One selected-swatch rule, shared by all four round colour swatches - the
-accent row in Appearance, the six categories, a template's own colour, a
+accent row in Appearance, the categories, a template's own colour, a
 library list's dot. Each sets `--pick` to its own colour and the shared rule
-draws the ring: the fill, a two-pixel gap in `--surface`, a two-pixel ring in
+draws the ring: the fill, a two-pixel gap in `--ground` (the page, or the
+surface the row stands on), a two-pixel ring in
 `--pick`, as a box-shadow so choosing one never moves the row. It was four
 different treatments until v2.0.1 - see DECISIONS, "One ring, for every
 colour that can be chosen".
@@ -754,7 +767,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 2341 tests in 143 files, no worker limits, no skips; plus 35 Playwright tests across two viewports in 16 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom: over two hundred test files, no worker limits, and no skips but the ones written down (STATE section 4 has the count); plus the Playwright files in `e2e/`, in a desktop and a phone project, against the production build, and the measuring passes - `npm run sweep`, `keys`, `precision`, `textscale` - in a real browser (CONVENTIONS sections 9 and 10).
 
 Two kinds, deliberately:
 
@@ -805,8 +818,9 @@ npm run build     # typecheck, build, generate the service worker
 
 ### The week view
 
-`views/week/` - a third mode in the Calendar tab rather than a seventh tab,
-because six views is already the whole of what the navigation carries.
+`views/week/` - the Week mode of the Calendar tab, beside Month, rather than a
+place of its own, because the rail's seven are already the whole of what the
+navigation carries.
 
 | File | Job |
 |---|---|
@@ -856,8 +870,9 @@ counted as busy.
 Fetching goes through the sync server's `/ics` proxy, because a browser cannot
 read a Google or Outlook feed itself - those hosts send no CORS headers. The
 proxy refuses anything that is not http or https, and anything resolving to
-localhost, a private range or the tailnet. Without sync there is no
-subscribing, and Settings says so up front; file import is the way in.
+localhost, a private range or the tailnet. Without a sync server there is no
+subscribing - sync through GitHub has no proxy - and Settings says so up front;
+file import is the way in.
 
 The parser reads DTSTART, DTEND, DURATION, SUMMARY and RRULE: daily, weekly,
 the plain monthly (the same day each month, one BYMONTHDAY or DTSTART's own
@@ -889,7 +904,9 @@ second. Later is for a task with no day; this is for a line with nothing
 attached at all - a number said once, a bug noticed while doing something
 else.
 
-`ScratchNote` is text, an instant, a date key and an optional `pinned`. It
+`ScratchNote` is text, an instant, a date key, an optional `pinned`, and
+optionally the task it became (`taskId`, `taskDate`) and its photographs'
+ids (`lib/photos.ts`). It
 is a sync entity at the same grain as a Later item, and nothing in the text
 is parsed: a `#word` was a filter for four versions and is a word again
 since v2.5, because reading the text for meaning is a question asked at the
@@ -897,14 +914,15 @@ moment of writing. See DECISIONS "Notes are notes".
 
 **The constraint is the feature, and it is in CONVENTIONS.md section 11.**
 One stream, no folders, no rich text. A note that needs structure has stopped
-being scratch: it becomes a task (through quick-add's own parser, so a time
-and a size come out right), a Later item, or nothing. Adding a field to
+being scratch: it becomes a task (NoteToTask: the title filled in, a time and
+a length a press away, the note kept and linked to it), a Later item, or
+nothing. Adding a field to
 `ScratchNote` to hold structure is the wrong move; adding a way out is the
 right one.
 
-Capture is never gated: the `S` key (or the backtick) from anywhere, a
-draggable button on a phone, or the palette. `Q` is the shorter one, and
-opens the clock panel's Notes tab instead of the stream: one line, Enter,
+Capture is never gated: the `S` key (or the backtick) from anywhere, Open
+notes in the header's Notes panel, or the palette. `Q` is the shorter one,
+and opens the header's Notes panel instead of the stream: one line, Enter,
 gone. It writes through the same `addScratch` and has no state of its own. The overlay writes on the first
 keystroke and rewrites on every one after, so there is no Save and leaving
 loses nothing.
@@ -913,12 +931,13 @@ loses nothing.
 
 The engine knows nothing about what it teaches. It walks a step array, points
 at whatever selector the step names, and asks that step's predicate - over the
-store - whether it has happened yet. Nine steps, each ending on a real action
-rather than a Next button; the two ends are the exception, because a welcome
-has nothing to do yet and an ending has nothing left.
+store - whether it has happened yet. Eleven steps: a welcome, nine that each end on a
+real action rather than a Next button, and an ending - the two ends are the
+exception, because a welcome has nothing to do yet and an ending has nothing
+left.
 
-The steps are data, in two arrays: desktop and mobile, the same nine in
-different words. The whole thing is under 120 words and a test holds the
+The steps are data, in two arrays: desktop and mobile, the same eleven in
+different words. The whole thing is under 150 words and a test holds the
 budget. **The tour is a mirror of the app and goes stale silently - see
 CONVENTIONS.md section 13, which makes checking it part of every wave.**
 
@@ -985,7 +1004,7 @@ today whatever day was asked for.
 
 `DayPlan.away` is the pause. It lives on the day so it travels with it - two
 devices cannot disagree about whether the day is paused - and while it is set
-the task reminder does not fire.
+the header says "Away since" and offers Back where Replan was.
 
 ## 13. Conventions worth knowing before editing
 
@@ -998,7 +1017,7 @@ the task reminder does not fire.
 - **Nothing is created until asked for.** The app ships empty; starter
   templates and starter library lists are *offers*.
 - **Nothing is measured that would become a target.** No streak on the day
-  view, no counter on an if-then rule. See `RESEARCH-ADHD.md`.
+  view, no count of days written in the journal. See `RESEARCH-ADHD.md`.
 
 - **The tour is a mirror of the app.** It points at real controls with real
   selectors and goes stale silently. Every wave that changes the UI checks

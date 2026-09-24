@@ -21,6 +21,10 @@ import type { AppData, Routine, SleepProfile, Template } from './types'
 
 process.env.TZ = 'Europe/Vilnius'
 
+test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours", () => {
+  expect((new Date(2026, 9, 26).getTime() - new Date(2026, 9, 25).getTime()) / 3_600_000).toBe(25)
+})
+
 const PROFILES: SleepProfile[] = [
   { id: 'default', name: 'Nights', window: { start: '23:00', end: '07:00' } },
   { id: 'daytime', name: 'Daytime', window: { start: '08:30', end: '14:30' } },

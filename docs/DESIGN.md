@@ -220,8 +220,8 @@ One corner - one look, rule 3.
 
 `--r-mark`, `--r-control`, `--r-card` and `--r-pill` are all `var(--r)`,
 kept as names so a rule still says what it rounds. `--r-control` and
-`--r-card` are the preset's own `--radius` and `--edge`, 8px in every
-preset. There were two radii, 6 and 10, and a pill: three shapes where the
+`--r-card` were the preset's own `--radius` and `--edge` until one look; a
+preset still carries both, and nothing reads them. There were two radii, 6 and 10, and a pill: three shapes where the
 eye reads one thing. A chip is a control, and has a control's corner.
 
 ## Colour

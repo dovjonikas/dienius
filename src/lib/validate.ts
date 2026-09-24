@@ -140,9 +140,8 @@ const FONT_TOKEN_KEYS = new Set(['fontDisplay', 'fontBody', 'fontMono'])
 const DIMENSION_PART_RE = /^-?\d+(?:\.\d+)?(?:px|em|rem|%)$/
 
 // edge alone can be a full CSS border-radius shorthand - four lengths and an
-// optional "/" group for the hand-drawn preset's asymmetric corner (see
-// HAND_DRAWN_EDGE in themes.ts) - so every space- or slash-separated piece
-// is checked as its own plain length. A value built entirely from digits, a
+// optional "/" group, the shape a hand-drawn corner once took - so every
+// space- or slash-separated piece is checked as its own plain length. A value built entirely from digits, a
 // decimal point and a known unit can never spell a function call: there is
 // no character left to write a "(" with.
 const dimensionList: Check = x =>

@@ -11,6 +11,10 @@ import type { AppData, DayPlan, Routine, Task, Template } from './types'
 // Lithuania's clock, as the other composition tests run on.
 process.env.TZ = 'Europe/Vilnius'
 
+test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours", () => {
+  expect((new Date(2026, 9, 26).getTime() - new Date(2026, 9, 25).getTime()) / 3_600_000).toBe(25)
+})
+
 /**
  * The night's own hours and the dates around a change of kind, composed -
  * docs/RESEARCH-SHIFTS.md sections 10.2 and 10.2a. A date given a kind puts

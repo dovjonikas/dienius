@@ -259,12 +259,11 @@ test('a week of ordinary use leaves the day adding up and the file loading', asy
   // Nothing in this app has ever had a "Set aside" menu item - the first
   // version of this step opened a task's menu and pressed a control that
   // does not exist, then carried on, which is why it passed while doing
-  // nothing. The flag is written in exactly one place, the return half of
-  // this door, and it only writes it for a task that no longer fits in what
-  // is left of the day. Producing that needs a day shaped for it rather than
-  // the ordinary week this soak lives on, so what is asserted here is the
-  // half this day can honestly reach: the day pauses. The return half is
-  // covered by replan.e2e.ts, on a day built for it.
+  // nothing. The flag is written when Something came up skips a one-off in
+  // its way (replan.ts); Back sends what no longer fits to tomorrow and sets
+  // nothing aside. What is asserted here is what this day can honestly
+  // reach: Away pauses it. The shelf and Bring back are covered by
+  // replan.e2e.ts.
   await page.clock.setFixedTime(dayAt(3, 13))
   await page.reload()
   await goTo(page, 'Today')

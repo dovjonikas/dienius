@@ -31,8 +31,9 @@ import { blocksAsTasks, nightLine, overlapsIn, templateSummary, type DrawableBlo
  * may be meant - a commute that runs into the start of a shift is a real
  * Tuesday - so the line says which and Save is untouched.
  *
- * A picture and nothing else in v2.5: blocks are not dragged in it. That is
- * in STATE's "Asked for, not yet built".
+ * A picture and nothing else in v2.5. Since 2026-09-15 a block is dragged
+ * and pulled on it through the day's own drag hook, where the editor lets it
+ * (`onReshape` below).
  */
 
 export interface TemplateTimelineProps {

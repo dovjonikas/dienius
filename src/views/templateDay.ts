@@ -18,8 +18,9 @@ import type { Task, TemplateBlock } from '../lib/types'
  * block turned into the task shape the grid already knows, what clashes,
  * and the one line under it.
  *
- * The timeline is a picture and nothing else in v2.5 - blocks are not
- * dragged in it. That is in STATE's "Asked for, not yet built".
+ * The timeline was a picture and nothing else in v2.5. Since 2026-09-15 a
+ * block on it is dragged to another hour and its bottom edge to another
+ * length, through the day's own drag hook - see TemplateTimeline.tsx.
  */
 
 /**

@@ -12,7 +12,7 @@ import type { AppData, Task, TemplateBlock } from './types'
  * time, how often it moved and by how much, how often it was set aside, how
  * often it was not done. The next brief comes out of these lines - from the
  * data of a lived-in week, not from a feeling - which is why they are counts
- * and nothing else. See STATE "The v2.7 wave".
+ * and nothing else. See HISTORY.md, "The v2.7 wave".
  *
  * "Happened at its time" is defined from what already exists. No timestamp of
  * a tick is stored and none is added for this: the app would be collecting a

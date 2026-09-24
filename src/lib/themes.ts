@@ -111,23 +111,6 @@ export const SYSTEM_MONO = "'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono',
 // own compiled choice, not one of the four options a person can pick from
 // there, so this has no legitimate use outside this file today.
 
-// The hand-drawn edge from docs/THEMES.md section 5, used as-is. Because
-// this is the literal value of --edge, every element already styled with
-// border-radius: var(--edge) picks it up with no component changes.
-// Exported alongside two siblings for the override panel's Corners control
-// (section 3: soft / sharp / hand-drawn) - sharp is a crisp corner no
-// shipped preset uses yet but Graph, Terminal and Blueprint will. Soft is
-// deliberately the same '10px' Slate already ships as its own --edge (equal
-// to --radius, a plain symmetric rounded rect) rather than a fourth,
-// invented value - a preset's own stock corner and the panel's "Soft"
-// option must mean the literal same thing, or the control shows nothing
-// selected on a preset that is, in fact, already soft.
-// The one shape a preset still names for itself. The two that stood beside
-// it - SOFT_EDGE and SHARP_EDGE - existed only for the override panel's Edge
-// control, which went with the panel in the v1.0 theme rework; storage.ts
-// still refers to this one by name in the comment explaining why a border
-// radius may contain slashes and spaces.
-export const HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
 
 
 /**
@@ -184,11 +167,9 @@ const NO_SURFACE = {
 } as const
 
 /**
- * The two corners are one value since v2.25: a card rounds by the same 10px
- * as the button inside it, which with the 6px mark and the pill is the whole
- * corner scale - docs/DESIGN.md. A preset may still give its own edge (the
- * hand-drawn one in THEMES section 5 is kept for that); none of these three
- * does.
+ * A preset still carries a radius and an edge, so a stored theme and the
+ * guard on it keep their shape, but nothing reads either since one look:
+ * every corner is the stylesheet's one --r - docs/DESIGN.md, "Corners".
  */
 const TYPE_AND_SHAPE = {
   fontDisplay: SYSTEM_SANS,

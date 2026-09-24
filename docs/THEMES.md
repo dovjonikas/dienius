@@ -1,5 +1,10 @@
 # Dienius - the theme system
 
+> **What was kept.** Built in full, then cut on 2026-09-02 to three presets
+> (Dark, Light, Midnight) and an accent, with the override panel gone - see
+> DECISIONS "Three themes, and why eight good ones had to go". What follows
+> is the spec as it was written.
+
 > Written 2026-08-31 as a spec for the next build session. This is the feature the app is judged on
 > before anyone reads a single word of copy: someone sees it on a friend's phone and asks what it is.
 > Everything below is design intent plus the concrete shape to build. No em-dashes anywhere, plain

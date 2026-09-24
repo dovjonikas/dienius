@@ -152,20 +152,16 @@ test('every input class excluded from the base rule sets its own colour', () => 
 // --- and one corner scale, said in tokens --------------------------------
 
 /**
- * Every corner in the app is one of three steps or one of two shapes, and
- * none of them is a number written at the point of use.
+ * Every corner in the app is a radius token, and none of them is a number
+ * written at the point of use.
  *
  * The night pass counted fourteen distinct border-radius values, of which
  * two were bare literals - `1px` on five bars and `3px` on four blocks -
- * doing the job the smallest step already had a token for. A literal corner
- * is a corner a theme cannot reach: `--r-control` and `--r-card` are the
- * preset's own `--radius` and `--edge`, so a preset with a hand-drawn edge
- * changes every card and leaves the nine hard-coded ones square.
- *
- * The steps go by the size of the thing rather than by its role, which is
- * why there are three and not the two the brief asked for: an 18px checkbox
- * and a 38px button cannot share a corner. See the block on `--r-mark` in
- * the stylesheet, and DECISIONS.
+ * doing the job a token already had. A literal corner is a corner the token
+ * cannot reach. There were three steps then, by the size of the thing; since
+ * one look every step is the one `--r` and only `--r-round` is another shape,
+ * so a change to `--r` changes every corner but the ones written as numbers.
+ * See the block on the corners in the stylesheet, and DESIGN.md, "Corners".
  */
 test('every corner is a radius token, or nothing', () => {
   const offenders = declarations(['border-radius', 'border-[a-z]+-radius'])

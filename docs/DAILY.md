@@ -212,8 +212,8 @@ and finishing one moves the block on to the next by itself.
    front. Three shorter ones - the heavy reading, the work reading, and the
    thing you will actually pick up on a Tuesday evening - each move on their
    own, and finishing something in one offers the next thing from *that* one.
-   `Ctrl-K` → **Load my reading plan** fills three named MIND, CRAFT and
-   LIGHT if you want a shape to start from.
+   The quick start **Three reading lanes** makes three empty ones, MIND,
+   CRAFT and LIGHT, if you want a shape to start from.
 2. Add what is on the shelf, in the order you would actually read them:
    `Deep Work, 12 chapters`. A page-counted book is `The War of Art, 139
    pages`; a series is `Andor, 2 seasons`. Or use the two controls beside the

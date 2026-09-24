@@ -51,8 +51,8 @@ a colleague:
   ```
   Co-Authored-By: Claude <model> <noreply@anthropic.com>
   ```
-  with the model that did the work named - `Claude Opus 5` up to v1.9,
-  `Claude Fable 5.1` from v1.10.
+  with the model that did the work named, whichever it was - `Claude Opus 5`,
+  `Claude Fable 5.1` and `Claude Opus 5.5` all appear in the history.
 - PR bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 Commit and push after each part of a wave, not at the end. A wave that dies
@@ -91,7 +91,7 @@ Never delete a failing test to make a suite green.
 
 ### Timing tests
 
-Do not assert absolute milliseconds. The suite runs a hundred-odd files in parallel on
+Do not assert absolute milliseconds. The suite runs over two hundred files in parallel on
 whatever machine CI hands out. Assert a *ratio* against a baseline measured the
 same way, take the fastest of several rounds, and alternate the two sides so a
 machine that gets busier partway through slows both equally.
@@ -102,7 +102,7 @@ millisecond assertion left in the suite. Two shapes:
 - `measureSlowdown(baseline, load, operation)` for anything that reads the
   store. The baseline is a parameter rather than always-empty, because the
   honest baseline differs per test: for a month grid it is an empty store,
-  since the same forty-two cells are drawn either way and only the lookups
+  since the same cells of the month are drawn either way and only the lookups
   change;
   for a list of two hundred rows it is a *small* list, because two hundred rows
   genuinely do cost more than none, and the question worth asking is whether
@@ -124,7 +124,8 @@ The suite runs in UTC on CI and in Europe/Vilnius on the owner's machine, so a
 test about daylight saving or a local midnight that relies on whichever zone it
 lands in passes in one place for the wrong reason. Such a file sets
 `process.env.TZ` at its top, and its first test checks that it took - that 25
-October 2026 has twenty-five hours. Each test file runs in a process of its own,
+October 2026 has twenty-five hours. One file is the exception on purpose:
+`capacity.nights.test.ts` sets it inside the one test that needs it. Each test file runs in a process of its own,
 so the setting never reaches another file; measured, not assumed.
 
 ### Property tests
@@ -166,12 +167,14 @@ v2.0, and nothing said so.
   44px is a touch target and on a desktop it was only height: a nine-block
   day spent 350px on gaps nobody could miss. A day with more blocks than
   the room has floors for still cannot fit at any density; `fitPxPerMinute`
-  says so by returning the base density, and then **the grid's own column
-  scrolls, opened at now, and the page does not.** `e2e/demo.e2e.ts` holds
+  then draws it at its floors, the least height it can honestly take, and
+  **the grid's own column scrolls, opened at now, and the page does not.** `e2e/demo.e2e.ts` holds
   that at 1366x768 and 1920x1080 on the sample fortnight.
 
-Everything else scrolls vertically and that is fine. **Nothing scrolls
-horizontally, ever.** Check with
+On a desktop no page scrolls either: every page is its head and a body that
+scrolls inside its own box (DESIGN.md, one look's rule 6). On a phone a page
+scrolls where its content is long by nature. **Nothing scrolls horizontally,
+ever.** Check with
 `document.documentElement.scrollWidth > clientWidth`.
 
 ### A full-screen overlay centres on the window, not on what is left of it
@@ -225,9 +228,8 @@ were the ones a person actually has to be somewhere for.
 - **And the width has the last word**, measured on the block itself by a
   container query: under about 144px a line cannot hold a word of title,
   the gap and a time, so the time goes and the block is its title, as
-  every short block was before v2.7; under about 96px - the template
-  editor's seven week columns, a three-lane clash on a phone - not even
-  the line under a title is whole, and the block is its title alone. The
+  every short block was before v2.7; under about 96px - a three-lane
+  clash on a phone - not even the line under a title is whole, and the block is its title alone. The
   axis on the left still says when.
 - **On the week** a block's height is its duration and nothing may floor
   it, and a column is too narrow for a time beside a title, so the same
@@ -266,7 +268,7 @@ card unmounts itself on dismiss, so the order in `DayView.tsx` is the
 queue. The rule exists because the demo's first screen once carried the
 demo line, the banner and the North card above a day the visitor had not
 seen yet, and the day itself was below the fold. The demo line at the very
-top is not one of the two: it is chrome, one 30px row, and never goes away
+top is not one of the two: it is chrome, one row a control tall, and never goes away
 while the sample is open.
 
 The North card - the goal that came forward on a Monday or after a day
@@ -326,7 +328,7 @@ This section is the short form for somebody writing a rule, and
 - One control height, `--control-h`; two page widths, `--page-w` and
   `--read-w`
 - Elevation `--e2` (a popover, a menu) and `--e3` (a modal, a sheet); motion
-  `--dur-fast`, `--dur`, `--ease`
+  `--dur-fast`, `--dur`, `--dur-sweep`, `--ease`
 - Palette `--bg`, `--surface`, `--surface-raised`, `--text`, `--muted`,
   `--faint`, `--accent`, `--accent-dim`, `--border`, `--mark`, `--danger`,
   `--good`; the derived `--fill`, `--fill-strong`, `--scrim` and `--ring`; and
@@ -346,8 +348,8 @@ measures it - see DESIGN.md, "Where actions stand".
 **Retired, not to be used:** `--s0`, `--s5`, `--s7`, `--t-2xs`, `--t-input`,
 `--e1` (none of them is declared any more, so a rule naming one is thrown
 away whole), a font weight written as a number, tracked capitals, a press
-that scales - all at nought - and a line height or a height written in
-pixels, a border that is not one of DESIGN.md's kinds, black written as
+that scales - all at nought - and a line height written as a number or a
+min-height written in pixels, a border that is not one of DESIGN.md's kinds, black written as
 `rgba()`, which are counted at what is kept on purpose. Each is a number in
 `design.test.ts` that only goes down, and DESIGN-AUDIT.md says why each
 kept one is kept.
@@ -392,8 +394,10 @@ bare `14px` is a defect: it means somebody tuned one screen by eye, and the
 next screen will not match it. What looks like room and is not a gap is in
 DESIGN.md, "One look, seven rules".
 
-Two are derived at runtime rather than declared: `--safe-ink` (readable on
-`--surface`) and `--on-accent` (readable on whatever accent is in force).
+Five are derived at runtime rather than declared: `--safe-ink` (readable on
+`--surface`), `--on-accent` (readable on whatever accent is in force),
+`--on-danger` (the armed danger button's ink), and the two rules `--rule-h`
+and `--rule-v`.
 **Anything filled with `--accent` uses `--on-accent` for its ink.** Hard-coding
 white there measured 2.42:1 on the app's loudest button - and again, two
 versions later, on the tick of a done task and the thumb of a switched-on
@@ -404,7 +408,8 @@ lines - every rule that fills with `var(--accent)`, and what it draws on
 top - and it is worth running after any wave that touches the stylesheet.
 
 **A duration is a token or it explains itself.** `--dur-fast`, `--dur`, and
-one bespoke 0.35s on the day progress bar with its reason written beside it.
+`--dur-sweep`, the second a countdown's ring takes to reach its number - the
+clock's, not the interface's, which is why it is named apart.
 A literal that happens to equal a token - `0.15s` beside `var(--dur-fast)` in
 the same declaration, which shipped three times - means the token no longer
 controls what it claims to, and a reader cannot tell which was meant.
@@ -436,16 +441,17 @@ functions and fails on any difference. **Change a theme token in both places.**
 
 ## 6. Buttons and touch targets
 
-Three variants and nothing else: `.btn-primary` (the one action a screen is
-for), `.btn-secondary` (the several it also offers), `.btn-danger` (the one that
-destroys something, outlined until armed, filled only on the confirming second
-tap).
+Three kinds and nothing else: `.btn-primary` (the one action a screen is
+for), `.btn-secondary` (the several it also offers), `.btn-quiet` (Cancel,
+Dismiss, Edit, a link doing a button's job). `.btn-danger` is the quiet kind
+in the danger ink: no ground until armed, filled only on the confirming second
+tap.
 
 **Every control is 44px on a coarse pointer.** Two ways to get there:
 
-1. **Height**, for anything with room. The plain `button` rule gives 44px; the
-   three variants sit at 38px on a mouse and are raised to 44px under
-   `@media (pointer: coarse)`.
+1. **Height**, for anything with room. Every kind is `--control-h` tall - 36px
+   on a mouse, 32px at compact density - and `--control-h` becomes `--touch`,
+   44px, under `@media (pointer: coarse)`.
 2. **A `::after` hit-area overlay**, for an inline control where growing the box
    would grow its row:
    ```css
@@ -453,18 +459,20 @@ tap).
      content: '';
      position: absolute;
      top: 50%; left: 50%;
-     width: max(100%, 44px);
-     height: max(100%, 44px);
+     width: max(100%, var(--touch));
+     height: max(100%, var(--touch));
      transform: translate(-50%, -50%);
    }
    ```
    The list of controls using this is in the `@media (pointer: coarse)` block.
 
 **Audit by measuring, not by reading the stylesheet.** A 28px segmented control
-shipped for four versions because it looked fine in the CSS. The snippet is in
-[`STATE.md`](STATE.md#5-phone-checklist).
+shipped for four versions because it looked fine in the CSS. `npm run sweep --
+--phone` measures every control on every screen, every run - [`STATE.md`
+section 5](STATE.md#5-phone-checklist).
 
-The one documented exception is a week-view block, whose height is its duration.
+The one documented exception is a week-view block, whose height is its duration
+(`SMALL_ON_PURPOSE` in `scripts/sweep.mjs`).
 
 **A stacked stepper is not a touch target.** Two half-height chevrons in one
 44px column are 22px each, and the overlay cannot save them: two overlays on
@@ -621,10 +629,11 @@ npm run e2e
 npm run sweep -- --phone   # serves the build itself; desktop sizes and the phone
 npm run keys               # every screen on a keyboard alone
 npm run precision          # centring, rhythm, alignment
+npm run textscale          # every screen at three text sizes
 npm run privacy            # nothing of the owner's own in a tracked file
 ```
 
-All eight clean, one after another - the sweep and the browser tests both
+All nine clean, one after another - the sweep and the browser tests both
 build or serve `dist`, and two of them at once measure each other. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass; the browser tests run in
@@ -676,7 +685,7 @@ writing, and every addition that asks something takes that value away. So:
   at it turns one press into three corrections. The note is kept and marked
   with where it went - its words are not the task's title, and its pictures
   have to stay somewhere.
-- **An old note is not an accusation.** The count is shown in `--faint`, with
+- **An old note is not an accusation.** The count is shown in `--muted`, with
   no badge and no accent colour, and nothing ever says "unprocessed". Same
   rule as the day view's score: a number that grows in red is a report card.
 - **The way out costs one character.** A leading `!`, or the toggle beside
@@ -686,12 +695,12 @@ writing, and every addition that asks something takes that value away. So:
   the marker says which it is going to be before Enter, not after. This is
   the same rule as the one above it, read the other way: a note that needs
   structure gets a way out, not a field.
-- **Capture is never gated.** The key (`S` or the backtick), the floating
-  button, the palette command: each opens the box with the cursor in it and
+- **Capture is never gated.** The key (`S` or the backtick), Open notes under
+  the header's Notes button, the palette command: each opens the box with the cursor in it and
   every keystroke already saved. If a change makes any of those take a second
   step, it is wrong.
-- **And there is a shorter way in than the stream.** `Q`, or the clock
-  button's Notes tab: one line, Enter, gone, without leaving the screen. It
+- **And there is a shorter way in than the stream.** `Q`, or the Notes
+  button in the header: one line, Enter, gone, without leaving the screen. It
   is not a second Scratch and must never grow into one - no pinning, no
   editing, no filtering. The last three are shown to be recognised, and the
   way to the stream is a button that says where it goes.
@@ -721,8 +730,9 @@ whole day is gone" - so the rules are about tone as much as arithmetic:
 - **Ten seconds and one press.** Every replan screen is one question, shows
   its answer before it is accepted, and applies in one commit with one undo.
   If a change adds a second question to the path, it is wrong.
-- **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
-  nudges; "Back" offers one rescue and clears it. A day that was paused
+- **Away is a pause, not a verdict.** While `DayPlan.away` is set the header
+  says "Away since" and the time, and Back stands where Replan was; Back
+  offers one rescue and clears it. A day that was paused
   is scored like any other, because the score is a fact and the pause was a
   choice.
 
@@ -733,12 +743,12 @@ week, and five more rules came with it:
   interruption lands on and where each block goes - before anybody says
   anything. A row is pressed to say otherwise, never to say yes. If a change
   makes the proposal wait for a choice, it is wrong.
-- **A routine block is skipped, a one-off is moved.** A template's block, a
-  repeat's instance or a routine's task (`hasIdentity`) taken by the interruption is dropped for that
-  day and the summary says "Skipped", because the template makes it again;
-  a task somebody typed is fitted into a gap, key tasks first, or sent on to
-  the next day. A one-off the person chooses to let go of reads "Dropped".
-  Two words, because they are two facts.
+- **A routine block stays, a one-off is moved.** A template's block, a
+  repeat's instance or a routine's task (`hasIdentity`) is not in the
+  interruption's way, and the summary says "The routine stays"; a task
+  somebody typed is fitted into a gap, key tasks first, or sent on to the next
+  day. One the person lets go of is set aside: its row reads "gone", the
+  summary "Set aside, waiting".
 - **The line for the caller comes first.** "Free tomorrow: 15:30-17:00,
   after 19:30" sits above the plan's own sentence, in weight, before Accept,
   where it is read with the phone at the ear. Stretches under half an hour
@@ -792,14 +802,15 @@ which rule and not which line.
 
 ## 13. The tour is a mirror of the app
 
-`lib/tour.ts` describes nine steps by pointing at real controls with real
+`lib/tour.ts` describes eleven steps - a welcome, nine that each end on a real
+action, and a finish - by pointing at real controls with real
 selectors and waiting for real events. That makes it the one piece of this
 codebase that goes stale silently: rename a class, move a control behind a
 menu, change what a button does, and the tour still compiles, still renders,
 and still points at nothing.
 
 **Every wave that changes the UI or adds a feature checks the tour.** Not the
-tests alone - walk it, both platforms, all nine steps, in the browser. A
+tests alone - walk it, both platforms, all eleven steps, in the browser. A
 broken or out-of-date tour is a P0 bug, on the same footing as data loss:
 it is the first thing a new person sees, and a first impression that points
 at an empty rectangle is worse than no tour at all.
@@ -956,7 +967,7 @@ of these - section 25.
 
 | Shelf | What it holds | What it asks |
 |---|---|---|
-| **Notes** | Text, and nothing attached | Nothing at all |
+| **Notes** | Text, and the photographs taken for it | Nothing at all |
 | **Later** | Something to do, on no day | A title, and whatever else you feel like |
 | **A float** | A task on a day, with no time | It is already on a day |
 
@@ -1012,8 +1023,7 @@ rest is what it means in practice.
   It is still in the list underneath, where somebody can look at it if they
   want to. The card does not point at it.
 - **"Enough" is reachable every day.** Half the day's tasks, or every key one.
-  That threshold is the 40% doctrine in
-  [`RESEARCH-ADHD.md`](RESEARCH-ADHD.md) written as a sentence: a day that got
+  That threshold is written as a sentence: a day that got
   half of a real plan done is a day that went well, and an app that only says
   so at ten out of ten says so four times a year.
 - **A day that did not reach it is not failed either.** "The day gave what it
@@ -1022,21 +1032,19 @@ rest is what it means in practice.
 - **No colour means anything on that card.** No accent bar, no tick, no ring,
   no red, no percentage, no comparison with yesterday. The only filled control
   is the button that ends it, because that is the only action on it.
-- **The questions are optional and asked once.** "Best moment today?" is a
-  plain empty field, and since v2.3 so are the journal's two under it: "What
-  was real today?" and "What do I want to tell myself tomorrow?" (see
-  `lib/journal.ts`). Nothing measures whether days have one, nothing
-  prompts for them during the day, and a day that already carries a line
-  shows the line rather than asking again. A journal that counted its own
+- **Nothing is asked.** Three questions lived on the card until v2.5 and
+  were too much; writing has its own place, the journal - one free field a
+  day, no questions (`lib/journal.ts`). Nothing measures whether days have
+  one and nothing prompts for it. A journal that counted its own
   days would be the report card this card refuses to be, so it never does.
 - **The offer to push is an offer.** It names a number, because that is a fact
   about a button, and gives no reason, because leaving three things unfinished
   is not a problem this card exists to solve.
 
 The words this app does not use, anywhere near a day's outcome: missed,
-failed, behind, only, should, incomplete, overdue. A test in
-`eveningClose.test.ts` checks the generated line against that list, on every
-shape of day.
+failed, behind, left, remaining, unfinished, only, still, but, a percentage -
+and should, incomplete, overdue. A test in `eveningClose.test.ts` checks the
+generated line against the first ten, on every shape of day.
 
 ---
 
@@ -1081,8 +1089,9 @@ field, and the field changed is the text rewritten (`lib/recipeNumbers.ts`).
   guess.
 - **A control shows what its answer sits in.** Choosing a time opens on the
   day rather than at midnight - the value it holds, else the end of the last
-  block, else waking - and an hour a block already covers carries that
-  block's colour, so what is taken is seen before the choice instead of
+  block, else waking - and an hour that already holds something carries a
+  grey rule down its edge while the time being chosen is drawn on the
+  timeline beside it, so what is taken is seen before the choice instead of
   after it. Nothing is refused for it: an overlap is allowed, and the point
   is that it stops being a surprise. The same rule is why the quick-add time
   control opens on a real free slot and why the replan sheet shows its plan
@@ -1109,7 +1118,8 @@ a week without finding it. It got a pen in the header, and for a while the
 feature had two different ways in, one per platform - which is the shape this
 rule accepts when there is nowhere a control can live on both. Since v2.0
 there is: the navigation rail is a rail on a desktop and a bar along the
-bottom on a phone, and Scratch is one pen in it, in the same place, on both.
+bottom on a phone, and Scratch was one pen in it for two versions; its way in
+is now Notes in the header, beside the journal, in the same place on both.
 
 What "visible" means, concretely:
 
@@ -1123,7 +1133,7 @@ What "visible" means, concretely:
   today are two that can disagree tomorrow.
 - **The tooltip names the key.** The rail's first icon carries
   `data-tip="Today · 1"`: the visible control is where somebody learns the
-  shortcut, which is the order that works. Under the icon, never on it -
+  shortcut, which is the order that works. Beside the icon, never on it -
   section 24.
 
 ---
@@ -1206,9 +1216,10 @@ module rather than beside it.
 
 A template editor that shows only a list of blocks answers "what is on this
 day". The question somebody is actually asking while building one is "is
-there room for it", and only the picture answers that - which is why both
-editors draw the day the template makes, live, as it is typed
-(`TemplateTimeline`, `templateDay.ts`).
+there room for it", and only the picture answers that - which is why the day
+editor draws the day the template makes (`TemplateTimeline`, `templateDay.ts`)
+and the week editor draws the week (`WeekTemplateGrid.tsx`), live, as it is
+typed.
 
 - **The same grid the day view draws.** Same component, same hour scale,
   same block colours, same gap labels. A second, simplified drawing of a day
@@ -1228,13 +1239,14 @@ editors draw the day the template makes, live, as it is typed
   overloaded day is caught before it is stamped onto a month of Tuesdays,
   and overlapping blocks are counted once so the arithmetic never disagrees
   with the picture above it.
-- **A week is seven shapes and one detail.** Each column draws its own day
-  with its own sleep and gives up its hour numbers - seven copies of a clock
-  in a hundred pixels each say nothing - and the column being worked on is
-  drawn full width above them, with its hours.
-- **It is a picture.** Blocks are not dragged in it. That is in STATE's
-  "Asked for, not yet built", and adding it means the drag machinery the day
-  view already has, not a second one.
+- **A week is drawn as a week.** The editor draws the calendar's own week,
+  fed template blocks (`WeekTemplateGrid.tsx`, `computeWeekLayout`), each
+  column with its own sleep on one hour axis, so a template week and a real
+  week are drawn by one set of rules.
+- **It is a picture you can move.** Since 2026-09-15 a block on the day
+  editor's picture is dragged to another hour and its bottom edge pulled to
+  another length, through the day view's own `useTimelineDrag` - not a second
+  drag machinery; `e2e/template-drag.e2e.ts` holds it.
 
 ## 21. A setting has to earn its place
 
@@ -1261,9 +1273,9 @@ from.
 **A nudge that can only fire while you are looking at the app is not a
 nudge.** Two lived under Nudges until v2.5 - one before a timed task, one
 every so many minutes during focus work - and both could only speak from a
-page already open in front of somebody. Real ones need a service worker and
-a push subscription, which is a piece of work of its own and sits in
-STATE's "Asked for, not yet built" until it is done.
+page already open in front of somebody. Real ones need a push handler in the
+service worker and a push subscription, which is a piece of work of its own,
+parked in [`BACKLOG.md`](BACKLOG.md).
 
 **One card, one switch.** The Monday goal card and the slow-day goal card
 had a switch each. They are the same card in two moments, and nobody has
@@ -1310,13 +1322,16 @@ is a floor that moves depending on how the dimming was written.
 
 **One value for "faded", and it is `--faded`.** Nine hand-tuned numbers
 between 0.35 and 0.5 lived in this stylesheet, and three of them were
-unreadable. They are one token now. A drag is not on it: a card under the
+unreadable. They are one token now, except the 0.75 of a block's time line
+(`.timeline-anchor-time`, `.week-block-time`), which the token's own comment
+names. A drag is not on it either: a card under the
 cursor is faded for the second it is moving and nobody reads it there.
 
 **A filled button does not fade.** Fading a primary takes its background
 toward the surface and its text with it - "Save template" greyed out read
-2.61:1. A disabled primary keeps a quarter-strength tint of the accent so
-it is still recognisably the loud one, with muted text on it.
+2.61:1. A disabled primary takes the fill and the secondary ink, `--fill` and
+`--muted`, with no fade on top, so it reads as waiting rather than broken and
+still reads at 4.5:1.
 
 ### A chosen thing has to look chosen
 
@@ -1374,7 +1389,7 @@ What it settled, so the same doubles do not come back:
 
 - **The header says how the day is going; the rail's card says how the day
   is made.** The bar and the fraction are the header's; the card carries
-  Timed, Focus, Free and Sleep and nothing that counts what is done. It
+  Timed, Deep work, Free and Sleep and nothing that counts what is done. It
   carried a ring with the fraction in it and a Done row beside the ring
   until v2.6 - one number, three times.
 - **The capacity sentence is not drawn where the card is.** At the wide
@@ -1410,7 +1425,8 @@ What it settled, so the same doubles do not come back:
   same thing to the minute. Where a fact is on the screen twice, the copy
   that has to approximate is the one that goes. The column keeps a grey
   rule for "not empty" and a time being chosen is drawn on the timeline
-  instead. See DECISIONS "The colours leave the column".
+  instead. See DECISIONS "The colours leave the column, and the candidate goes into
+  the timeline".
 - **A count of nothing is not shown.** "Nothing yet" over "Nothing here yet"
   was one fact said twice on an empty stream.
 - **A tooltip that only repeats the visible text is removed**, not
@@ -1426,7 +1442,7 @@ the same thing twice is a finding.
 
 The check is a script over every visible text node on a screen, counting
 the ones that appear in two elements; stage 9 of v2.6 ran it on every
-screen at 1920x1080 and the table is in STATE.
+screen at 1920x1080 and the table is in HISTORY.md, under the v2.6 wave.
 
 ## 24. Nothing moves on hover
 
@@ -1453,12 +1469,13 @@ on a line of small caps was on the words, so it is not used anywhere:
 the words go in `data-tip`, and one element at the root
 (`views/TipLayer.tsx`) draws them in the window, 400ms after a mouse
 rests and at once when a keyboard arrives, positioned in the window rather
-than inside whatever scroller or clipped rail the control lives in. The
-North line's peek and the explanation bubble are the same shape by hand.
+than inside whatever scroller or clipped rail the control lives in. North's
+heading card beside the day (`NorthDay.tsx`) and the explanation bubble are
+the same shape by hand.
 
-The North card is the same rule from the other side: a card that arrives
-in the flow above the day and leaves again moves the day twice, so it is a
-sheet over the day since v2.6 (section 4).
+The North card was the same rule from the other side: a card that arrived
+in the flow above the day and left again moved the day twice, so it was a
+sheet over the day from v2.6 until goals were retired in v2.28 (section 4).
 
 ## 25. A state has to earn its place
 

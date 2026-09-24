@@ -199,11 +199,8 @@
      --r-control a button, a field, a chip: something pressed or typed in.
      --r-card    a surface something sits on: a card, a sheet, a panel.
 
-     --r-control and --r-card are the theme's own --radius and --edge, so a
-     preset sets both - including the hand-drawn corner in THEMES section 5.
-     Every preset sets both to 10px since v2.25: two radii and one shape for
-     the whole app, and a card no longer rounds more than the button inside
-     it - docs/DESIGN.md.
+     Until one look they were the theme's own --radius and --edge; every
+     one of them is --r now, below, and a preset reaches no corner.
      The two shapes are not sizes: a pill is a capsule whatever it holds,
      and round is a circle. */
   /* One corner since the one-look pass, rule 3 - docs/DESIGN.md: 8px, a

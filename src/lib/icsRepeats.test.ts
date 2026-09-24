@@ -5,6 +5,10 @@ import { parseIcs } from './ics'
 // this file is about.
 process.env.TZ = 'Europe/Vilnius'
 
+test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours", () => {
+  expect((new Date(2026, 9, 26).getTime() - new Date(2026, 9, 25).getTime()) / 3_600_000).toBe(25)
+})
+
 function cal(body: string): string {
   return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\n${body}\r\nEND:VCALENDAR\r\n`
 }

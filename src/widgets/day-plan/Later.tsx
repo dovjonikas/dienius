@@ -18,7 +18,7 @@ export interface LaterProps {
  * The one undated shelf, since v2.7 - the inbox and the backlog before it
  * were two folds whose rows looked the same and had the same two ways out,
  * and the only thing "decided" ever tracked was which button had been
- * pressed. See docs/STATE.md, the v2.7 decisions, and `LaterItem`.
+ * pressed. See docs/HISTORY.md, the v2.7 wave, and `LaterItem`.
  *
  * The whole design is in what it does *not* do. It is collapsed by default
  * behind a count, exactly like the Done fold - so the day view never

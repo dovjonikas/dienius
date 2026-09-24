@@ -12,6 +12,10 @@ import type { AppData, Routine, Template } from '../../lib/types'
 // night on a machine that runs in UTC - which is how it failed in the deploy.
 process.env.TZ = 'Europe/Vilnius'
 
+test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours", () => {
+  expect((new Date(2026, 9, 26).getTime() - new Date(2026, 9, 25).getTime()) / 3_600_000).toBe(25)
+})
+
 /**
  * A routine that lands on a day with no time says why - rotating shifts, v2.29
  * stage 9, and docs/RESEARCH-SHIFTS.md section 2.3. A kind with no time for it
