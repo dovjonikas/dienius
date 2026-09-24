@@ -217,6 +217,10 @@ localStorage ──loadData()──> validate() ──> normalizeLoaded() ──
   Every one is `commit(next)`: replace the whole object, save, notify. There
   are no reducers and no action types - the function *is* the action.
 - Components never mutate. They call an action and re-render from the store.
+- Another tab of the app saving the plan is heard through the browser's
+  `storage` event and taken in one entity at a time, the sync merge's way
+  (`takeFromOtherTab` in `store/core.ts`); the tab writes the result back
+  only where it holds something the other's copy did not.
 
 ### Reading it in a component
 

@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import type { AppData, DayPlan } from '../types'
-import { loadData, saveData } from '../storage'
+import { loadData, planFromOtherTab, saveData } from '../storage'
 import { stampChanges } from '../syncEntities'
+import { mergeStates } from '../syncMerge'
 import { resetClockForTests, sawPlan, stampNow } from '../clock'
 import { isTourRunning } from '../tourState'
 import { markTourCreated } from '../tour'
@@ -76,6 +77,39 @@ export function replaceState(next: AppData, options: { owed?: boolean } = {}): v
   saveOk = saveData(data)
   listeners.forEach(fn => fn())
   if (options.owed) onCommit.forEach(fn => fn())
+}
+
+/**
+ * Another tab of the app on this device saved the plan - the owner's shift
+ * brief of 2026-09-25, stage 7. Every tab keeps the plan in memory and saves
+ * it whole, so a tab left open behind another saved its older copy over the
+ * other's next change: a tick made in one tab was gone the moment anything
+ * was written in the other. Now a tab takes in what another saved one entity
+ * at a time, the way sync takes in another device (the later stamp wins, a
+ * deletion sticks), and writes the result back only where it holds something
+ * the other's copy did not - so two tabs settle in one exchange instead of
+ * answering each other for ever. Nothing is stamped: both sides' stamps
+ * already say which is later.
+ */
+export function takeFromOtherTab(other: AppData): void {
+  const now = new Date().toISOString()
+  const merged = mergeStates(data, other, now)
+  // What this tab has that the other's copy lacks, which only this tab can write back.
+  const theirs = mergeStates(other, data, now)
+  const lacking = theirs.applied > 0 || theirs.deleted > 0
+  if (merged.applied === 0 && merged.deleted === 0 && !lacking) return
+  data = merged.data
+  sawPlan(data)
+  if (lacking) saveOk = saveData(data)
+  listeners.forEach(fn => fn())
+}
+
+// The browser tells a tab when another one saved, and never the tab that wrote.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', event => {
+    const other = planFromOtherTab(event.key, event.newValue)
+    if (other) takeFromOtherTab(other)
+  })
 }
 
 /**

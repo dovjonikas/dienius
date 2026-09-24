@@ -5533,3 +5533,28 @@ tick dropped on a re-stamp (`stamping.test.ts`), a free day laid over a
 ticked shift leaving no shift (`handStamp.test.ts`), and the night's-hours
 property, which now asks every task of a night that is not ticked to stand
 for a block of the night as it is (`shiftDay.property.test.ts`).
+
+## Two tabs take in what the other saved
+
+Found in the free hunt of the owner's shift brief of 2026-09-25, stage 7,
+by looking where nobody had: two tabs of the app open at once on one
+device - the installed app and a browser tab, or two browser tabs. Each
+keeps the plan in memory and saves it whole, and nothing told a tab that
+another had saved. So a tab left open behind the other saved its older
+copy over the other's change the next time anything was written in it: a
+tick made in one tab was gone after a tick in the other.
+
+**A tab takes in what another saved** (`takeFromOtherTab` in
+`store/core.ts`, hearing the browser's `storage` event, which reaches every
+tab but the one that wrote). One entity at a time, the way sync takes in
+another device - the later stamp wins, a deletion sticks - and nothing is
+stamped, since both sides' stamps already say which is later. The result
+is written back only where this tab holds something the other's copy did
+not, so two tabs settle in one exchange instead of answering each other
+for ever; a copy with nothing new is taken in and not written again. A
+write to another key - the demo's sample, the tour's sandbox - is not this
+tab's plan, and a text that does not read as a plan is left alone.
+
+Rejected: one tab at a time, the second told to close. The installed app
+and a tab left open from yesterday are how people use a planner, and a
+second tab that refuses to work is a worse surprise than one that agrees.

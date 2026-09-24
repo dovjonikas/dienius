@@ -371,6 +371,22 @@ function keepAside(raw: string): void {
   if (activeKey() === STORAGE_KEY) keepUnreadable(raw)
 }
 
+/**
+ * The plan another tab of the app on this device has just saved, read the way
+ * this tab reads its own - or null where the write is not this tab's plan (the
+ * demo's, the tour's, any other key) or does not read as a plan, which is left
+ * for that tab's own open to keep aside.
+ */
+export function planFromOtherTab(key: string | null, text: string | null): AppData | null {
+  if (key !== activeKey() || !text) return null
+  try {
+    const parsed: unknown = JSON.parse(text)
+    return validate(parsed) ? normalizeLoaded(parsed) : null
+  } catch {
+    return null
+  }
+}
+
 export function saveData(data: AppData): boolean {
   // Where an unreadable plan could not be kept aside it is still here, and
   // nothing goes over it until the person has let it go.
