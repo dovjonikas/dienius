@@ -108,7 +108,7 @@ export interface TaskRowProps {
    * finishing a task is no longer a change to this row alone: it also starts
    * the hand-off that moves the card into the Done section. The store write
    * still happens first and unconditionally up there - see
-   * `handleToggleDone`.
+   * `useDoneAnimation`.
    */
   onToggleDone: (taskId: string, wasDone: boolean) => void
   /**

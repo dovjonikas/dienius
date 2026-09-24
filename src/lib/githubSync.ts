@@ -99,7 +99,7 @@ export async function readSyncState(): Promise<GitHubSyncRead> {
  * Writes the shared copy, but only over the version that was read.
  *
  * No retry with a fresh sha, deliberately, and this is the difference between
- * this and `writeFile` in cloudBackup.ts. A backup that loses a race can read
+ * this and `writeMerged` in cloudBackup.ts. A backup that loses a race can read
  * the new sha and write again, because what it is writing is the whole truth
  * of this device. A sync cannot: the state in hand was merged against what
  * the file said *before* the other device wrote, so writing it again with a

@@ -130,10 +130,5 @@ export function periodStats(data: AppData, from: string, to: string): PeriodStat
   }
 }
 
-/** 0-1, or null when there was no plan to be a fraction of. */
-export function doneRate(stat: { done: number; total: number }): number | null {
-  return stat.total > 0 ? stat.done / stat.total : null
-}
-
 /** The cap, restated here so the Review tab does not import types for one number. */
 export const KEY_TASKS_PER_DAY = MAX_HIGHLIGHTS

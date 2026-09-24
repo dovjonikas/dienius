@@ -103,16 +103,6 @@ export function KitchenIcon() {
   )
 }
 
-/** The pen from the header, at rail size. Scratch has always been this shape. */
-export function ScratchIcon() {
-  return (
-    <svg {...BOX}>
-      <path d="M13.5 3.2l3.3 3.3-9.5 9.5-4.3 1 1-4.3z" {...STROKE} />
-      <path d="M11.6 5.1l3.3 3.3" {...STROKE} />
-    </svg>
-  )
-}
-
 /** Two sliders. A gear at 20px with a 1.5 stroke is a grey circle. */
 export function SettingsIcon() {
   return (

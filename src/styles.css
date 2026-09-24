@@ -5282,7 +5282,7 @@ button.primary {
   color: var(--text);
 }
 
-/* Settings' own sleep-window controls - two TimeStepInput fields per row
+/* Settings' own sleep-window controls - two time fields per row
    (bedtime, wake time), wrapping at 375px the same way .block-add's own
    row already does, so neither field is ever squeezed below a usable
    width on the phone. */
@@ -7728,8 +7728,8 @@ button.danger:focus-visible {
   /* .app's own padding-bottom (64px, unconditional - see above) is a
      phone concern: room to scroll a tall page clear of a device's own
      bottom chrome. Nothing about the Today tab needs that much air below
-     it at this width - see fix-fill-viewport-height-report.md, "more than
-     half the window is empty background." A plain 24px matches the gap
+     it at this width, where more than half the window was empty
+     background. A plain 24px matches the gap
      already used between the three columns below, rather than inventing a
      second spacing value. Scoped by the same :has(.main-day) the max-width
      override above already uses, so Calendar, Templates and Settings keep
@@ -8151,8 +8151,7 @@ button.danger:focus-visible {
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
-     as an "optional, later" change and fix-fill-viewport-height-report.md
-     is the one that made it: at this width the grid is a dedicated column,
+     as an "optional, later" change, since made: at this width the grid is a dedicated column,
      not competing with a task list stacked below it, and TimelineGrid.tsx
      now measures real vertical room and draws denser to use it
      (useAvailableGridHeight, chooseWidePxPerMinute) - so the container

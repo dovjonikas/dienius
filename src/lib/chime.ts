@@ -193,11 +193,6 @@ const PROFILES: Record<Exclude<ChimeProfile, 'off'>, Profile> = {
   },
 }
 
-/** The numbers, for anything that wants to describe or render them - see docs/audio. */
-export function chimeProfile(profile: Exclude<ChimeProfile, 'off'>): Profile {
-  return PROFILES[profile]
-}
-
 /**
  * Whether the page has had a user gesture yet.
  *

@@ -2,7 +2,6 @@ import { beforeEach, expect, test } from 'vitest'
 import { defaultData } from './storage'
 import {
   datesBetween,
-  doneRate,
   endOfMonth,
   libraryProgress,
   periodStats,
@@ -57,7 +56,6 @@ test('a range is inclusive at both ends', () => {
 test('an empty period reports no planned days rather than a zero rate', () => {
   const stats = periodStats(data, MON, SUN)
   expect(stats.plannedDays).toBe(0)
-  expect(doneRate(stats)).toBeNull()
 })
 
 test('done counts across the period, and every day is present whether it was used or not', () => {

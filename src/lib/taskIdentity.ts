@@ -37,9 +37,8 @@ export function identityOf(task: Task): string | null {
  * one-off. Replan does not move these, an interruption drops them for the day,
  * and the rollover does not push one tomorrow is getting anyway.
  *
- * Called `isRoutine` until v2.29, when rotating shifts gave "routine" a
- * meaning of its own (`Routine` in types.ts); a routine's task is one of
- * these, and so is every template block.
+ * A routine's task (`Routine` in types.ts) is one of these, and so is every
+ * template block.
  */
 export function hasIdentity(task: Task): boolean {
   return identityOf(task) !== null
@@ -150,8 +149,8 @@ export function dedupeTasks(tasks: Task[]): Task[] {
  *
  * Three ways that happens: the day already holds it, the day is stamped from
  * the same template, or the weekday map will stamp that template when the day
- * is first opened. A repeat series is not counted here - `willRepeatOnto`
- * below answers that, because it needs the repeat rules.
+ * is first opened. A repeat series is not counted here - `sourceCovers` in
+ * repeats.ts answers that, because it needs the repeat rules.
  *
  * A night's task is the one exception to the second and third (section 10 of
  * RESEARCH-SHIFTS): a template gives a date its night's hours through the

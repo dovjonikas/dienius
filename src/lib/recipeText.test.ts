@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest'
-import { readRecipe, recipeIngredients, recipeSteps } from './recipeText'
+import { readRecipe, recipeIngredients } from './recipeText'
 
 /**
- * A recipe's text, read for its page and for Cook. The rule is North's - a
+ * A recipe's text, read for its page. The rule is North's - a
  * line in capitals is a heading - and two headings mean something more:
  * under INGREDIENTS every line is an ingredient, and under STEPS every line
  * is a step. Anything else is shown as it was typed. Every recipe here is a
@@ -13,7 +13,6 @@ test('a text with no heading reads as typed, paragraph by paragraph, and has no 
   const reading = readRecipe('Toast the bread.\nSpread it with butter.\n\nEat it warm.')
   expect(reading).toEqual({ intro: ['Toast the bread.\nSpread it with butter.', 'Eat it warm.'], parts: [] })
   expect(recipeIngredients(reading)).toEqual([])
-  expect(recipeSteps(reading)).toEqual([])
 })
 
 test('the lines under INGREDIENTS are the ingredients, one to a line, whatever blank lines or bullets they were typed with', () => {
@@ -29,7 +28,6 @@ test('the lines under STEPS are the steps in order, one to a line, without the n
   expect(reading.parts).toEqual([
     { kind: 'steps', heading: 'STEPS', items: ['Chop the onion.', 'Soften it in oil.', 'Add the lentils.', 'Simmer for twenty minutes.'] },
   ])
-  expect(recipeSteps(reading)).toEqual(['Chop the onion.', 'Soften it in oil.', 'Add the lentils.', 'Simmer for twenty minutes.'])
 })
 
 test('any other heading stands over its paragraphs, and every part keeps the place it was written in', () => {
@@ -46,7 +44,6 @@ test('INGREDIENTS and STEPS are known with or without a colon, a second list of 
   const reading = readRecipe('INGREDIENTS:\nflour\nSTEPS:\nMix.\nSAUCE INGREDIENTS\ncream\nINGREDIENTS\nsugar\nSTEP\nBake.')
   expect(reading.parts.map(part => part.kind)).toEqual(['ingredients', 'steps', 'section', 'ingredients', 'section'])
   expect(recipeIngredients(reading)).toEqual(['flour', 'sugar'])
-  expect(recipeSteps(reading)).toEqual(['Mix.'])
 })
 
 test('in a recipe a line of --- and words in brackets are text, and a heading with nothing under it is still a heading', () => {

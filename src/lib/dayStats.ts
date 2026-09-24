@@ -90,33 +90,3 @@ export function dayStat(day: DayPlan | undefined): DayStat {
 export function keptEveryKeyTask(stat: DayStat): boolean {
   return stat.highlights > 0 && stat.highlightsDone === stat.highlights
 }
-
-export interface MonthSummary {
-  /** Days with a plan, over the month's own dates and never over the calendar around them. */
-  activeDays: number
-}
-
-/**
- * One line about a month, for the calendar header.
- *
- * A count of the days that had a plan, and nothing else. Until v2.7 the line
- * also said what share of the month's tasks got done and how long the best
- * run of full days was, and both were verdicts: the share is the score this
- * app declines to put beside anything, and a longest run is a streak under a
- * softer name - a counter that resets to zero encodes a rule the psychology
- * does not support, whichever screen it is on (docs/RESEARCH-ADHD.md
- * section 8). How many days were used has no direction to it.
- */
-export function monthSummary(days: Record<string, DayPlan>, dates: string[]): MonthSummary {
-  let activeDays = 0
-  for (const date of dates) {
-    if (dayStat(days[date]).rate !== null) activeDays++
-  }
-  return { activeDays }
-}
-
-/** "14 days with a plan". Null when there is nothing to say. */
-export function summaryLine(summary: MonthSummary): string | null {
-  if (summary.activeDays === 0) return null
-  return `${summary.activeDays} ${summary.activeDays === 1 ? 'day' : 'days'} with a plan`
-}

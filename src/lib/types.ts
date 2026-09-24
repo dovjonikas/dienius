@@ -780,22 +780,6 @@ export interface LibraryList extends Timestamped {
 /** How many tasks on one day may be marked as highlights. See `Task.highlight`. */
 export const MAX_HIGHLIGHTS = 3
 
-/**
- * The day's journal: three lines, none required - see lib/journal.ts.
- *
- * `intent` is the morning line under the North line, "Today: ...". `real`
- * and `tomorrow` are the two questions on the evening close card: what was
- * real today, and what to tell yourself tomorrow. Plain text with no limit,
- * and every field absent when it is blank, so a day nobody wrote on carries
- * no journal at all. Nothing counts these, nothing streaks them, and a day
- * without them is not a state the app mentions.
- */
-export interface DayJournal {
-  intent?: string
-  real?: string
-  tomorrow?: string
-}
-
 export interface DayPlan extends Timestamped {
   date: string
   /**

@@ -245,11 +245,6 @@ export function readPhoto(id: string): Promise<Blob | null> {
   return store.get(id)
 }
 
-/** Whether this device has the picture, which is what the placeholder asks. */
-export async function hasPhoto(id: string): Promise<boolean> {
-  return (await store.get(id)) !== null
-}
-
 /**
  * Puts a blob back under an id it already had. The one caller is the undo
  * of a note delete, which is holding the pictures it took out a moment ago

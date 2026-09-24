@@ -28,14 +28,14 @@ export interface MinuteStepInputProps {
 
 /**
  * A number-of-minutes field with the same shape and the same manners as
- * `TimeStepInput`: type into it freely, or step it with the arrow keys and
+ * quick-add's time field: type into it freely, or step it with the arrow keys and
  * the two buttons beside it, and it only ever commits a value it has
  * normalised. It exists so that nowhere in this app is a duration entered
  * through a bare `<input type="number">`, whose spinner cannot be styled to
  * match anything and whose touch behaviour is a lottery.
  *
- * Kept separate from `TimeStepInput` rather than folded into it as a mode.
- * That component's whole behaviour is about clock times - wrapping past
+ * Kept separate from the time field rather than folded into it as a mode.
+ * A time's whole behaviour is about clock times - wrapping past
  * midnight, parsing "0930", seeding 09:00 - and none of it means anything for
  * a length. Two small components that each do one thing are easier to trust
  * than one with a flag that changes half of what it does.

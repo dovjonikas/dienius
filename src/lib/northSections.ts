@@ -2,7 +2,6 @@ import {
   headingLineKinds,
   introText,
   isHeading,
-  isSignatureMark,
   parseHeadings,
   splitHeading,
   tagAt,
@@ -115,15 +114,6 @@ export function northTagAt(line: string): number {
  */
 export function isNorthHeading(line: string): boolean {
   return isHeading(line, NORTH_RULES)
-}
-
-/**
- * Whether a line is the one that starts the signature: three hyphens and
- * nothing else, spaces around it aside. Four hyphens, or three with a word
- * after them, are text.
- */
-export function isNorthSignatureMark(line: string): boolean {
-  return isSignatureMark(line)
 }
 
 /**

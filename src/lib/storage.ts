@@ -18,10 +18,6 @@ import { holdsSaves, keepUnreadable } from './unreadable'
 // fresh install should start with. See DEFAULT_PRESET_ID in themes.ts.
 const DEFAULT_PRESET_ID = 'dark'
 
-// Off, every twenty minutes, and a sentence about the two things a body
-// actually needs during a long block. Duplicated here rather than imported
-// for the same reason DEFAULT_PRESET_ID is: this file only needs the literal
-// a fresh install starts with.
 // North's switches as a fresh plan has them: every one on. `afterASlowDay`
 // switched a card that went with goals in v2.28 and nothing reads it, but an
 // older device's check requires it - see NorthSettings.
@@ -75,9 +71,7 @@ const DEFAULT_NIGHT_SLEEP_WINDOW: SleepWindow = { start: '00:00', end: '13:00' }
  */
 const REMOVED_SETTINGS = ['reminder', 'taskReminder', 'enabledWidgets', 'sleepWindow', 'nightSleepWindow'] as const
 
-// The if-then board's old widget registry id, from when it rendered as its
-// own stacked section under the day plan - see docs/TIMELINE.md section 6.
-// Also duplicated, deliberately and minimally, in the pre-paint script in
+// Duplicated, deliberately and minimally, in the pre-paint script in
 // index.html - that script reads settings.theme straight out of this key
 // before React mounts, so it has to know the key and that one field's shape
 // on its own. Change either here and check the other still matches.
@@ -177,10 +171,6 @@ function migrateTheme(theme: StoredTheme): ThemeState {
 export { validate }
 export type { StoredAppData } from './validate'
 
-// Fills in what a payload from before the if-then board existed does not
-// have: an empty ifThens list. The dead 'if-then' widget id such payloads
-// also carry needs no handling of its own any more - the whole
-// `enabledWidgets` list goes on load, see REMOVED_SETTINGS.
 /**
  * Turns whatever a payload carries about sleep into the profile list.
  *

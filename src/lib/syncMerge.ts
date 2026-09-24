@@ -328,9 +328,4 @@ export function normaliseRemote(remote: AppData): AppData {
   }
 }
 
-/** Only used by the tests and by the client's own logging. */
-export function entityKinds(): string[] {
-  return ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'recipe', 'routine', 'setting']
-}
-
 export { idOf, kindOf }

@@ -176,18 +176,19 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
     }
   }
 
-  // A second confirming tap, then every key this app wrote here goes and the
+  // A second confirming tap, then everything this app wrote here goes and the
   // page reloads - see lib/eraseDevice.ts, which is what "everything on this
   // device" means: the plan, the timer, the cached calendars, the snapshots,
-  // and the sync switch and the repo and token Backup holds. Leaving those
-  // two behind had the plan back from GitHub a second after the erase.
-  // Removing the keys and reloading rather than a soft in-memory clear is
-  // deliberate: the app comes back through the same loadData() a fresh
-  // install goes through, rather than some other path to keep in step.
+  // the photographs, the picked files, and the sync switch and the repo and
+  // token Backup holds. Leaving those last two behind had the plan back from
+  // GitHub a second after the erase. Removing it all and reloading rather
+  // than a soft in-memory clear is deliberate: the app comes back through
+  // the same loadData() a fresh install goes through, rather than some other
+  // path to keep in step. The reload waits for the databases, and follows
+  // the keys at once.
   function handleResetClick() {
     if (confirmReset) {
-      eraseThisDevice()
-      window.location.reload()
+      void eraseThisDevice().then(() => window.location.reload())
     } else {
       setConfirmReset(true)
     }
@@ -447,9 +448,9 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
                 <span className="setting-name">Erase all data</span>
                 <span className="setting-desc">
                   Removes everything on this device: every template, every day, your North, the
-                  theme, and the repo and token this device syncs and backs up with - so nothing
-                  brings the plan back afterwards. What is on GitHub stays. Export a backup first
-                  if you want to keep a copy.
+                  photographs in your notes, the theme, and the repo and token this device syncs
+                  and backs up with - so nothing brings the plan back afterwards. What is on
+                  GitHub stays. Export a backup first if you want to keep a copy.
                 </span>
               </div>
               <div className="setting-control">

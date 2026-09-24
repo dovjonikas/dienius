@@ -157,11 +157,3 @@ export async function readSnapshot(date: string): Promise<AppData | null> {
   db.close()
   return record?.data ?? null
 }
-
-/** Test seam, and the thing "Erase all data" has to call. */
-export async function clearSnapshots(): Promise<void> {
-  const db = await openDb()
-  if (!db) return
-  await transact(db, 'readwrite', store => store.clear())
-  db.close()
-}

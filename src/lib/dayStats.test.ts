@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { HIGH_RATE, LOW_RATE, dayStat, keptEveryKeyTask, monthSummary, summaryLine, toneFor } from './dayStats'
+import { HIGH_RATE, LOW_RATE, dayStat, keptEveryKeyTask, toneFor } from './dayStats'
 import type { DayPlan, Task } from './types'
 
 function task(over: Partial<Task> = {}): Task {
@@ -97,36 +97,6 @@ test('deep work counts finished, sized tasks in that category only', () => {
     ]),
   )
   expect(stat.focusMinutes).toBe(60)
-})
-
-// --- the month line ------------------------------------------------------
-
-const MONTH = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05']
-
-function days(entries: Record<string, Task[]>): Record<string, DayPlan> {
-  return Object.fromEntries(Object.entries(entries).map(([date, tasks]) => [date, { date, tasks }]))
-}
-
-test('a month nobody used has nothing to say', () => {
-  expect(summaryLine(monthSummary({}, MONTH))).toBeNull()
-})
-
-test('the summary is over planned days, never over the calendar', () => {
-  const store = days({
-    '2026-09-01': [task({ done: true }), task({ done: true })],
-    '2026-09-03': [task({ done: true }), task()],
-  })
-  expect(monthSummary(store, MONTH).activeDays).toBe(2)
-})
-
-// Whether the days went well is not the line's business: a month of nothing
-// finished and a month of everything finished read the same here.
-test('the line says how many days had a plan, and nothing about how they went', () => {
-  const full = [task({ done: true })]
-  const empty = [task(), task()]
-  expect(summaryLine(monthSummary(days({ '2026-09-01': full }), MONTH))).toBe('1 day with a plan')
-  expect(summaryLine(monthSummary(days({ '2026-09-01': full, '2026-09-02': full }), MONTH))).toBe('2 days with a plan')
-  expect(summaryLine(monthSummary(days({ '2026-09-01': empty, '2026-09-02': empty }), MONTH))).toBe('2 days with a plan')
 })
 
 // --- a low day -------------------------------------------------------------

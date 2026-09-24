@@ -5,7 +5,6 @@ import {
   PHOTO_MAX_EDGE,
   fitWithin,
   deletePhotos,
-  hasPhoto,
   keepPhoto,
   photoIds,
   readPhoto,
@@ -80,7 +79,6 @@ test('a kept photograph comes back by its id, with the size it was kept at', asy
 
 test('a photograph that is not there reads as nothing rather than throwing', async () => {
   expect(await readPhoto('never-existed')).toBe(null)
-  expect(await hasPhoto('never-existed')).toBe(false)
 })
 
 test('a store that refuses to keep anything is a photograph that was not added', async () => {

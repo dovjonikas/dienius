@@ -54,7 +54,7 @@ const PX_PER_MINUTE = 1.15
  * density: generous enough that a genuinely sparse day visibly spreads out
  * to use real extra room, conservative enough that a block still reads as
  * a block rather than a slab. Judgment, not a measurement of any one
- * screen - see fix-fill-viewport-height-report.md.
+ * screen.
  */
 const MAX_PX_PER_MINUTE_WIDE = PX_PER_MINUTE * 3
 
@@ -389,9 +389,9 @@ export interface TimelineGridProps {
    * read-only preview, most of this component's own tests) draws at the
    * phone's fixed `PX_PER_MINUTE` exactly as it always has - only a caller
    * that explicitly says the viewport is wide ever measures anything or
-   * draws denser than that. See `fix-fill-viewport-height-report.md` for
-   * why: the phone's own viewport height rarely has genuine room to spare,
-   * so it never pays for a measurement it would not act on.
+   * draws denser than that. The phone's own viewport height rarely has
+   * genuine room to spare, so it never pays for a measurement it would not
+   * act on.
    */
   isWide?: boolean
   /**

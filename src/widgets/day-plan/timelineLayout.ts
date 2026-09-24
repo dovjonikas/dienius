@@ -25,7 +25,7 @@ import { clipToWindow, formatDuration, gapsInWindow, isAnchor, mergeIntervals, t
  *   down by the same amount. So two minutes an hour apart are not always
  *   the same distance apart in pixels, and nothing outside this module may
  *   convert one to the other by multiplying - go through `topPx`, and back
- *   through `minutesAtPx` on the drag side.
+ *   through `minutesAt` on the drag side.
  *
  * ## Three windows, and why they disagree at the edges
  *

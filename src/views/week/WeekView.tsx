@@ -6,7 +6,6 @@ import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
 import { carriedInto, sleepOn } from '../../lib/shiftDay'
 import { categoryColor } from '../../lib/categories'
-import { formatDuration } from '../../widgets/day-plan/capacity'
 import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayout'
 import { useIsWide } from '../../lib/viewport'
 import { eventsOn, useCalendarCache } from '../../lib/calendars'
@@ -363,16 +362,6 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
  */
 function firstLine(journal: string | undefined): string | undefined {
   return journal?.split(String.fromCharCode(10)).find(line => line.trim())?.trim() || undefined
-}
-
-/** Exported for the column footer, which says the same thing about a past day. */
-export function footerLine(stat: ReturnType<typeof dayStat> | undefined, taskCount: number, focusMinutes: number): string {
-  if (stat && stat.rate !== null) {
-    return `${stat.done}/${stat.total} done`
-  }
-  if (taskCount === 0) return 'nothing yet'
-  const focus = focusMinutes > 0 ? ` - ${formatDuration(focusMinutes)}` : ''
-  return `${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}${focus}`
 }
 
 export { categoryColor }

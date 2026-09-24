@@ -475,13 +475,6 @@ export function CalendarView({
           </>
         )}
 
-        {/* One quiet line about the month, where a heading's subtitle would
-            be. Never on a month nobody used - see summaryLine. */}
-        {/* The month's own summary line went in v2.20. It counted the days with
-            a plan on them, which is the one fact the grid under it draws
-            forty-two times: a stamped day carries its template's colour and
-            its own lines, and an empty one is empty. */}
-
         {/* Only while the week is showing, because it is a question about
             that mode rather than about the calendar. Before the mode, in the
             document and on a wide screen, so the mode stands in one place in

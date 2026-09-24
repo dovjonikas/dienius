@@ -431,7 +431,7 @@ test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list
   }
 })
 
-// --- fix-fill-viewport-height-report.md: the grid stretches to fill real,
+// --- the grid stretches to fill real,
 // measured room at the wide breakpoint, rather than sitting inside a fixed
 // max-height cap with its own internal scrollbar. This only checks that
 // DayView actually passes isWide through to TimelineGrid - the grid's own

@@ -16,8 +16,6 @@ import { weekdayOf } from './repeats'
  * one you cannot screenshot, cannot describe, and cannot debug.
  */
 
-export const DEMO_MARK = 'demo'
-
 interface Seed {
   time: string
   title: string

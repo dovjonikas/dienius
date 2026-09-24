@@ -20,9 +20,6 @@ import { getSyncConfig } from './syncClient'
 
 const CACHE_KEY = 'dienius:calendars'
 
-/** How often a feed is refetched while the app is open. */
-export const REFRESH_INTERVAL_MS = 30 * 60 * 1000
-
 export interface CalendarCacheEntry {
   events: IcsEvent[]
   /** ISO instant of the last successful fetch. */
@@ -78,7 +75,7 @@ export function useCalendarCache(): CalendarCache {
   return useSyncExternalStore(subscribeCalendars, getCalendarCache, getCalendarCache)
 }
 
-/** Test seam, and what "erase all data" reaches for. */
+/** Test seam. An erase takes the cache with every other key - lib/eraseDevice.ts. */
 export function clearCalendarCache(): void {
   cache = {}
   try {

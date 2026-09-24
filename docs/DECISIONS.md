@@ -4610,6 +4610,17 @@ The crash screen's own reset is deliberately not this. It exists to get past
 a state the app cannot render, and sync pulling the plan back afterwards is
 the recovery, not the bug.
 
+**And the databases, since the freeze (2026-09-24).** The prefix reached
+every key and none of the three IndexedDB databases beside them: the daily
+snapshots were cleared by a call of their own, and the photographs in the
+notes and the files picked for the Library stayed where they were - a
+note's pictures on a machine being handed on, after an erase that said it
+removed everything. An erase now deletes all three by name, and a test reads
+the code for every database it opens and fails if one is not on the list.
+The databases go first and the keys last, and the page reloads as soon as
+they are gone, so nothing can write a key back in between; a database that
+does not answer in two seconds is not waited for.
+
 ## Routines in the templates file
 
 v2.37, the owner's brief of 2026-09-22, part 3, and section 4 of

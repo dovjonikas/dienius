@@ -1,7 +1,7 @@
 import { parseHeadings } from './headings'
 
 /**
- * A recipe's text, read for its page and for Cook - Kitchen, since v2.27.
+ * A recipe's text, read for its page - Kitchen, since v2.27.
  *
  * The rule is North's and so is the parser (lib/headings.ts): a line in
  * capitals is a heading and owns the lines under it to the next heading, and
@@ -86,7 +86,3 @@ export function recipeIngredients(reading: RecipeReading): string[] {
   return reading.parts.flatMap(part => (part.kind === 'ingredients' ? part.items : []))
 }
 
-/** Every step in the recipe, from every STEPS list, in order. */
-export function recipeSteps(reading: RecipeReading): string[] {
-  return reading.parts.flatMap(part => (part.kind === 'steps' ? part.items : []))
-}
