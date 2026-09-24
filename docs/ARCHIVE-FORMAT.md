@@ -29,7 +29,9 @@ connection. What was not written waits for the next run; nothing is lost
 for being late.
 
 A date is a lived day once it is behind today on the device's clock, and it
-is archived when anything is on it: a task, a journal line, a note.
+is archived when anything is on it - a task, a journal line, a note - or a
+kind of day, even with nothing else on it: a rest day with no blocks was
+still a rest day.
 
 ## 2. What a reader can rely on
 

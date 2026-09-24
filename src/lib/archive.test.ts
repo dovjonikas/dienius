@@ -134,6 +134,15 @@ describe('a lived day, as a record', () => {
   test('a date with nothing on it has no record', () => {
     expect(dayRecord(getData(), '2030-01-05')).toBeNull()
   })
+
+  test('a day with a kind and nothing on it is still archived, as the kind it was; a recipe with no numbers is named alone', () => {
+    const data = getData()
+    data.days['2030-01-06'] = { date: '2030-01-06', templateId: 'day', dayType: 'shift', tasks: [] }
+    expect(dayRecord(data, '2030-01-06')).toMatchObject({ kind: { letter: 'D', name: 'Day shift' }, tasks: [] })
+    expect(dayRecord(data, '2030-01-06')!.score).toBeUndefined()
+    const bare = { ...data, recipes: [{ id: 'soup', title: 'A lentil soup', text: '' }] }
+    expect(dayRecord(bare, '2030-01-07')!.tasks.find(t => t.title === 'Lunch')!.recipe).toEqual({ title: 'A lentil soup' })
+  })
 })
 
 describe('the archive in the repo', () => {

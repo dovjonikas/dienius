@@ -214,7 +214,7 @@ function taskRecord(task: Task, data: AppData): TaskRecord {
 
 /**
  * A lived day as the archive writes it, or null where the day holds nothing
- * - no task, no journal and no note. Pure, and the same day is the same
+ * - no task, no journal, no note and no template. Pure, and the same day is the same
  * record: its tasks in the order of the day, timed by their time and the
  * untimed after, and each field only where the task says it.
  */
@@ -222,7 +222,9 @@ export function dayRecord(data: AppData, date: string): DayRecord | null {
   const day = data.days[date]
   const notes = data.scratch.filter(n => n.date === date)
   const journal = day?.journal?.trim() ? day.journal : undefined
-  if (!day?.tasks.length && !journal && notes.length === 0) return null
+  // A day with a kind and nothing on it was still that kind of day - a rest
+  // day with no blocks is a rest day - and is archived as it.
+  if (!day?.tasks.length && !journal && notes.length === 0 && !day?.templateId) return null
   const tasks = [...(day?.tasks ?? [])].sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99') || a.title.localeCompare(b.title))
   const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
   const dayType: DayType = day?.dayType ?? 'full'
