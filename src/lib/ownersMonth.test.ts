@@ -7,6 +7,7 @@ import { dayKinds, isNightKind, kindOnDate } from './dayKinds'
 import { addDays } from './dates'
 import { routineNotes, wakingDayOn } from './shiftDay'
 import { recipeForDate } from './kitchen'
+import { closingAt, closingDay, eveningSummary } from './eveningClose'
 import { weekdayOf } from './repeats'
 import { originFor } from './taskIdentity'
 import type { AppData, Task, Template } from './types'
@@ -47,6 +48,7 @@ interface FileTemplate {
   kind?: string
   type?: string
   afterNight?: string
+  sleep?: { from: string; to: string }
   blocks?: FileBlock[]
 }
 interface OwnersFile {
@@ -223,5 +225,33 @@ describe.skipIf(!here)("the owner's month, lived", () => {
     const next = addDays(block, 8)
     actions.stamp({ [addDays(next, 1)]: kind(letters.N).id })
     expect([0, 1, 2, 3, 4].map(n => letterOn(getData(), addDays(next, n)))).toEqual([letters.D, letters.N, letters.N2, letters.N2, letters.P])
+  })
+
+  // The evening close follows the kind of day - the owner's brief of
+  // 2026-09-25, before the freeze: half an hour before the sleep that ends
+  // the date, which is the next date's, read here from the file itself.
+  test('each date closes half an hour before the sleep that ends it - a night the morning after, closing the night - and never while its shift runs', () => {
+    const { text, file, letters } = sixWeeks()
+    actions.importTemplatesJson(text)
+    const data = getData()
+    const byLetter = new Map(file.templates.filter(t => t.kind).map(t => [t.kind!, t]))
+    const closed = new Set<string>()
+    for (const date of dates.slice(0, -1)) {
+      // Over midnight the next sleep starts this evening; within one day, tomorrow.
+      const sleep = byLetter.get(letterOn(data, addDays(date, 1))!)!.sleep!
+      const due = (minutes(sleep.from) < minutes(sleep.to) ? minutes(sleep.from) + 1440 : minutes(sleep.from)) - 30
+      const others = (on: string) => on !== date
+      const at = (clock: number) => (clock >= 1440 ? closingAt(data, addDays(date, 1), clock - 1440, others) : closingAt(data, date, clock, others))?.date ?? null
+      const what = `${date} ${letterOn(data, date)}`
+      expect(eveningSummary(closingDay(data, date)), what).not.toBeNull()
+      expect(at(due - 1), `${what} a minute early`).toBeNull()
+      expect(at(due), `${what} at its close`).toBe(date)
+      closed.add(letterOn(data, date)!)
+      for (const shift of data.days[date].tasks.filter(t => t.unbounded && t.time && t.minutes)) {
+        const start = minutes(shift.time!)
+        for (const clock of [start + 1, start + shift.minutes! - 1]) expect(at(clock), `${what} ${shift.title} running`).toBeNull()
+      }
+    }
+    expect([...closed].sort()).toEqual(Object.values(letters).sort())
   })
 })

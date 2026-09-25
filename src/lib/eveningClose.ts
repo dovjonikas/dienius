@@ -1,4 +1,7 @@
-import type { DayPlan, EveningCloseSettings, Task } from './types'
+import type { AppData, DayPlan, EveningCloseSettings, Task } from './types'
+import { addDays } from './dates'
+import { kindOnDate } from './dayKinds'
+import { wakingDayOn } from './shiftDay'
 import { dayScore } from '../widgets/day-plan/score'
 
 /**
@@ -105,34 +108,126 @@ function lineFor(s: Omit<EveningSummary, 'line'>): string {
   return `${count} - the day gave what it gave.`
 }
 
+const DAY_MINUTES = 24 * 60
+
+/** The card comes this long before the sleep that ends a day with a kind. */
+export const BEFORE_SLEEP = 30
+
+/**
+ * A day's evening on its own clock - minutes from its midnight, past 1440 the
+ * date after: from when the card may come to when the day is over.
+ */
+export interface Evening {
+  from: number
+  until: number
+}
+
+/**
+ * When a date's evening is - the owner's brief of 2026-09-25, before the
+ * freeze. A date with a kind of day closes half an hour before the sleep
+ * that ends it, and that sleep is the next date's, as every reader of a
+ * date's sleep has it (lib/wakingDay.ts): a day shift at its early bedtime,
+ * a free day at its late one, a free day before a day shift at the day
+ * shift's, and a night the morning after, when the sleep after it begins.
+ * Its evening lasts until that sleep is over. A date with no kind, or no
+ * sleep to end it, keeps the time in Settings until midnight, as every
+ * evening did before kinds.
+ */
+export function eveningOf(data: AppData, date: string, today: string): Evening {
+  const settings = data.settings.eveningClose ?? DEFAULT_EVENING_CLOSE
+  const tonight = kindOnDate(data, date) ? wakingDayOn(data, date, today).tonight : null
+  if (tonight) return { from: tonight.start - BEFORE_SLEEP, until: tonight.end }
+  return { from: atMinutes(settings.at), until: DAY_MINUTES }
+}
+
+/**
+ * The day a card closes: the date's own tasks, and its night's hours on the
+ * date after - a night's day ends at the morning's bedtime, and the snack at
+ * half past two was the night's. Not the hours of the night before, on the
+ * date's own list: those closed with that night.
+ */
+export function closingDay(data: AppData, date: string): DayPlan | undefined {
+  const day = data.days[date]
+  const night = (data.days[addDays(date, 1)]?.tasks ?? []).filter(t => t.nightOf === date)
+  if (!day && night.length === 0) return undefined
+  return { ...(day ?? { date, tasks: [] }), tasks: [...(day?.tasks ?? []).filter(t => !t.nightOf), ...night] }
+}
+
+/**
+ * Whether the day's ongoing block - a shift - is running at `nowMinutes` on
+ * the day's clock. Its night's hours are on the clock of the date after.
+ */
+function shiftRunning(day: DayPlan | undefined, nowMinutes: number): boolean {
+  return (day?.tasks ?? []).some(t => {
+    if (!t.unbounded || t.done || t.missed || !t.time || !CLOCK.test(t.time) || !t.minutes) return false
+    const start = atMinutes(t.time) + (t.nightOf === day?.date ? DAY_MINUTES : 0)
+    return start <= nowMinutes && nowMinutes < start + t.minutes
+  })
+}
+
 /**
  * Whether the card should be on screen right now.
  *
  * Two ways in, and the second is the better one. The clock is the fallback -
- * a time somebody set once, for the evenings that just end. Finishing the
- * last thing on the list is the real trigger: the day is *over*, and being
- * told so in the same second is the whole point. Neither ever fires twice,
- * because dismissing is remembered for the date.
+ * the day's evening, `eveningOf`. Finishing the last thing on the list is the
+ * real trigger: the day is *over*, and being told so in the same second is
+ * the whole point. Neither ever fires twice, because dismissing is remembered
+ * for the date; neither fires once the day's evening is over - yesterday does
+ * not close itself - and neither while a shift of the day is still running.
  *
  * `nowMinutes` is passed in rather than read, the same way every other piece
- * of arithmetic in this app takes its clock as an argument.
+ * of arithmetic in this app takes its clock as an argument - on the day's own
+ * clock, past 1440 once its evening runs into the date after.
  */
 export function shouldClose(input: {
   day: DayPlan | undefined
   settings: EveningCloseSettings
   nowMinutes: number
-  /** True only on the day being looked at - yesterday does not close itself. */
-  isToday: boolean
+  /** The day's evening; the time in Settings until midnight where none is given. */
+  evening?: Evening
   dismissed: boolean
 }): boolean {
-  const { day, settings, nowMinutes, isToday, dismissed } = input
-  if (!settings.enabled || dismissed || !isToday) return false
+  const { day, settings, nowMinutes, dismissed } = input
+  if (!settings.enabled || dismissed) return false
+  const evening = input.evening ?? { from: atMinutes(settings.at), until: DAY_MINUTES }
+  if (nowMinutes >= evening.until) return false
   const summary = eveningSummary(day)
   if (!summary) return false
+  if (shiftRunning(day, nowMinutes)) return false
   // Everything on the list is done. It does not matter what time it is: the
   // day this app was built for can end at four in the afternoon.
   if (summary.done === summary.total) return true
-  return nowMinutes >= atMinutes(settings.at)
+  return nowMinutes >= evening.from
+}
+
+/** The day a card closes, and the moment on its clock. */
+export interface Closing {
+  date: string
+  /** Its day, as the card counts it - `closingDay`. */
+  day: DayPlan
+  /** Now, on the closing date's own clock. */
+  nowMinutes: number
+}
+
+/**
+ * The date whose day the card closes at `nowMinutes` on `today`, or null:
+ * yesterday while its evening still runs into this morning - a night closed
+ * at eight the morning after, a day shift before a night at one - and today.
+ * Yesterday first, since its evening is the one ending.
+ */
+export function closingAt(data: AppData, today: string, nowMinutes: number, dismissed: (date: string) => boolean): Closing | null {
+  const settings = data.settings.eveningClose ?? DEFAULT_EVENING_CLOSE
+  for (const [date, offset] of [
+    [addDays(today, -1), DAY_MINUTES],
+    [today, 0],
+  ] as const) {
+    const day = closingDay(data, date)
+    const now = nowMinutes + offset
+    if (day && shouldClose({ day, settings, nowMinutes: now, evening: eveningOf(data, date, today), dismissed: dismissed(date) })) {
+      return { date, day, nowMinutes: now }
+    }
+  }
+  return null
 }
 
 function atMinutes(at: string): number {

@@ -324,10 +324,13 @@ one browser is where you plan; nothing degrades.
   something came up, shift the rest, away. Each shows its answer before
   you accept it. The first of them works for any day of the week -
   the next section is that one, walked as a phone call.
-- **Evening.** Around half nine, or the moment the last thing is ticked, a
-  card offers to close the day. It never says anything about what was not
-  done, and it asks nothing; the journal is a button of its own - the
-  section after the phone call, below.
+- **Evening.** Half an hour before the sleep that ends the day, or the
+  moment the last thing is ticked, a card offers to close the day - on a day
+  with a kind of day, by that kind's bedtime; after a night shift, the next
+  morning; on any other day at the time in Settings, half nine unless it is
+  changed. It never says anything about what was not done, and it asks
+  nothing; the journal is a button of its own - the section after the phone
+  call, below.
 
 Two keys worth learning: **`N`** jumps to the box, **`Ctrl-K`** finds
 anything or runs any command. **`?`** shows the rest - and every icon in the
@@ -498,10 +501,11 @@ shows its last hours at the top - "Night shift, from yesterday", until six -
 and at one in the morning it is what is running. On a computer the week draws
 them in the next column's first hours; a phone's week keeps its waking hours,
 and the day has them. The day, the week and the month show each date's letter
-where a template's dot would be. The evening close from half past nine
-leaves a shift that has not started yet alone. And the two nights a year the
-clocks change, a night shift is an hour longer or shorter: the time it has
-left says so.
+where a template's dot would be. A night is closed the morning after, half
+an hour before the sleep after it, on the morning's page - "That was the
+night" - and no close ever comes while a shift is running. And the two
+nights a year the clocks change, a night shift is an hour longer or
+shorter: the time it has left says so.
 
 **What happens after midnight is written in the night shift.** A night meal at
 one and the drive home at seven are blocks in the night shift's template with

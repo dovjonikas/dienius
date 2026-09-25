@@ -456,7 +456,7 @@ it delegates:
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `Later.tsx` | The undated shelf: in the owner's order, pulled onto the day at the next free slot |
 | `laterSlot.ts` | The next free slot a Later item lands in, the same arithmetic quick-add's time control opens on |
-| `EveningClose.tsx` | The end of the day, said once - tone is the feature: one sentence, Close the day and the push offer; nothing asked |
+| `EveningClose.tsx` | The end of the day, said once - tone is the feature: one sentence, Close the day and the push offer; nothing asked. On today's page, for the day whose evening it is - a night's the morning after (`closingAt`, lib/eveningClose.ts) |
 | `YesterdayBanner.tsx` | What yesterday left |
 
 `DayView.tsx` itself is now only about the day: what it is made of and how its

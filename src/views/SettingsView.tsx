@@ -624,9 +624,12 @@ export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: ()
                 <div className="setting-row">
                   <div className="setting-label">
                     <span className="setting-name">Evening starts at</span>
+                    {/* The fallback since the owner's brief of 2026-09-25: a
+                        date with a kind closes by its sleep - lib/eveningClose.ts. */}
                     <span className="setting-desc">
-                      When the card appears on an ordinary evening. Finishing the last task shows it
-                      whatever the time.
+                      For a date with no kind of day. A date with a kind closes half an hour before the
+                      sleep that ends it - after a night, the next morning. Finishing the last task shows
+                      the card whatever the time.
                     </span>
                   </div>
                   <div className="setting-control">

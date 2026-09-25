@@ -12,7 +12,7 @@ function day(tasks: Partial<Task>[], extra: Partial<DayPlan> = {}): DayPlan {
   }
 }
 
-const ALWAYS = { settings: DEFAULT_EVENING_CLOSE, nowMinutes: 22 * 60, isToday: true, dismissed: false }
+const ALWAYS = { settings: DEFAULT_EVENING_CLOSE, nowMinutes: 22 * 60, dismissed: false }
 
 /**
  * Tone is the feature here, so most of these are about what the card is not
@@ -116,8 +116,20 @@ describe('when the day closes', () => {
     expect(shouldClose({ ...ALWAYS, day: finished, nowMinutes: 16 * 60 })).toBe(true)
   })
 
-  it('does not open on a day that is not today', () => {
-    expect(shouldClose({ ...ALWAYS, day: day([{ done: true }, { done: true }]), isToday: false })).toBe(false)
+  it('does not open once its evening is over - yesterday does not close itself', () => {
+    const finished = day([{ done: true }, { done: true }])
+    expect(shouldClose({ ...ALWAYS, day: finished, nowMinutes: 24 * 60 + 30 })).toBe(false)
+    expect(shouldClose({ ...ALWAYS, day: finished, nowMinutes: 8 * 60, evening: { from: 7 * 60, until: 9 * 60 } })).toBe(true)
+    expect(shouldClose({ ...ALWAYS, day: finished, nowMinutes: 9 * 60, evening: { from: 7 * 60, until: 9 * 60 } })).toBe(false)
+  })
+
+  it('opens at the evening it is given rather than the time in Settings', () => {
+    const d = day([{ done: true }, {}])
+    const evening = { from: 22 * 60 + 30, until: 32 * 60 }
+    expect(shouldClose({ ...ALWAYS, day: d, nowMinutes: 22 * 60 + 29, evening })).toBe(false)
+    expect(shouldClose({ ...ALWAYS, day: d, nowMinutes: 22 * 60 + 30, evening })).toBe(true)
+    // Past midnight, on the same day's clock, while its evening lasts.
+    expect(shouldClose({ ...ALWAYS, day: d, nowMinutes: 25 * 60, evening })).toBe(true)
   })
 
   it('does not open twice - dismissing is remembered for the date', () => {

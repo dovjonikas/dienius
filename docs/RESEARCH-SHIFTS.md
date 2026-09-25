@@ -469,6 +469,11 @@ today - the result is identical.
 - The evening close offers to push only what is behind it: a timed task that
   has not started yet (with a length or without) or is running now is
   tonight's, not unfinished (`stillAhead`, eveningClose.ts).
+- Since the owner's brief of 2026-09-25 it comes half an hour before the
+  sleep that ends the date - the next date's, as above - so a night is
+  closed the morning after, on the morning's page, and never while a shift
+  runs (`eveningOf`, `closingAt`; DECISIONS "The evening close follows the
+  kind of day").
 
 ### 3.4 Clock values past midnight
 

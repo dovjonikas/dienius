@@ -297,7 +297,7 @@ every page.
 | Timer and stopwatch | In the header. Survive a refresh, keep time in a background tab, run in a corner on every page, ring Soft, Bell or Alarm (or nothing) at a volume, with a start bell if asked for; a stopwatch started from a task's Time this offers to record what it actually took |
 | North on the day | One line of North's text under the day's title, the signature under it from 21:00; North's headings one line each - in the rail on a desktop, folded under the title on a phone - each opening a card of its lines (both off in Settings, Nudges) |
 | North after sleep | North's window over the day, once, after a break long enough to be a night |
-| Close the day | A quiet card at a set time, or once the last task is ticked: one sentence about the day, Close the day, and the push offered. Never a word about what was not done |
+| Close the day | A quiet card half an hour before the sleep that ends the day - a night the morning after, on the morning's page, and never while a shift runs - or at the time in Settings on a date with no kind, or once the last task is ticked: one sentence about the day, Close the day, and the push offered. Never a word about what was not done |
 | Notes and the journal | The header's Notes (a line kept in one press; Open notes is Scratch - one stream, photographs in a note, a note made into a task, sent to Later or pinned) and Journal (a line or more a day, never counted; the whole of it on its own page with a month and a search, copied as markdown) |
 | Sleep | Named schedules in Settings; a template, and once there are two a single day, says which it follows. The timeline greys those hours, free time is counted around them, and the header says when sleep is near |
 | The day's rail | On a desktop, beside the day: a month to move by, the templates as chips that stamp the open day, North's headings, Up next, and the day's figures; the header chooses which panes show |
@@ -356,6 +356,7 @@ after that a version is found by its number in the commit messages
 | **The shift** | 2026-09-25: the file pasted again, the archive, a reading block's list, four defects, and the owner's month in a test - SHIFT-2026-09-25.md |
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
+| **v2.44** | The evening close follows the kind of day |
 | **v2.43** | An archive of every lived day, beside the backup |
 | **v2.42** | A templates file pasted again brings today and the dates ahead along |
 | **v2.41** | A reading block names its list in the templates file |

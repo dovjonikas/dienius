@@ -72,7 +72,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Three shelves for what is not on the day: notes (one key, nothing asked), Later - a list with no dates and no ages, in the order you would pull from it - and a float on a day with no time
 - Push twice, then decide: an unfinished task moves to tomorrow twice, after that you finish it, drop it, or mark it ongoing
 - What yesterday left, said once in a banner, moved forward in one tap, never on its own
-- An evening close: one sentence about the day at a time you set, or when the last thing is ticked. It never mentions what was not done
+- An evening close: one sentence about the day, half an hour before the sleep that ends it - on a date with no kind of day, at a time you set - or when the last thing is ticked. It never mentions what was not done
 - North: your own text, read every morning - short lines in blocks, a line in capitals a heading whose lines open on a hover or a tap, and the headings in a row under the day's title - and under it up to four directions with a why and no progress bar, what you do to deserve each one, and the moments that pull you off it. Nothing measured, ever
 - Focus: the running task, its own planned time, a ring, a way out. Not a pomodoro
 - A timer and a stopwatch that survive a refresh and run on every tab

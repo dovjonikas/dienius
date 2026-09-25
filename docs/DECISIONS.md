@@ -5600,3 +5600,47 @@ questions OPEN-QUESTIONS held, each the way it was recommended or left:
 - **"A kind before a day shift" stays parked** (BACKLOG). The file answers
   the evening it was for; a rule beside `afterNight` waits until a day asks
   for something the file cannot say.
+
+## The evening close follows the kind of day
+
+Until 2026-09-25 the card came at one time for every date - half past nine
+unless Settings said otherwise. On the owner's rota that was wrong three
+ways: at half past nine on a night the owner is at work; on a free day,
+asleep at eleven, it came an hour early; and nothing ever closed a night,
+whose day ends when its sleep begins the next morning.
+
+**The rule, the owner's: the card comes half an hour before the sleep that
+ends the day.** That sleep is the next date's - a sleep belongs to the day
+it wakes into, the rule every reader of a date's sleep has followed since
+v2.29 (`lib/wakingDay.ts`). So a day shift closes at 21:30 before a 22:00
+bedtime, a free day at 22:30 before 23:00, a free day before a day shift at
+the day shift's 21:30, and a day shift before a first night after
+midnight, half an hour before the night's bedtime. A night closes the
+morning after, at 08:00 before its 08:30 sleep, and what it closes is the
+night: the card stands on the morning's page, where the night's hours
+after midnight already are - the app opened at 02:30 shows them - and says
+"That was the night". The day it counts is the night's own list and its
+hours on the morning after, and the morning does not count them again. A
+push from that card goes to today, the date after the night, and says so.
+
+**Never while a shift is running.** An ongoing block of the day that is
+still running holds the card back until it is over; neither the clock nor
+the last tick opens it. And a day's evening lasts until the sleep that
+ends it is over, so a card nobody closed is gone by the time the next day
+wakes, the way it was gone at midnight before.
+
+**A date with no kind, or no sleep to end it,** keeps the time in Settings
+until midnight, exactly as every evening did before kinds, and Settings
+says so beside the time. North's signature stays at the foot of every
+close, a night's included.
+
+In the code: `eveningOf`, `closingDay` and `closingAt` in
+`lib/eveningClose.ts`, and the card on today's page asks `closingAt` which
+date is closing. The tests: `eveningCloseKinds.test.ts` (each kind, a
+night the morning after, a shift running past the close, no kind, off),
+`EveningCloseNight.test.tsx` (the morning page at 08:00 after an ordinary
+night and the two nights the clocks change, the signature, the push to
+today), `e2e/night-open.e2e.ts` on a desktop and a 375px phone, and
+`ownersMonth.test.ts` on the owner's own file: every date of six weeks
+closes half an hour before the sleep that ends it, and never while its
+shift runs.

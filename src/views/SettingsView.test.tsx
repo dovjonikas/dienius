@@ -335,6 +335,14 @@ test('Nudges is four rows: closing the day, when the evening starts, North on th
   expect(names).toEqual(['Close the day', 'Evening starts at', 'North on the day', 'North after sleep'])
 })
 
+// Since the owner's brief of 2026-09-25 a date with a kind closes by its
+// sleep, and the time here is for every other date - said where it is set.
+test('the evening time says it is for a date with no kind, and that a kind closes by its sleep', async () => {
+  const { container } = await renderSettled()
+  const row = Array.from(container.querySelectorAll('#settings-nudges .setting-row')).find(r => r.querySelector('.setting-name')?.textContent === 'Evening starts at')!
+  expect(row.querySelector('.setting-desc')).toHaveTextContent('For a date with no kind of day. A date with a kind closes half an hour before the sleep that ends it - after a night, the next morning.')
+})
+
 // The same shape as the row above it: on until switched off, and only off is
 // ever carried in the plan.
 test('North after sleep is on until switched off', async () => {

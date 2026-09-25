@@ -11,7 +11,7 @@ is today: for that, read STATE, and for why things are the way they are,
 
 Newest first:
 
-- [v2.43 back to v2.17](#v243---an-archive-of-every-lived-day-beside-the-backup), a section each, with
+- [v2.44 back to v2.17](#v244---the-evening-close-follows-the-kind-of-day), a section each, with
   One look and the first real month's dry run between them
 - [The versions before, one line each](#the-versions-before-one-line-each),
   v1.0 to v2.17
@@ -22,6 +22,25 @@ Newest first:
 - [Where steps lived, before they were removed](#where-steps-lived-before-they-were-removed)
 
 ---
+
+## v2.44 - The evening close follows the kind of day
+
+The owner's decisions before the freeze, 2026-09-25, stage 2.
+
+- **`lib/eveningClose.ts`**: `eveningOf` - a date with a kind closes half an
+  hour before the sleep that ends it, the next date's, and its evening lasts
+  until that sleep ends; any other date keeps the time in Settings until
+  midnight. `closingDay` - a night's day is its own list and its hours on
+  the morning after. `closingAt` - yesterday while its evening runs into
+  this morning, then today; never while a shift of the day is running.
+- **The card** stands on today's page and closes the day whose evening it
+  is: a night at 08:00 the morning after, "That was the night", its push to
+  today.
+- **Settings**: the evening time is for a date with no kind, and says so.
+- **Tests**: `eveningCloseKinds.test.ts`, `EveningCloseNight.test.tsx` (the
+  two nights the clocks change among them), `e2e/night-open.e2e.ts`, and
+  `ownersMonth.test.ts` on the owner's file. DECISIONS "The evening close
+  follows the kind of day".
 
 ## v2.43 - An archive of every lived day, beside the backup
 

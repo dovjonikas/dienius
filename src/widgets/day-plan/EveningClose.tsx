@@ -1,14 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
+import { isNightKind, kindOnDate } from '../../lib/dayKinds'
 import { parseNorth } from '../../lib/northSections'
-import {
-  DEFAULT_EVENING_CLOSE,
-  eveningSummary,
-  pushableAtClose,
-  stillAhead,
-  shouldClose,
-} from '../../lib/eveningClose'
+import { closingAt, eveningSummary, pushableAtClose, stillAhead } from '../../lib/eveningClose'
 import { requestCloudBackup } from '../../lib/cloudBackup'
 
 const DISMISSED_KEY = 'dienius:evening-dismissed'
@@ -35,37 +30,37 @@ const DISMISSED_KEY = 'dienius:evening-dismissed'
  * an evening, on the device in your hand, and a phone that refused to offer
  * it because the laptop closed the day at six would be wrong about whose
  * evening it is.
+ *
+ * It stands on today's page, and closes the day whose evening it is - which
+ * since the owner's brief of 2026-09-25 can be yesterday's: a night is
+ * closed at eight the morning after, half an hour before the sleep that ends
+ * it (lib/eveningClose.ts, `closingAt`).
  */
 export function EveningClose({ date }: { date: string }) {
   const data = useAppData()
-  const [dismissed, setDismissed] = useState(() => readDismissed(date))
-  const [pushOffered, setPushOffered] = useState(false)
+  const [, setClosed] = useState<string | null>(null)
+  const [pushOffered, setPushOffered] = useState<string | null>(null)
 
-  const day = data.days[date]
-  const settings = data.settings.eveningClose ?? DEFAULT_EVENING_CLOSE
+  const today = todayKey()
   const now = new Date()
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
-
-  // The date changing under a card that is open - a phone left on the day
-  // view past midnight - resets the dismissal to whatever the new day says.
-  useEffect(() => {
-    setDismissed(readDismissed(date))
-    setPushOffered(false)
-  }, [date])
-
-  const open = shouldClose({ day, settings, nowMinutes, isToday: date === todayKey(), dismissed })
-  const summary = eveningSummary(day)
-  if (!open || !summary) return null
+  const closing = date === today ? closingAt(data, today, nowMinutes, readDismissed) : null
+  const summary = eveningSummary(closing?.day)
+  if (!closing || !summary) return null
 
   const { signature } = parseNorth(data.picture?.text ?? '')
   // What is still tonight's - a shift that starts at ten, a class running now -
-  // is not unfinished, and the push leaves it where it is.
-  const ahead = stillAhead(day, nowMinutes)
-  const unfinished = pushableAtClose(day, ahead)
+  // is not unfinished, and the push leaves it where it is. Read on the list
+  // the push moves, the closing date's own, and on its clock.
+  const own = data.days[closing.date]
+  const ahead = stillAhead(own, closing.nowMinutes)
+  const unfinished = pushableAtClose(own, ahead)
+  const yesterday = closing.date !== today
 
   function close() {
-    rememberDismissed(date)
-    setDismissed(true)
+    if (!closing) return
+    rememberDismissed(closing.date)
+    setClosed(closing.date)
     // The day is over, so its copy can be: the one moment a push is owed
     // that no clock could find. Fire-and-forget - see lib/cloudBackup.ts.
     void requestCloudBackup('evening-close')
@@ -75,8 +70,12 @@ export function EveningClose({ date }: { date: string }) {
     <aside className="evening-close" aria-label="Closing the day">
       {/* Just the lead. It carried " - sleep in 1h" until v2.6, under a
           header that says "Sleep in 1h" in the same hour, which is the same
-          fact twice on one screen - CONVENTIONS section 23. */}
-      <p className="evening-close-lead">That was today</p>
+          fact twice on one screen - CONVENTIONS section 23. A day closed the
+          morning after is not today: a night is the night, and anything
+          else the day. */}
+      <p className="evening-close-lead">
+        {!yesterday ? 'That was today' : isNightKind(kindOnDate(data, closing.date)) ? 'That was the night' : 'That was the day'}
+      </p>
 
       {/* The whole of what the app says about how the day went. One sentence,
           and nothing in it about what was not done. */}
@@ -100,16 +99,18 @@ export function EveningClose({ date }: { date: string }) {
         </button>
         {/* Offered, never urged, and never given a reason. Leaving three
             things unfinished is not a problem this card is here to solve. */}
-        {unfinished > 0 && !pushOffered && (
+        {/* To the date after the one closing - today, once that is
+            yesterday. */}
+        {unfinished > 0 && pushOffered !== closing.date && (
           <button
             type="button"
             className="evening-close-push"
             onClick={() => {
-              actions.rolloverUnfinished(date, ahead)
-              setPushOffered(true)
+              actions.rolloverUnfinished(closing.date, ahead)
+              setPushOffered(closing.date)
             }}
           >
-            Push {unfinished} to tomorrow
+            Push {unfinished} to {yesterday ? 'today' : 'tomorrow'}
           </button>
         )}
       </div>

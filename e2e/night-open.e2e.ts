@@ -63,3 +63,32 @@ test("opened at half past two in a night shift, today is the night's morning: it
   // And on a desktop, where the grid stands beside the list, the shift's last hours at its top.
   if (info.project.name === 'desktop') await expect(page.getByText(/Shift/).filter({ visible: true }).first()).toBeVisible()
 })
+
+/**
+ * The night's close - the owner's decisions before the freeze, 2026-09-25,
+ * stage 2. A night's day ends when its sleep begins the next morning, so its
+ * card comes half an hour before that sleep, on the morning's page, and
+ * closes the night - not while the shift runs, and not the morning.
+ */
+test('at eight the morning after, the card on the morning page closes the night; at half past two it was not there', async ({ page }, info) => {
+  await openFreshAt(page, september(16, 10))
+  if (info.project.name === 'phone') await page.setViewportSize({ width: 375, height: 812 })
+  await tab(page, 'Settings')
+  await page.getByRole('textbox', { name: 'Templates and roster as JSON' }).fill(FILE)
+  await page.getByRole('button', { name: 'Preview', exact: true }).click()
+  await page.getByRole('button', { name: 'Apply', exact: true }).click()
+  await expect(page.getByText(/^Applied\./)).toBeVisible()
+
+  await reopenAt(page, september(17, 2, 30))
+  await tab(page, 'Today')
+  await expect(page.getByRole('checkbox', { name: 'Snack', exact: true })).toBeAttached()
+  await expect(page.getByLabel('Closing the day')).toHaveCount(0)
+
+  await reopenAt(page, september(17, 8, 0))
+  await tab(page, 'Today')
+  const card = page.getByLabel('Closing the day')
+  await expect(card).toContainText('That was the night')
+  await card.getByRole('button', { name: 'Close the day' }).click()
+  await expect(page.getByLabel('Closing the day')).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('dienius:evening-dismissed'))).toBe('2026-09-16')
+})
