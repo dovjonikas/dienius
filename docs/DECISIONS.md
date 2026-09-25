@@ -5300,7 +5300,8 @@ in a public repo; the owner's devices have the lists already, by sync. The
 command, the seed and their tests are gone, and the test that an ordinary
 open writes no library at all stays. The titles remain in the history of
 the repo, which only a rewrite of it could take out - the owner's call,
-beside the two older commits in OPEN-QUESTIONS.
+beside the two older commits, and on 2026-09-25 the owner left both as they
+are ("Four questions answered before the freeze", below).
 
 **And what nothing called.** Six store actions went, with their tests
 where a test kept one alive (a behaviour worth holding moved onto the path
@@ -5569,3 +5570,33 @@ writes nothing more and starts afresh, as the tab that erased did. It is a
 reload nobody pressed in that tab, which this app otherwise never does;
 here the person asked for this device to forget everything, and a tab of
 the device is the device.
+
+## Four questions answered before the freeze
+
+On 2026-09-25, three days before the freeze, the owner answered the four
+questions OPEN-QUESTIONS held, each the way it was recommended or left:
+
+- **The tests of the real templates file stay outside the repo.**
+  `src/lib/ownersFile.test.ts`, `src/lib/ownersMonth.test.ts` and
+  `e2e/owners-week.e2e.ts` read the owner's file where it lives, through the
+  git-ignored `owners-file.local`, and are skipped wherever it is not - the
+  deploy's runner included. The generic tests beside them hold the same
+  rules for the deploy. No copy of the file comes into the repo, under any
+  name.
+- **The history is not rewritten.** Two commits of the overnight of
+  2026-09-23 carry the path of that file, and the commits from the one
+  that added `src/lib/librarySeed.ts` to the one that took it out carry the
+  owner's reading plan. Both stay in the history of the public repo: a
+  rewrite - a force push, and a fresh clone on every device - was the one
+  step that could not be taken back, and the privacy guard and the tests
+  keep both out of every file from here on.
+- **A free day's evening ends before a day shift's bedtime.** The month
+  walk found the free day's evening block standing in the early night
+  before a day shift, five times in six weeks. The owner moved the block
+  in their own file so that it ends by that bedtime, and the walk's one
+  allowance for it is gone: `ownersMonth.test.ts` fails on any block in
+  any sleep, and a copy of the file with the block put back at its old
+  hour fails it.
+- **"A kind before a day shift" stays parked** (BACKLOG). The file answers
+  the evening it was for; a rule beside `afterNight` waits until a day asks
+  for something the file cannot say.

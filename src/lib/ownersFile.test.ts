@@ -16,7 +16,7 @@ import type { AppData, Template } from './types'
  *
  * The file lives outside the repo, on the owner's machine, and only there:
  * the repo is public and carries none of the owner's words
- * (docs/OPEN-QUESTIONS.md has the reasoning). So this file's tests read it
+ * (DECISIONS "Four questions answered before the freeze"). So its tests read it
  * where it is and are skipped anywhere it is not - on the deploy's runner,
  * on another machine. What they hold is the file's shape - kinds of day,
  * some of them standing in for another on a date after a night; gym

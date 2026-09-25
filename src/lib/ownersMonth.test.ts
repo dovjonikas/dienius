@@ -117,8 +117,8 @@ describe.skipIf(!here)("the owner's month, lived", () => {
     expect(dates.map(date => letterOn(getData(), date))).toEqual(dates.map((_, i) => expected[i % expected.length]))
   })
 
-  test('every routine has its time - none needing one, none refused for running into something - and no block stands in a sleep but the one the file itself puts there', () => {
-    const { text, letters } = sixWeeks()
+  test('every routine has its time - none needing one, none refused for running into something - and no block stands in a sleep', () => {
+    const { text } = sixWeeks()
     actions.importTemplatesJson(text)
     const data = getData()
     for (const date of dates) {
@@ -127,15 +127,12 @@ describe.skipIf(!here)("the owner's month, lived", () => {
       for (const task of data.days[date].tasks.filter(t => t.time && t.minutes)) {
         const start = minutes(task.time!)
         const end = start + task.minutes!
+        // Nothing in a sleep: a routine is placed only where the day has
+        // room, and the file keeps its blocks out of every sleep - the free
+        // day's evening before a day shift too, since the owner moved it on
+        // 2026-09-25 (DECISIONS "Four questions answered before the freeze").
         const into = sleeps.some(sleep => Math.min(end, sleep.end) - Math.max(start, sleep.start) > 0)
-        if (!into) continue
-        // A routine never: the app places it only where the day has room.
-        expect(task.routineId, `${date} ${task.title} placed in a sleep`).toBeUndefined()
-        // A block only where the file asks for it: a free day's evening, at
-        // the hour a free day keeps, runs into the early night before a day
-        // shift. The file's to change, and told to the owner
-        // (docs/OPEN-QUESTIONS.md); any other would be a finding of its own.
-        expect(`${letterOn(data, date)} before ${letterOn(data, addDays(date, 1))}`, `${date} ${task.title} in its sleep`).toBe(`${letters.L} before ${letters.D}`)
+        expect(into, `${date} ${letterOn(data, date)} ${task.title} in a sleep`).toBe(false)
       }
       expect([...routineNotes(data, date, START).values()], date).toEqual([])
       for (const task of data.days[date].tasks.filter(t => t.routineId)) {

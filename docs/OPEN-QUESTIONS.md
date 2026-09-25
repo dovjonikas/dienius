@@ -3,7 +3,18 @@
 > Things that need the owner's decision, parked here during work rather than guessed at.
 > Each one has a recommendation. Nothing here is blocking - work continues around all of it.
 
-Empty as of 2026-09-07, the day the app closed with v2.7.
+Empty as of 2026-09-25, three days before the freeze.
+
+The four questions parked here by the overnight of 2026-09-23, the freeze
+preparation and the shift of 2026-09-25 were answered by the owner on
+2026-09-25: the tests of the real templates file stay outside the repo as
+built; the history is not rewritten, neither for the file's path in two
+commits nor for the reading plan; and a free day's evening ends before a
+day shift's bedtime in the owner's own file, so the month walk now allows
+no block in any sleep. They are DECISIONS now, under "Four questions
+answered before the freeze".
+
+Before them, empty as of 2026-09-07, the day the app closed with v2.7.
 
 The two items that stood here since v2.0 - the mini calendar's 33px cells and the task title's 29px
 target - carried a recommendation to leave both as built, and the owner accepted it with the closing
@@ -16,88 +27,3 @@ next rather than by a decision: the owner lives in the app for a week, on the ph
 for, and the week is the first touch test. Anything asked for since waits in the Parked section of
 BACKLOG.md, and from the freeze of 2026-09-28 that is where every new request goes (STATE, first
 section).
-
-## 2026-09-23, overnight: the owner's own templates file and the public repo
-
-The overnight brief asks for the owner's real templates file to be used in
-the tests rather than an invented example. The standing rule is that the
-repo is public and carries none of the owner's own words - every example
-generic, the owner's templates living only in their browser and their
-backup.
-
-**What was done:** the tests that read the real file read it where it is,
-outside the repo (`src/lib/ownersFile.test.ts`, `e2e/owners-week.e2e.ts`),
-and are skipped wherever it is not - the deploy's runner, another machine.
-Nothing in them names what the file says: every title they check is read
-out of the file at run time. The generic tests beside them hold the same
-rules for the deploy.
-
-**Recommendation:** keep it so. A copy of the file in the repo, even under a
-generic name, would be the owner's rota and meals on a public site for good;
-a test that runs on the owner's machine and is skipped elsewhere gives the
-real file its proof without that. If a run of the real-file tests is wanted
-on every deploy, the honest way is a private fixture the runner fetches
-from the owner's own repo with the backup's token - which is a small piece
-of work, and the owner's to ask for.
-
-## 2026-09-23, overnight: two commits carry the path of the real file
-
-The first versions of the two real-file tests wrote the path of the file into
-the repo, and the path names a folder of the owner that the privacy guard
-knows. The guard caught it on the full run, after the two commits (stage 2
-and stage 3 of the night) had been pushed. The fix went on top: the path now
-lives in owners-file.local, which git ignores, and the guard is clean. The
-two earlier commits still hold it, in the history of the public repo.
-
-**Recommendation:** rewrite the history so the name is gone for good - it is
-four commits of one night, all this session's, nobody else has pulled them.
-A force push was not made here, since that is the one action that is not
-reversed from this side. The commands, from a clean tree:
-
-    git rebase -i 70b7c60      # edit the stage 2 and stage 3 commits, take the path out
-    git push --force-with-lease origin main
-
-After that the deploy runs again by itself. If the history is left as it
-is, the name stays in two commits nobody reads and the guard keeps it out
-of every file from here on.
-
-## 2026-09-24, the freeze preparation: the reading plan in the history
-
-`src/lib/librarySeed.ts` was the owner's own reading plan - three lists of
-book titles - and "Load my reading plan" in the palette put it into any
-visitor's Library. Both are out of the app now (DECISIONS "Eight defects
-and a reading plan, before the freeze"). The file stays in every commit
-from the one that added it to the one that removed it, in the history of
-the public repo, the same way the path above does.
-
-**Recommendation:** decide the two together. If the history is rewritten
-for the path, take the file out of every commit in the same pass - a
-rewrite of the whole history rather than one night's, with
-`git filter-repo --path src/lib/librarySeed.ts --invert-paths` on a fresh
-clone, then a force push and a fresh clone on every device. If the history
-is left as it is, both stay in commits nobody reads, and the guard and the
-test keep them out of every file from here on. Titles of published books
-are not a secret; what they add up to is the owner's, which is why they
-left the app.
-
-## 2026-09-25, the shift: a free day's evening runs into the night before a day shift
-
-Stage 4 of the shift brief laid six weeks of the owner's own file - two
-days, two nights, four free days, from 30 September - and checked every
-date. Every routine had its time on every date, every night's hours landed
-on the morning after once, and no date held anything twice. One thing did
-not hold, five times in the six weeks: on the last free day before a day
-shift, the free day's evening block at 22:00 stands wholly inside the sleep
-of the day shift that follows, which starts at 22:00 (a sleep belongs to
-the day it wakes into, so the night before a day shift is the day shift's).
-The day draws it that way - the evening block under a grey sleep band - and
-it is the file's, not the app's: nothing in the app moved it there.
-
-**Recommendation:** in the journal that writes the file, start that
-evening block before the day shift's bedtime, or end it by then - an hour
-earlier does it for every free day. If the free day before a day shift
-should have an evening of its own, the way the day after a night has one,
-that is a rule the app does not have yet ("the kind a day is before a day
-shift", beside `afterNight`): a small feature, parked in BACKLOG for after
-the freeze. The test that found it (`src/lib/ownersMonth.test.ts`) allows
-exactly this one and fails on any other block in a sleep.

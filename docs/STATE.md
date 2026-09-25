@@ -203,7 +203,7 @@ a month later. Seven points, each with every gate green.
 | **3. Offline** | The build under /dienius/ on a desktop and a 375px phone: no network from the start and from the middle of a session, a deploy over the served build | The app opened empty offline under a server that sends `Vary`; after every deploy the first open offered an update it already was | Both | The same on the iPhone itself: CHECKS-BY-HAND B3, the owner's to run |
 | **4. Speed and keyboard** | Lighthouse at both sizes, the bundle file by file, 39 screens on a keyboard alone | Tab ran off an open sheet into the page under it; two controls were named apart from their words | Both: the page behind a sheet is out of reach | Phone performance 95-96: the first paint on a slow line, whose price is splitting the script (SPEED.md, parked). Desktop accessibility 93: faded days at 3:1 on purpose, a quiet key hint, and the time field's arrows, which the field itself stands in for |
 | **5. Dead code** | Every export, store action, class in the stylesheet and comment that names code | 16 exports and 6 store actions nothing called, 20 classes for screens that are gone, a dozen comments about what is gone, 2 stray files; Erase all data left two databases behind | All removed; an erase deletes all three databases | The test seams, and five rules the tests name - kept on purpose |
-| **Found on the way** | The eight defects the rotating-shifts audit had left, each traced in the code | All eight still true; the owner's own reading plan one palette command away for every visitor | All eight, each with a test that failed first; the reading plan is out of the app | Its titles, and the older file path, stay in the repo's history: taking them out needs a force push, which is the owner's call (OPEN-QUESTIONS) |
+| **Found on the way** | The eight defects the rotating-shifts audit had left, each traced in the code | All eight still true; the owner's own reading plan one palette command away for every visitor | All eight, each with a test that failed first; the reading plan is out of the app | Its titles, and the older file path, stay in the repo's history, as the owner decided on 2026-09-25 (DECISIONS "Four questions answered before the freeze") |
 | **6. Documents** | STATE, ARCHITECTURE, CONVENTIONS and DECISIONS against the code and each other; BACKLOG item by item | 262 findings, and 97 names or files the four pointed at that the repo no longer has | All: STATE split into STATE and HISTORY, the other three corrected, BACKLOG sorted | - |
 | **7. Deploy** | Each point as its own commit, pushed, the deploy watched | - | - | - |
 
@@ -242,7 +242,8 @@ stage done, every gate green before each push, the report with its proof in
   the app opened at 02:30 in a night, a phone with no network, the three
   pastes, and the ordinary day counted press by press.
 - **Left**: two things parked in BACKLOG with their cost, and one question
-  for the owner about the file (OPEN-QUESTIONS).
+  for the owner about the file - answered, with the three before it, on
+  2026-09-25 (DECISIONS "Four questions answered before the freeze").
 
 ---
 

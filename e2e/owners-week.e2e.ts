@@ -7,9 +7,9 @@ import { openFreshAt, quickAdd, reopenAt, tick } from './app'
  * A week of the owner's own roster, lived day by day - the overnight brief of
  * 2026-09-23, stage 3. The templates file lives outside the repo and only on
  * the owner's machine; this walk reads it where it is and is skipped
- * anywhere it is not (docs/OPEN-QUESTIONS.md). Every title it presses is
- * read out of the file at run time, so nothing here names what the file
- * says.
+ * anywhere it is not (DECISIONS "Four questions answered before the
+ * freeze"). Every title it presses is read out of the file at run time, so
+ * nothing here names what the file says.
  *
  * What is walked: the file pasted and applied; each date of its roster
  * opened, the kind it is read as on it - after a night, the kind standing
