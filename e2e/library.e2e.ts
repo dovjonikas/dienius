@@ -80,6 +80,12 @@ test('finishing a book names the next one on the card and offers a sitting on it
   await page.getByRole('button', { name: 'Onto today' }).click()
 
   await tick(page, 'Dune')
+  // The card stays in the open list only while its tick plays out, then
+  // folds under Done, where it goes on saying so - so it is read there. Read
+  // in the open list, the sentence raced the fold (420 ms, useDoneAnimation.ts)
+  // and lost it on a loaded machine.
+  const doneFold = page.getByRole('button', { name: /^Done \d+$/ })
+  if ((await doneFold.getAttribute('aria-expanded')) !== 'true') await doneFold.click()
   await expect(card(page, 'Dune')).toContainText('finished - next is Deep Work')
 
   await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
