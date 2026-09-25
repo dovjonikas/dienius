@@ -141,6 +141,10 @@ itself, and nothing in it is deleted.
 - **When.** The first open of a new day, after every backup, and on
   Archive now in Settings, Backup - a day is archived once it is over, and
   written again only when it changes afterwards.
+- **A long history.** Forty days a run at most, oldest first, so a plan
+  with months behind it is archived over its first few runs, each one
+  reaching further - "Archived until" says how far. A run keeps well
+  inside what GitHub lets one token write in a minute.
 - **Two devices.** A day's file is named by its date, so there is one
   whichever device writes it. A device finding the day there as it would
   write it writes nothing; one holding an older copy of the day leaves the

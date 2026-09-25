@@ -52,9 +52,12 @@ is the private GitHub repo the backup writes to:
 | `data/state.json` | The whole plan, the latest copy - since v2.34 the merge of every device's backups, so never older than any of them. Start here. |
 | `data/history/YYYY-MM-DD.json` | That day's last copy of the whole plan. One file a day. |
 | `data/sync.json` | Sync's own machinery. Not for reading. |
+| `archive/days/YYYY/MM/YYYY-MM-DD.json` | Since v2.43, one lived day as it was - its kind, its blocks, what was ticked and when, the meals with their recipe, kcal and protein, the notes, the score - in a shape of its own, for reading the progress back: [ARCHIVE-FORMAT.md](ARCHIVE-FORMAT.md). Written once the day is over, again only if it changes. |
+| `archive/weekly/YYYY-MM-DD.json` | The whole plan once a week, under the week's Monday, in the backup's format. Never written over. |
 
-The format of both, field by field, what a reader can rely on from one version
-to the next, and how the plan's rules are read out of it, is
+The format of the whole plan's copies - `state.json`, the history, the weekly
+archive - field by field, what a reader can rely on from one version to the
+next, and how the plan's rules are read out of it, is
 [BACKUP-FORMAT.md](BACKUP-FORMAT.md) - the contract. A file exported by hand
 (Settings, Export and import, Export backup) is the same text.
 
@@ -231,6 +234,15 @@ the same format, to start from. Write only what the person asked for: their
 own templates live in their browser and their backup, never in this
 repository.
 
+**Write the whole file again when something changes, and let it be pasted
+again** - never ask the person to clear dates first. Since v2.42 the days
+behind today stay as they were lived; today keeps what has already ended;
+the rest of today and every day ahead follow the file - a block moved,
+renamed, taken away or added - while what the person ticked, moved or wrote
+stays. The preview says how many dates ahead change, how many behind are
+left and how many ticked blocks stay. A reading block names its Library
+list with `library`, by the list's name.
+
 ### 4.8 What is never done without the person
 
 - A date's kind is never changed by the app.
@@ -296,6 +308,7 @@ the file even where the weekday map will fill it.
 - [RESEARCH-SHIFTS.md](RESEARCH-SHIFTS.md) - the rota, every rule and why.
 - [BACKUP-FORMAT.md](BACKUP-FORMAT.md) - the backup's format, field by field, and what a reader can rely on.
 - [TEMPLATE-JSON.md](TEMPLATE-JSON.md) - templates and a roster as one text: what to write for the person to import.
+- [ARCHIVE-FORMAT.md](ARCHIVE-FORMAT.md) - the lived days as the archive writes them: what to read the progress from.
 - [DAILY.md](DAILY.md) - how the app is used, day to day.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - where the code lives.
 - [DECISIONS.md](DECISIONS.md) - why things are the way they are.

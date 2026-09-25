@@ -9,9 +9,9 @@ are. How the app got here, version by version, is
 [`HISTORY.md`](HISTORY.md): written as each version was done, so the code it
 names is the code of that time.
 
-**Last updated:** 2026-09-24, the freeze preparation - the owner's seven
-points before the freeze of Monday 2026-09-28, in the section after the
-next.
+**Last updated:** 2026-09-25, the shift - the owner's eight-stage brief,
+written up in [`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md) and in the
+section after the freeze preparation's.
 
 ## Freeze nuo 2026-09-28: kas leidziama (bug fix, duomenu saugumas, docs) ir kas ne (naujos funkcijos, jos eina i BACKLOG parking skyriu)
 
@@ -219,6 +219,31 @@ this one, asked twice. And Settings says what the owner could not have
 known: a backup alone does not join the other device (DECISIONS "Sync
 turned on again asks again, and the right plan can be kept").
 
+## The shift of 2026-09-25
+
+The owner at work for twelve hours, and an eight-stage brief behind: every
+stage done, every gate green before each push, the report with its proof in
+[`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md). What it left in the app:
+
+- **The templates file pasted again** (v2.42): the dates behind today as they
+  were lived, today cut at now, the dates ahead following the file, and
+  nothing done by hand undone; the preview says how many of each.
+- **The archive** (v2.43): every lived day and a week at a time in the
+  backup's repo, for the journal to read back - docs/ARCHIVE-FORMAT.md.
+- **A reading block names its list** in the file (v2.41).
+- **Four defects fixed**, each with a test that failed first: a tick lost
+  when a date's kind changed; two tabs saving over each other, and an erase
+  in one tab undone by the other; a long word in a note pushing the phone
+  sideways. And two of the shift's own, caught before anything left the
+  machine: a note held back from a block that had ended, and a rest day
+  with nothing on it left out of the archive.
+- **Held by new tests, nothing needing a change**: the owner's six-week
+  rota on the real file, the nights the clocks change, month and year ends,
+  the app opened at 02:30 in a night, a phone with no network, the three
+  pastes, and the ordinary day counted press by press.
+- **Left**: two things parked in BACKLOG with their cost, and one question
+  for the owner about the file (OPEN-QUESTIONS).
+
 ---
 
 ## 1. What Dienius is
@@ -241,10 +266,11 @@ not re-litigate those without reading them.
 
 ## 2. Every feature, one line each
 
-The app as it is at v2.40, with one look done and the freeze preparation
-applied. The rail has seven places - Today, Calendar, Templates, Library,
-Review, North, Kitchen - and Settings after them; the header carries the
-timer, Notes, the journal and Search on every page.
+The app as it is at v2.43, with one look done, the freeze preparation
+applied and the shift of 2026-09-25 behind it. The rail has seven places -
+Today, Calendar, Templates, Library, Review, North, Kitchen - and Settings
+after them; the header carries the timer, Notes, the journal and Search on
+every page.
 
 ### Today
 
@@ -307,7 +333,7 @@ timer, Notes, the journal and Search on every page.
 | A plan that could not be read | Kept aside, as it was, before anything is saved over it; a line over every page says so, and Settings saves it as a file |
 | Backup to GitHub | The plan as JSON in the owner's private repo, written when a day closes, when a new one opens and on Back up now; Restore from cloud compares both copies, then brings back what is missing or replaces everything; the token stays on the device |
 | Archive | Beside the backup, in the same repo: a file for every lived day - its kind, blocks, what was ticked and when, meals with recipe and numbers, notes, the score - and the whole plan once a week, never written over; "Archived until" in Settings, Backup - docs/ARCHIVE-FORMAT.md |
-| Sync | Optional, between devices, through GitHub or a server of your own; per entity, the later write wins, a delete is kept; a device joining with a plan of its own - or turning sync on again - chooses Take from GitHub, Keep this one or Merge first, and a line over every page says when sync fails or waits - docs/SYNC.md |
+| Sync | Optional, between devices, through GitHub or a server of your own; per entity, the later write wins, a delete is kept; a device joining with a plan of its own - or turning sync on again - chooses Take from GitHub, Keep this one or Merge first, and a line over every page says when sync fails or waits; two tabs of the app on one device take in what the other saved - docs/SYNC.md |
 | External calendars | An imported .ics file, or a subscribed address fetched through a sync server of your own, drawn as a read-only layer on Today and the week; free time counts their timed events |
 | Screens that fail alone | A page, a sheet the shell opens, or a panel of the header that cannot draw says so in its own place, and everything else goes on; a sheet a page opens itself fails with its page |
 | Offline and updates | Installs as an app, opens and works with no network, and the next open after a deploy is the new version |
@@ -326,6 +352,7 @@ after that a version is found by its number in the commit messages
 
 | Version | What it was |
 |---|---|
+| **The shift** | 2026-09-25: the file pasted again, the archive, a reading block's list, four defects, and the owner's month in a test - SHIFT-2026-09-25.md |
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
 | **v2.43** | An archive of every lived day, beside the backup |
@@ -391,14 +418,15 @@ after that a version is found by its number in the commit messages
 
 ### Nothing is half-built
 
-Checked, not assumed, at the end of the freeze preparation (2026-09-24):
-**3584 unit tests in 239 files** (and 8 skipped on purpose: a backup from
-before v2.29 is the same file back only after one import, not at once -
-`lib/backupVersions.test.ts`), **147 browser tests** on a desktop and a
-phone (16 more skip on purpose, where a walk has nothing to say on one of
-the two), a clean typecheck and build, and every measuring pass at zero -
-the sweep at four desktop sizes and on the phone, the keyboard walk over 39
-screens, the precision pass, the three text sizes, and the privacy guard.
+Checked, not assumed, at the end of the shift (2026-09-25):
+**3656 unit tests in 246 files**, **165 browser tests** on a desktop and a
+phone (and 8 unit tests skipped on purpose: a backup from before v2.29 is
+the same file back only after one import, not at once -
+`lib/backupVersions.test.ts`; and the browser walks that have nothing to
+say on one of the two sizes skip there), a clean typecheck and build, and
+every measuring pass at zero - the sweep at four desktop sizes and on the
+phone, the keyboard walk over 39 screens, the precision pass, the three
+text sizes, and the privacy guard.
 Nothing is started and left.
 
 ### The gates
