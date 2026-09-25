@@ -401,6 +401,17 @@ export const dayActions = {
     }))
   },
 
+  /**
+   * Another recipe on a meal, from its card - the owner's decisions before
+   * the freeze, 2026-09-25, stage 3. The day's choice within the meal, so
+   * the meal it was for stays: `setTaskMealLink` is the other door, where a
+   * recipe and a meal left open are one choice or the other.
+   */
+  setTaskRecipe(date: string, taskId: string, recipeId: string): void {
+    const day = dayOf(date)
+    commit(withDay(date, { ...day, tasks: day.tasks.map(t => (t.id === taskId ? { ...t, recipeId } : t)) }))
+  },
+
   setTaskLibraryRef(date: string, taskId: string, ref: LibraryRef | undefined): void {
     const day = dayOf(date)
     commit(withDay(date, {

@@ -5644,3 +5644,43 @@ today), `e2e/night-open.e2e.ts` on a desktop and a 375px phone, and
 `ownersMonth.test.ts` on the owner's own file: every date of six weeks
 closes half an hour before the sleep that ends it, and never while its
 shift runs.
+
+## Another recipe on a meal in two presses
+
+The shift of 2026-09-25 counted the owner's ordinary day press by press,
+and one action stood over two: putting another recipe of the same meal on
+a meal took five - its menu, Details, the recipe line, the recipe, Done -
+and it was parked. The owner took it out of Parked before the freeze: the
+owner's meal blocks carry a kind of meal and no recipe, so the recipe is
+chosen on the day, every day.
+
+**A second mark on the meal's card.** Beside the recipe's name - which
+still opens the recipe in Kitchen - a word, "choose" on a meal left open
+and "another" on one with a recipe, opens the meal's recipes in place,
+under the card on the note's left edge, each with its kcal and protein -
+the two numbers a choice for after the gym is made on - and the one on it
+marked. One press puts a recipe on the meal and shuts the list: two in
+all, on a phone and on a desktop. A meal already ticked is the same two
+presses on its card under Done, once Done is open.
+
+**A row of its own.** The recipe's pill stood on the meta line, and with
+the word beside it the line no longer fitted: on a 375px phone the
+category and the core mark gave way to a letter each, and at a desktop's
+card width the length wrapped onto a line of its own. So a meal's recipe
+and its word are a row of the card's grid under the meta line, on every
+width, starting on the title's edge; the recipe's name gives up its tail
+before the word beside it does.
+
+**Which recipes.** The meal's kind of meal: the one it leaves open, else
+the one its block in the template is for, else the meals of the recipe it
+has (`mealChoices`, `lib/kitchen.ts`). A meal with nothing to choose
+between shows no mark. A recipe put on from the card keeps the meal on
+the task (`actions.setTaskRecipe`), so the card can offer the meal's
+recipes again and the archive still says which meal it was; the detail
+sheet stays the other door, where a recipe and a meal left open are one
+choice or the other.
+
+Tests: `kitchen.test.ts` (the choices), `kitchen.store.test.ts` (the meal
+kept), `MealOnDay.test.tsx` (the list in place with its numbers, a meal
+left open, a meal ticked), and `e2e/owners-day.e2e.ts` on a desktop and a
+375px phone, which holds each to two presses.

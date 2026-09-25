@@ -1,4 +1,4 @@
-import { MEAL_TYPES, RECIPE_LIMITS, type MealType, type Recipe } from './types'
+import { MEAL_TYPES, RECIPE_LIMITS, type MealType, type Recipe, type Task, type Template } from './types'
 import { readRecipe, recipeIngredients } from './recipeText'
 import { dayNumber } from './north'
 import { formatDuration } from '../widgets/day-plan/capacity'
@@ -236,6 +236,29 @@ export function mealLink(
   if (recipe) return { kind: 'recipe', recipe }
   if (block.mealType) return { kind: 'meal', meal: block.mealType, label: `${MEAL_TYPE_LABELS[block.mealType]} recipes` }
   return undefined
+}
+
+/**
+ * The recipes a meal's card offers in place, to put another on it with one
+ * press - the owner's decisions before the freeze, 2026-09-25, stage 3. The
+ * recipes of the meal's kind of meal, by name: the meal it leaves open, else
+ * the meal its block in the template is for - a recipe chosen by hand takes
+ * the meal off the task - else the meals of the recipe it has. Nothing for a
+ * task that is not a meal, a meal whose kind is known nowhere, or a meal
+ * whose one recipe is already on it.
+ */
+export function mealChoices(
+  task: Task,
+  templates: readonly Pick<Template, 'id' | 'blocks'>[],
+  recipes: readonly Recipe[],
+): Recipe[] {
+  if (!isMealCategory(task.category)) return []
+  const origin = task.origin
+  const block = origin?.type === 'template' ? templates.find(t => t.id === origin.sourceId)?.blocks.find(b => b.id === origin.blockId) : undefined
+  const current = task.recipeId === undefined ? undefined : recipes.find(r => r.id === task.recipeId)
+  const meals: readonly MealType[] = task.mealType ? [task.mealType] : block?.mealType ? [block.mealType] : (current?.mealTypes ?? [])
+  const choices = recipesForMeal(recipes.filter(r => r.mealTypes?.some(m => meals.includes(m))), 'all')
+  return choices.some(r => r.id !== current?.id) ? choices : []
 }
 
 /** What a recipe's form holds when it is saved. Numbers the form could not read arrive as NaN or absent. */

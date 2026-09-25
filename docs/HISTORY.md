@@ -11,7 +11,7 @@ is today: for that, read STATE, and for why things are the way they are,
 
 Newest first:
 
-- [v2.44 back to v2.17](#v244---the-evening-close-follows-the-kind-of-day), a section each, with
+- [v2.45 back to v2.17](#v245---another-recipe-on-a-meal-in-two-presses), a section each, with
   One look and the first real month's dry run between them
 - [The versions before, one line each](#the-versions-before-one-line-each),
   v1.0 to v2.17
@@ -22,6 +22,23 @@ Newest first:
 - [Where steps lived, before they were removed](#where-steps-lived-before-they-were-removed)
 
 ---
+
+## v2.45 - Another recipe on a meal in two presses
+
+The owner's decisions before the freeze, 2026-09-25, stage 3, out of
+Parked.
+
+- **The meal's card** (`TaskRow.tsx`): beside the recipe's name, "choose"
+  on a meal left open and "another" on one with a recipe opens the meal's
+  recipes under the card, each with its kcal and protein; one press puts one
+  on the meal. On a ticked meal the same, under Done.
+- **`mealChoices`** in `lib/kitchen.ts`: the meal's kind of meal from the
+  task, its block, or its recipe; **`actions.setTaskRecipe`**: the recipe
+  put on, the meal kept.
+- **Tests**: `kitchen.test.ts`, `kitchen.store.test.ts`,
+  `MealOnDay.test.tsx`, and `e2e/owners-day.e2e.ts`, where choosing and
+  changing a meal's recipe are two presses each on both sizes. DECISIONS
+  "Another recipe on a meal in two presses".
 
 ## v2.44 - The evening close follows the kind of day
 

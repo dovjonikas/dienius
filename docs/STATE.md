@@ -292,7 +292,7 @@ every page.
 | Task menu | The dots on a card or a long press: Details, Time this, a free gap to place it in, Remove time, Push to tomorrow, Mark as ongoing, did not happen, Delete (Let go at the bound). A right click has the short list; a double click opens the detail |
 | Task detail | Everything the card does not show: the exact minute, the length, the category, the key mark, the repeat (this one or the series), the library item it draws from or a meal's recipes, the note it was made from, a link, and the note. A panel on a desktop, a sheet on a phone |
 | A note as choices | A line starting `## ` begins a section; its heading becomes a choice on the card, read over the day. No other markdown |
-| Meals | A meal's card names its recipe, or its kind of meal, and opens it in Kitchen |
+| Meals | A meal's card names its recipe, or its kind of meal, and opens it in Kitchen; a second press beside it - "choose" or "another" - opens the meal's recipes in place with their kcal and protein, and one more puts one on it |
 | Focus | One task, its own planned time, a ring, a way out; a bar over every page while it runs |
 | Timer and stopwatch | In the header. Survive a refresh, keep time in a background tab, run in a corner on every page, ring Soft, Bell or Alarm (or nothing) at a volume, with a start bell if asked for; a stopwatch started from a task's Time this offers to record what it actually took |
 | North on the day | One line of North's text under the day's title, the signature under it from 21:00; North's headings one line each - in the rail on a desktop, folded under the title on a phone - each opening a card of its lines (both off in Settings, Nudges) |
@@ -356,6 +356,7 @@ after that a version is found by its number in the commit messages
 | **The shift** | 2026-09-25: the file pasted again, the archive, a reading block's list, four defects, and the owner's month in a test - SHIFT-2026-09-25.md |
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
+| **v2.45** | Another recipe on a meal in two presses |
 | **v2.44** | The evening close follows the kind of day |
 | **v2.43** | An archive of every lived day, beside the backup |
 | **v2.42** | A templates file pasted again brings today and the dates ahead along |

@@ -4287,6 +4287,38 @@ select:focus {
 .task-meta .task-size,
 .task-meta .task-size-input { margin-left: auto; }
 
+/* A meal's own row, under the meta line: its recipe, or its kind of meal, and
+   the second press beside it - "choose" or "another", which opens the meal's
+   recipes under the card. A row of the card's grid, the same on every width:
+   on the meta line the two squeezed the category and the core mark to a
+   letter each on a 375px phone, and wrapped the length onto a line of its own
+   at a desktop's card width. It starts on the title's edge, as the meta line
+   does, and the recipe's name gives up its tail before the word beside it. */
+.task-row:has(> .task-meal) {
+  grid-template-areas:
+    "label menu"
+    "meta  menu"
+    "meal  .";
+}
+
+/* And on the running card, whose Focus has a column of its own. */
+.task-active .task-row:has(> .task-meal) {
+  grid-template-areas:
+    "label focus menu"
+    "meta  focus menu"
+    "meal  .     .";
+}
+
+.task-meal {
+  grid-area: meal;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+  margin-top: var(--s1);
+  padding-left: calc(var(--s6) + var(--s3));
+}
+
 /* The real control, out of the way of the box the app paints for it.
 
    The list of places was a list because the rule was written for the day's
@@ -9761,7 +9793,8 @@ button.danger:focus-visible {
    ------------------------------------------------------------------------ */
 .task-library,
 .task-note-mark,
-.task-recipe {
+.task-recipe,
+.task-recipe-other {
   flex-shrink: 0;
   padding: 0 var(--s2);
   /* One height for the three, whatever the face: a line of the interface
@@ -9987,6 +10020,61 @@ button.task-recipe:focus-visible {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* The second press on a meal - its other recipes, opened under the card. The
+   note's mark in every way: a word on the same pill, ringed while open. */
+button.task-recipe-other { min-height: 0; cursor: pointer; }
+button.task-recipe-other:hover { color: var(--text); }
+button.task-recipe-other.is-open {
+  border-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  color: var(--text);
+}
+button.task-recipe-other:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The meal's recipes, under the card on the note's left edge, so the list
+   reads as the card's. One press each: the name at the start of the row and
+   its kcal and protein, the quiet words, at the end. */
+.task-recipe-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: var(--s1) 0 0;
+  padding: 0 0 0 calc(var(--s6) + var(--s3));
+  list-style: none;
+}
+
+.task-recipe-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: var(--hairline) solid transparent;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 35%, transparent);
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-recipe-choice:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
+.task-recipe-choice[aria-pressed='true'] { border-color: color-mix(in srgb, var(--muted) 40%, transparent); }
+.task-recipe-choice-name { min-width: 0; overflow-wrap: anywhere; }
+.task-recipe-choice-numbers {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* The box it becomes. The same width as the mark it replaces, near enough,
@@ -10487,6 +10575,7 @@ button.task-recipe:focus-visible {
   .task-note-mark,
   .task-library,
   .task-recipe,
+  .task-recipe-other,
   .library-detail-pick,
   .task-title-select {
     position: relative;
@@ -10502,6 +10591,8 @@ button.task-recipe:focus-visible {
   .task-library::after,
   /* A meal's recipe on its card, which opens it in Kitchen. */
   .task-recipe::after,
+  /* And the second press beside it, its other recipes. */
+  .task-recipe-other::after,
   /* The picker's link under the address field, where it is a link. */
   .library-detail-pick::after,
   .library-color::after,
@@ -18676,7 +18767,9 @@ button.link-out {
 .task-meta > button,
 .task-meta .task-note-mark,
 .task-meta > .task-recipe,
-.task-meta > .task-library {
+.task-meta > .task-library,
+.task-meal > .task-recipe,
+.task-meal > .task-recipe-other {
   box-sizing: border-box;
   min-height: calc(var(--s4) + var(--s2));
   line-height: var(--lh-tight);

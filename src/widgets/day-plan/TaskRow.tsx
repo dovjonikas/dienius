@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { Category, LibraryList, Task } from '../../lib/types'
 import { currentItem, isItemFinished, progressLabel } from '../../lib/library'
 import { ProgressChip } from '../ProgressControl'
@@ -10,7 +10,7 @@ import { Explain } from '../../views/Explain'
 import { LinkOut } from '../../views/LinkOut'
 import { NoteSections } from '../../views/NoteSections'
 import { parseNote } from '../../lib/note'
-import { mealLink } from '../../lib/kitchen'
+import { macroLine, mealLink } from '../../lib/kitchen'
 import type { MealType, Recipe } from '../../lib/types'
 import { recipeTitle } from '../../lib/names'
 
@@ -102,6 +102,10 @@ export interface TaskRowProps {
   recipes?: Recipe[]
   /** Opens Kitchen from a meal's card: on its recipe, or on its kind of meal. */
   onOpenKitchen?: (opening: { recipeId?: string; meal?: MealType }) => void
+  /** The recipes a meal's card offers in place - `mealChoices`, lib/kitchen.ts. Empty where there is nothing to choose. */
+  mealChoices?: Recipe[]
+  /** Puts another recipe on the meal, the one pressed in its list. */
+  onChooseRecipe?: (recipeId: string) => void
   /**
    * Checking the task off, or unchecking it. Routed up to `DayView` rather
    * than calling `actions.toggleTask` here the way this row used to, because
@@ -158,6 +162,8 @@ export function TaskRow({
   categories = [],
   recipes = [],
   onOpenKitchen,
+  mealChoices = [],
+  onChooseRecipe,
   onToggleDone,
   selected,
   onToggleSelect,
@@ -166,6 +172,9 @@ export function TaskRow({
   // one is there, and a day that opened all of them would be a day of
   // paragraphs where the point is a list of times.
   const [noteOpen, setNoteOpen] = useState(false)
+  // The meal's other recipes, under the card - closed on every mount too.
+  const [choicesOpen, setChoicesOpen] = useState(false)
+  const choicesId = useId()
   // The mark reveals the intro, so it is only worth a place when there is an
   // intro and it is not already showing. A note that is nothing but headings
   // has its choices on the card already, and a mark beside them would open
@@ -412,28 +421,6 @@ export function TaskRow({
             </span>
           ) : null}
           {boundPace && <span className="task-pace">{boundPace}</span>}
-          {/* The meal's recipe by name, or its kind of meal, as a press that
-              opens it in Kitchen - the one mark on a meal's card that is a
-              way somewhere else, like the note's. Where nothing can open
-              Kitchen it is a label. */}
-          {meal &&
-            (onOpenKitchen ? (
-              <button
-                type="button"
-                className="task-recipe"
-                aria-label={meal.kind === 'recipe' ? `Recipe: ${recipeTitle(meal.recipe)}` : meal.label}
-                onClick={e => {
-                  e.stopPropagation()
-                  onOpenKitchen(meal.kind === 'recipe' ? { recipeId: meal.recipe.id } : { meal: meal.meal })
-                }}
-              >
-                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
-              </button>
-            ) : (
-              <span className="task-recipe">
-                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
-              </span>
-            ))}
           {/* A control among marks, which is why it is an anchor with its own
               target rather than another chip: pressing the card still means
               what it meant, and this means the other thing. */}
@@ -520,6 +507,56 @@ export function TaskRow({
             only the half that is not already on the row. */}
         {showActual && <span className="task-actual">{formatDuration(task.actualMinutes!)} actual</span>}
         </div>
+        {/* A meal's own row, under the meta line: its recipe - or its kind of
+            meal - and the second press beside it. On the meta line the two
+            squeezed the category and the core mark to a letter each on a
+            375px phone; a row of their own is the same on every width. */}
+        {meal && (
+          <div className="task-meal">
+            {/* The meal's recipe by name, or its kind of meal, as a press that
+                opens it in Kitchen - the one mark on a meal's card that is a
+                way somewhere else, like the note's. Where nothing can open
+                Kitchen it is a label. */}
+            {onOpenKitchen ? (
+              <button
+                type="button"
+                className="task-recipe"
+                aria-label={meal.kind === 'recipe' ? `Recipe: ${recipeTitle(meal.recipe)}` : meal.label}
+                onClick={e => {
+                  e.stopPropagation()
+                  onOpenKitchen(meal.kind === 'recipe' ? { recipeId: meal.recipe.id } : { meal: meal.meal })
+                }}
+              >
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
+              </button>
+            ) : (
+              <span className="task-recipe">
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? recipeTitle(meal.recipe) : meal.label}</span>
+              </span>
+            )}
+            {/* The second press on a meal, beside the first: its meal's other
+                recipes, opened under the card, one press to put one on it -
+                the owner's decisions before the freeze, 2026-09-25, stage 3.
+                It was five presses through the actions menu and Details. The
+                first press still opens the recipe in Kitchen. */}
+            {mealChoices.length > 0 && onChooseRecipe && (
+              <button
+                type="button"
+                className={choicesOpen ? 'task-recipe-other is-open' : 'task-recipe-other'}
+                aria-expanded={choicesOpen}
+                aria-controls={choicesId}
+                aria-label={meal.kind === 'recipe' ? `Another recipe for ${task.title}` : `Choose a recipe for ${task.title}`}
+                onClick={e => {
+                  e.stopPropagation()
+                  setChoicesOpen(open => !open)
+                }}
+              >
+                {/* A meal left open is chosen; one with a recipe gets another. */}
+                {meal.kind === 'recipe' ? 'another' : 'choose'}
+              </button>
+            )}
+          </div>
+        )}
         {/* The single door to everything else this task can do - place or
             un-anchor, push, mark ongoing, delete - see
             docs/TIMELINE.md section 5 and TaskActionsSheet.tsx. Always
@@ -554,6 +591,33 @@ export function TaskRow({
           views/NoteSections.tsx. A note with no "## " line in it is the
           intro alone, which is what every note was before this. */}
       <NoteSections note={task.note} expanded={task.noteExpanded} open={noteOpen} label={task.title} />
+      {/* The meal's recipes, each with its kcal and protein - the two
+          numbers a choice for after the gym is made on - and the one on it
+          marked. A press puts it on the meal and shuts the list. */}
+      {choicesOpen && mealChoices.length > 0 && onChooseRecipe && (
+        <ul className="task-recipe-choices" id={choicesId} aria-label={`Recipes for ${task.title}`}>
+          {mealChoices.map(recipe => {
+            const numbers = macroLine(recipe)
+            return (
+              <li key={recipe.id}>
+                <button
+                  type="button"
+                  className="task-recipe-choice"
+                  aria-pressed={recipe.id === task.recipeId}
+                  onClick={e => {
+                    e.stopPropagation()
+                    onChooseRecipe(recipe.id)
+                    setChoicesOpen(false)
+                  }}
+                >
+                  <span className="task-recipe-choice-name">{recipeTitle(recipe)}</span>
+                  {numbers && <span className="task-recipe-choice-numbers">{numbers}</span>}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </li>
   )
 }

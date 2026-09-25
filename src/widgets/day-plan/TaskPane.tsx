@@ -10,6 +10,7 @@ import { startTour } from '../../lib/tourState'
 import { useIsWide } from '../../lib/viewport'
 import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clockTools } from '../../lib/clockTools'
+import { mealChoices } from '../../lib/kitchen'
 import { parseMinutesInput } from './capacity'
 import { scrollEdgeClass, useScrollEdges } from './useScrollEdges'
 import { rolloverSplit } from './rollover'
@@ -163,6 +164,8 @@ export function TaskPane({
       categories: data.categories,
       recipes: data.recipes,
       onOpenKitchen,
+      mealChoices: mealChoices(task, data.templates, data.recipes),
+      onChooseRecipe: (recipeId: string) => actions.setTaskRecipe(date, task.id, recipeId),
       selected: selectedTaskId === task.id,
       onToggleSelect: () => onToggleSelect(task.id),
     }

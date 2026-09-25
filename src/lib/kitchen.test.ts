@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cardLines, factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipeSections, recipesForMeal } from './kitchen'
+import { cardLines, factsLine, fullMacroLine, isMealCategory, macroLine, mealChoices, mealLink, recipeSections, recipesForMeal } from './kitchen'
 import type { Recipe } from './types'
 
 /**
@@ -127,4 +127,42 @@ test('a meal block shows the recipe it points at, or its kind of meal, and nothi
   expect(isMealCategory('meal')).toBe(true)
   expect(isMealCategory('core')).toBe(false)
   expect(isMealCategory(undefined)).toBe(false)
+})
+
+/**
+ * Another recipe on a meal in two presses - the owner's decisions before the
+ * freeze, 2026-09-25, stage 3. The choices a meal's card opens in place: the
+ * recipes of its kind of meal, by name - the meal it leaves open, else the
+ * meal its block in the template is for, else the meals of the recipe it has.
+ */
+test("a meal's choices are the recipes of its meal: the one it leaves open, its block's, or its recipe's", () => {
+  const oats = recipe({ title: 'Oats', mealTypes: ['breakfast'] })
+  const eggs = recipe({ title: 'Eggs', mealTypes: ['breakfast', 'snack'] })
+  const bowl = recipe({ title: 'A bean bowl', mealTypes: ['lunch'] })
+  const soup = recipe({ title: 'A simple soup', mealTypes: ['lunch', 'dinner'] })
+  const recipes = [oats, eggs, bowl, soup]
+  const titles = (list: Recipe[]) => list.map(r => r.title)
+  const block = { id: 'lunch-block', time: '12:00', title: 'Lunch', minutes: 30, category: 'meal', mealType: 'lunch' as const }
+  const template = { id: 'day', name: 'Day', blocks: [block] }
+
+  // Left open: the meal it names, whichever recipe the day walked onto it.
+  expect(titles(mealChoices({ id: 't', title: 'Lunch', done: false, category: 'meal', mealType: 'lunch', recipeId: bowl.id }, [], recipes))).toEqual(['A bean bowl', 'A simple soup'])
+  // Chosen by hand before, so the meal is gone from the task: its block still says it.
+  const stamped = { id: 't', title: 'Lunch', done: false, category: 'meal', recipeId: soup.id, origin: { type: 'template' as const, sourceId: 'day', blockId: 'lunch-block' } }
+  expect(titles(mealChoices(stamped, [template], recipes))).toEqual(['A bean bowl', 'A simple soup'])
+  // A meal written by hand with a recipe: the recipe's own meals.
+  expect(titles(mealChoices({ id: 't', title: 'Snack', done: false, category: 'meal', recipeId: eggs.id }, [], recipes))).toEqual(['Eggs', 'Oats'])
+})
+
+test('no choices where there is nothing to choose between, or nothing to eat', () => {
+  const oats = recipe({ title: 'Oats', mealTypes: ['breakfast'] })
+  const bowl = recipe({ title: 'A bean bowl', mealTypes: ['lunch'] })
+  // The one recipe of its meal, already on it.
+  expect(mealChoices({ id: 't', title: 'Breakfast', done: false, category: 'meal', mealType: 'breakfast', recipeId: oats.id }, [], [oats, bowl])).toEqual([])
+  // Left open with one recipe to put on it: that one is a choice.
+  expect(mealChoices({ id: 't', title: 'Breakfast', done: false, category: 'meal', mealType: 'breakfast' }, [], [oats, bowl]).map(r => r.title)).toEqual(['Oats'])
+  // Not a meal.
+  expect(mealChoices({ id: 't', title: 'Walk', done: false, category: 'health', mealType: 'breakfast' }, [], [oats, bowl])).toEqual([])
+  // A meal with no meal known anywhere.
+  expect(mealChoices({ id: 't', title: 'Food', done: false, category: 'meal' }, [], [oats, bowl])).toEqual([])
 })

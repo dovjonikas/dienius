@@ -215,3 +215,30 @@ test('a recipe written one at a time is taken by a block waiting for its name, w
   expect(block.recipeIds).toEqual([bowl.id])
   expect(block.waitingRecipes).toBeUndefined()
 })
+
+// Another recipe on a meal in two presses - the owner's decisions before the
+// freeze, 2026-09-25, stage 3. A recipe put on a meal from its card is the
+// day's choice within the meal: the meal it was for stays with it, so the
+// card can offer the meal's recipes again, and the archive still says which
+// meal it was.
+test('another recipe put on a meal from its card keeps the meal, and touches nothing else on the day', () => {
+  const bowl = actions.addRecipe({ title: 'A bean bowl', text: '', mealTypes: ['lunch'] })!
+  const soup = actions.addRecipe({ title: 'A simple soup', text: '', mealTypes: ['lunch'] })!
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      '2030-01-07': {
+        date: '2030-01-07',
+        tasks: [
+          { id: 'lunch', title: 'Lunch', done: true, category: 'meal', mealType: 'lunch', recipeId: bowl.id },
+          { id: 'walk', title: 'Walk', done: false },
+        ],
+      },
+    },
+  })
+  actions.setTaskRecipe('2030-01-07', 'lunch', soup.id)
+  const [lunch, walk] = getData().days['2030-01-07'].tasks
+  expect(lunch).toMatchObject({ recipeId: soup.id, mealType: 'lunch', done: true })
+  expect(walk).toMatchObject({ id: 'walk', title: 'Walk', done: false })
+  expect(walk.recipeId).toBeUndefined()
+})

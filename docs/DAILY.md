@@ -585,10 +585,14 @@ the day under **Or choose on the day**. The add row asks the same once a new
 block is a meal. From a recipe's own page, **Add to template** puts it into one
 of a template's meal blocks, or makes a new meal block at a time and a length.
 
-On a day, the task's details choose one recipe for that day only. The card
-shows the recipe's name - press it to open the recipe - or "Lunch recipes",
-which opens Kitchen on lunch so you can choose there. A meal pointing at
-nothing works exactly as it always did.
+On a day, a meal's card chooses its recipe for that day only, in two
+presses: **choose** beside "Lunch recipes" - or **another** beside the
+recipe's name, once there is one - opens lunch's recipes under the card,
+each with its kcal and protein, and a press on one puts it on the meal. On
+a meal already ticked it is the same, on its card under Done. The recipe's
+name opens the recipe in Kitchen, and "Lunch recipes" opens Kitchen on
+lunch; the task's details can choose too. A meal pointing at nothing works
+exactly as it always did.
 
 ---
 
