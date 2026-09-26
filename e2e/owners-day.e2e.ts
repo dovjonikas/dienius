@@ -82,11 +82,16 @@ test("the owner's day, press by press", async ({ page }, info) => {
   // two different screens - the deploy's runner failed on the first and passed on the second.
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.evaluate(() => document.fonts.ready)
-  const height = page.viewportSize()!.height
-  // The whole card, its recipe's row too, in the fonts a phone and this computer draw; the
-  // deploy's Linux runner draws text taller, and there the meal's name is what is held.
-  const seen = await (process.env.CI ? lunch.locator('.task-check') : lunch).boundingBox()
-  expect(seen!.y + seen!.height, 'the next meal is on the first screen').toBeLessThanOrEqual(height)
+  // The first screen ends where the phone's bar begins - it stands over the page, so the
+  // 53px under it are not seen - and at the window's foot on a desktop. What is held there
+  // is the meal's name, its card's first row, the same on this computer and on the deploy's
+  // Linux runner, whose fonts draw text taller. The whole card was held against the window
+  // until the evening before the freeze, when the owner's own days were measured against
+  // the bar (docs/SHIFT-2026-09-25.md, "The last evening before the freeze").
+  const bar = phone ? await page.getByRole('navigation', { name: 'Views' }).boundingBox() : null
+  const fold = bar ? bar.y : page.viewportSize()!.height
+  const seen = await lunch.locator('.task-check').boundingBox()
+  expect(seen!.y + seen!.height, 'the next meal is on the first screen').toBeLessThanOrEqual(fold)
 
   // The meal's recipes open in place, each with its kcal and protein, and one
   // press puts one on it - the owner's decisions before the freeze, stage 3.
