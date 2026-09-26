@@ -41,8 +41,11 @@ and sleep, the running line, the capacity sentence and the quick-add tools
 put the running card at 706px and the next meal's name at 813px, one flick
 down. Where the night's own meal is the first card, at half past two, its
 name ends at 739-757px, above the bar. The report's walk measured the whole
-card against the window's foot; both walks measure the meal's name against
-the bar now.
+card against the window's foot, and the numbers above are this computer's
+fonts: the deploy's Linux runner draws text taller, and there the generic
+day's meal name is 35px under the bar too. Both walks hold the meal as the
+card after the running one, and the whole card on a desktop's first screen;
+on a phone they measure the fold and write it to the report.
 
 **Recommendation:** leave it for the freeze. The running card says what is
 happening, and the meal is one flick down. The change that would put the

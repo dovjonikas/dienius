@@ -5731,7 +5731,10 @@ wide as the figures. An override belongs next to what it overrides.
 next meal is not on the first screen at waking on the owner's kinds - the
 running card is all that stands above the bar - which is a layout choice
 and not a fault, parked in BACKLOG with its cost and written to
-OPEN-QUESTIONS with a recommendation. The walks measure the first screen
-to the bar at the foot of the phone now, not to the window; the owner day
-walk had measured the whole card to the window and passed with the card's
-recipe row under the bar.
+OPEN-QUESTIONS with a recommendation. The walks hold the meal as the card
+after the running one, and the whole card on a desktop's first screen; on a
+phone they measure the first screen to the bar at its foot and write the
+numbers to the report, since what stands above the bar depends on the
+fonts - on the deploy's Linux runner the generic day's meal name is under
+it too. The owner day walk had measured the whole card to the window and
+passed with the card's recipe row under the bar.

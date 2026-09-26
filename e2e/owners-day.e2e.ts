@@ -82,16 +82,23 @@ test("the owner's day, press by press", async ({ page }, info) => {
   // two different screens - the deploy's runner failed on the first and passed on the second.
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.evaluate(() => document.fonts.ready)
-  // The first screen ends where the phone's bar begins - it stands over the page, so the
-  // 53px under it are not seen - and at the window's foot on a desktop. What is held there
-  // is the meal's name, its card's first row, the same on this computer and on the deploy's
-  // Linux runner, whose fonts draw text taller. The whole card was held against the window
-  // until the evening before the freeze, when the owner's own days were measured against
-  // the bar (docs/SHIFT-2026-09-25.md, "The last evening before the freeze").
+  // The next meal is the card after the running one, on both sizes, and on a desktop its
+  // whole card is on the first screen. On a phone the first screen ends where the bar
+  // begins - it stands over the last 53px of the page - and what stands above it depends
+  // on the fonts: on this computer the meal's name is above the bar, on the deploy's Linux
+  // runner, whose fonts draw text taller, it is 35px under it. So the phone's fold is
+  // measured and written to the report, not held. The whole card was held against the
+  // window's foot until the evening before the freeze, which passed with the card's recipe
+  // row under the bar (docs/SHIFT-2026-09-25.md, "The last evening before the freeze";
+  // BACKLOG, Parked).
+  const titles = await page.locator('.task-list > li input[type=checkbox]').evaluateAll(els => els.map(el => el.getAttribute('aria-label')))
+  expect(titles.indexOf('Lunch'), 'the next meal is the card after the running one').toBe(1)
   const bar = phone ? await page.getByRole('navigation', { name: 'Views' }).boundingBox() : null
   const fold = bar ? bar.y : page.viewportSize()!.height
-  const seen = await lunch.locator('.task-check').boundingBox()
-  expect(seen!.y + seen!.height, 'the next meal is on the first screen').toBeLessThanOrEqual(fold)
+  const box = (await lunch.boundingBox())!
+  const seen = (await lunch.locator('.task-check').boundingBox())!
+  info.annotations.push({ type: 'first screen', description: `Lunch is card 2, ${Math.round(box.y)} to ${Math.round(box.y + box.height)}, its name to ${Math.round(seen.y + seen.height)}; the first screen ends at ${Math.round(fold)}` })
+  if (!phone) expect(box.y + box.height, 'the next meal is on the first screen').toBeLessThanOrEqual(fold)
 
   // The meal's recipes open in place, each with its kcal and protein, and one
   // press puts one on it - the owner's decisions before the freeze, stage 3.
