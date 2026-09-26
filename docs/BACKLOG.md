@@ -1,6 +1,6 @@
 # Dienius - backlog
 
-Sorted on 2026-09-24 for the freeze that starts on Sunday 2026-09-28 (the
+Sorted on 2026-09-24 for the freeze that starts on Monday 2026-09-28 (the
 first section of [`STATE.md`](STATE.md)): everything this file and the
 lists beside it ever asked for, in three parts. **Parked** is what waits,
 and where anything asked for during the freeze is written down. **Done** is

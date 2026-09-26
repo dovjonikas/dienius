@@ -9,9 +9,10 @@ are. How the app got here, version by version, is
 [`HISTORY.md`](HISTORY.md): written as each version was done, so the code it
 names is the code of that time.
 
-**Last updated:** 2026-09-25, the shift - the owner's eight-stage brief,
-written up in [`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md) and in the
-section after the freeze preparation's.
+**Last updated:** 2026-09-26, the last work before the freeze - the owner's
+four stages after the shift, written up in
+[`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md), "After the shift", and in the
+section after the shift's. The freeze begins on Monday 2026-09-28.
 
 ## Freeze nuo 2026-09-28: kas leidziama (bug fix, duomenu saugumas, docs) ir kas ne (naujos funkcijos, jos eina i BACKLOG parking skyriu)
 
@@ -245,6 +246,26 @@ stage done, every gate green before each push, the report with its proof in
   for the owner about the file - answered, with the three before it, on
   2026-09-25 (DECISIONS "Four questions answered before the freeze").
 
+## Before the freeze, after the shift
+
+The owner answered the shift's report the same evening, and four stages
+followed, each pushed on its own with every gate green - SHIFT-2026-09-25.md,
+"After the shift":
+
+- **Closed**: every open question (OPEN-QUESTIONS is empty; DECISIONS "Four
+  questions answered before the freeze"). The month walk on the real file
+  now fails on any block in any sleep.
+- **The evening close follows the kind of day** (v2.44): half an hour before
+  the sleep that ends it, a night the morning after on the morning's page,
+  never while a shift runs; the time in Settings for a date with no kind.
+- **Another recipe on a meal in two presses** (v2.45), out of Parked: "choose"
+  or "another" on a meal's card, the meal's recipes in place with their kcal
+  and protein, one press to put one on.
+- **Parked, and staying there**: a kind before a day shift (the owner's file
+  answers it), and the rest of BACKLOG's Parked list. Nothing is started and
+  left.
+- **The freeze begins on Monday 2026-09-28** - the first section above.
+
 ---
 
 ## 1. What Dienius is
@@ -421,8 +442,8 @@ after that a version is found by its number in the commit messages
 
 ### Nothing is half-built
 
-Checked, not assumed, at the end of the shift (2026-09-25):
-**3656 unit tests in 246 files**, **165 browser tests** on a desktop and a
+Checked, not assumed, before the freeze (2026-09-26):
+**3681 unit tests in 248 files**, **167 browser tests** on a desktop and a
 phone (and 8 unit tests skipped on purpose: a backup from before v2.29 is
 the same file back only after one import, not at once -
 `lib/backupVersions.test.ts`; and the browser walks that have nothing to
