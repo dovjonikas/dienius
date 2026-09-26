@@ -5684,3 +5684,54 @@ Tests: `kitchen.test.ts` (the choices), `kitchen.store.test.ts` (the meal
 kept), `MealOnDay.test.tsx` (the list in place with its numbers, a meal
 left open, a meal ticked), and `e2e/owners-day.e2e.ts` on a desktop and a
 375px phone, which holds each to two presses.
+
+## Three things a fresh look found on the last evening before the freeze
+
+2026-09-26, the evening before the freeze: every screen and sheet looked at
+as a person opening the app for the first time, on a 375px phone and a
+1440px desktop, in both themes, on the sample day and on the owner's own
+file. Three things were drawn broken; each is fixed with a test that failed
+first, none adds anything.
+
+**A meta line keeps its words on a phone.** One look made the phone's meta
+line one line, each mark shrinking with an ellipsis, so that the pace's
+sentence would give up its tail rather than push the length under the time
+("One look, seven rules", rule 5). Every mark shrank, not only the long
+one: on the morning after a night the card of the night's snack read
+"last ni", "M" and "n" for "last night", "Meals" and "note", and the
+reading block "Perso", "co" and "chapte" - the marks of a night's card
+come to more than a 375px line holds, and the sweep never reported it,
+since it takes an ellipsis as shortened on purpose. The line wraps now:
+every mark whole, a second row where the first is full, the length at the
+end of the last, and the pace's sentence standing last before it, taking
+the room its line has left and ending in an ellipsis only where it is
+longer than a whole line. `e2e/night-open.e2e.ts` holds it on a generic
+night with every mark on its card, and `e2e/owners-freeze-week.e2e.ts` on
+the owner's own; the desktop is untouched.
+
+**The journal's page on a phone is one column.** Its body wraps on a
+desktop, where the text stands beside the month, and the phone turned it
+into a column without turning the wrap off; a column that wraps breaks into
+columns, so the month's box was cut to the room the text left and the
+writing box was painted over the month's last rows, in both themes. The
+column does not wrap now; `e2e/journal.e2e.ts` holds the box under the
+month.
+
+**Review's readings stand two abreast on a desktop again.** One look's
+stage 3 wrote the wide frame - the figures across, the readings two abreast
+under them from 1280px - and its stage 4 wrote the rule that makes every
+page body a column, below it, at the same weight: the column won at every
+width, and from 2026-09-23 the readings stood in a column of their own
+widths on the left of an empty page. The after picture of that stage shows
+it. The frame's rule stands under the column's now, which it has to
+outrank; `e2e/one-look-fits.e2e.ts` holds the two readings on one row, as
+wide as the figures. An override belongs next to what it overrides.
+
+**And one thing left as it is**, with its numbers: on a 375px phone the
+next meal is not on the first screen at waking on the owner's kinds - the
+running card is all that stands above the bar - which is a layout choice
+and not a fault, parked in BACKLOG with its cost and written to
+OPEN-QUESTIONS with a recommendation. The walks measure the first screen
+to the bar at the foot of the phone now, not to the window; the owner day
+walk had measured the whole card to the window and passed with the card's
+recipe row under the bar.

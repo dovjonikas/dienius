@@ -83,7 +83,14 @@ from Templates to Kitchen to the day, nothing may jump.
    that scrolls sideways inside its own box; a second row by design, a
    grid with a row for each part; or one line whose long part ends in an
    ellipsis. A grid, a column and a nowrap row are what the measure
-   passes, so a row that passes is one of the three and says so.
+   passes, so a row that passes is one of the three and says so. One row
+   is none of the three since the last evening before the freeze: a task's
+   meta line on a phone, whose marks are each a word and none of them the
+   long part - the night's letter and words, the category, core, the note,
+   a book's chapter, the length. Cut to a letter and dots each, they said
+   nothing; the line takes a second row where it must, every word whole,
+   and only the pace's sentence ends in an ellipsis (DECISIONS "Three
+   things a fresh look found on the last evening before the freeze").
 6. **It fits.** On a desktop no page scrolls: a list that is long scrolls
    inside its own box. On a phone the page scrolls only where the content
    is long by nature - a day, a week's agenda, a list of templates, books

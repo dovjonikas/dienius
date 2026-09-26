@@ -10803,22 +10803,6 @@ button.task-recipe-other:focus-visible {
   padding: 0 0 var(--s12);
 }
 
-/* On a wide screen, one look's frame: the readings two abreast under the
-   title, the period and the figures, from the frame's left edge. From
-   1280px, where half the frame is still a reading's measure: at 1024 a
-   reading's line broke into two under its block's name. */
-@media (min-width: 1280px) {
-  .review-body {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: var(--s4);
-    align-items: start;
-  }
-
-  .review-body > .review-figures,
-  .review-body > .review-empty { grid-column: 1 / -1; }
-}
-
 /* The page's body under its head and its nav - one look, rule 6 - with the
    room between its parts the page kept between them. */
 .review-body,
@@ -10838,6 +10822,27 @@ button.task-recipe-other:focus-visible {
 .library-body > *,
 .kitchen-body > * {
   flex-shrink: 0;
+}
+
+/* On a wide screen, one look's frame: the readings two abreast under the
+   title, the period and the figures, from the frame's left edge. From
+   1280px, where half the frame is still a reading's measure: at 1024 a
+   reading's line broke into two under its block's name. Under the column
+   rule above, which it has to outrank: it stood above it from one look's
+   stage 4 to the last evening before the freeze, the column won at every
+   width, and the readings stood in a column of their own widths on the left
+   of an empty page - the "after" picture showed it and nobody looked. An
+   override stands next to what it overrides. */
+@media (min-width: 1280px) {
+  .review-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--s4);
+    align-items: start;
+  }
+
+  .review-body > .review-figures,
+  .review-body > .review-empty { grid-column: 1 / -1; }
 }
 
 .review-header {
@@ -18429,19 +18434,26 @@ button.link-out {
 }
 
 @media (max-width: 599px) {
-  /* The task's meta line: the time and the count keep their words, the
-     sentence between them ends in an ellipsis. */
-  .task-meta { flex-wrap: nowrap; }
-  .task-meta > * {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  /* The task's meta line on a phone: every mark keeps its word. It was one
+     line, each mark shrinking with an ellipsis, and a night's card - the
+     night's letter and words, the category, core, the note and the length,
+     more than a 375px line holds - read "last ni", "M" and "n" on the
+     morning after every night, a book's line "Perso", "co" and "chapte";
+     the sweep never saw it, since it takes an ellipsis as shortened on
+     purpose (the last evening before the freeze, 2026-09-26). A line that
+     does not hold its marks takes a second now, whole words on each, the
+     length at the end of the last. The pace's sentence stands last, before
+     the length: whole on the line that holds it, taking the room that line
+     has left, and ending in an ellipsis only where it is longer than a
+     whole line - one look had it give up its tail on the one line, which
+     left "on..." of it beside the other marks. */
+  .task-meta > * { white-space: nowrap; }
+  .task-meta > .task-pace {
+    order: 1;
+    flex: 1 1 auto;
   }
-  .task-meta > .task-time,
   .task-meta > .task-size,
-  .task-meta > .task-size-input { flex: 0 0 auto; }
+  .task-meta > .task-size-input { order: 2; }
 
   /* The day's quick-add: the line across the top, the time and the length
      on the row under it - the rows it had, as rows. */
@@ -18700,13 +18712,17 @@ button.link-out {
   }
 
   /* The journal's head: the name on its row, the search and the copies on
-     the row under it; and its body a column, the month over the text. */
+     the row under it; and its body a column, the month over the text. One
+     column: the body wraps on a desktop, where the text stands beside the
+     month, and a column that wraps breaks into columns instead - the
+     month's box was cut to the room the text left and the text painted
+     over its last rows (the last evening before the freeze, 2026-09-26). */
   .journal-view-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
   .journal-view-head > h2 { grid-column: 1 / -1; }
-  .journal-view-body { flex-direction: column; align-items: stretch; }
+  .journal-view-body { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
   .journal-view-body > * { flex: 0 0 auto; }
 }
 

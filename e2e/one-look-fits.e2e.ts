@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { openFreshAt, wednesdayAt } from './app'
+import { openFreshAt, stampWorkingDay, tick, wednesdayAt } from './app'
 
 /**
  * One look, rule 6 - it fits: on a desktop no page scrolls, what is long
@@ -117,4 +117,29 @@ test('on a desktop no page scrolls and a long page scrolls inside its own box; o
     const after = await page.getByRole('heading', { level: 2, name: 'Settings' }).boundingBox()
     expect(after?.y).toBe(before?.y)
   }
+})
+
+/**
+ * One look's frame for Review on a wide screen: the readings two abreast
+ * under the figures, from 1280px. The rule for it stood above the later
+ * rule that makes every page body a column, and the column won: from one
+ * look's stage 4 to the last evening before the freeze the readings stood
+ * in a column, each the width of its own content, on the left of an empty
+ * page. Held here at the desktop's 1366px.
+ */
+test('on a desktop the readings of Review stand two abreast, as wide as their columns, under the figures', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'the wide frame')
+  // A day lived a little, so the week has readings: the starter day, one thing ticked.
+  await openFreshAt(page, wednesdayAt(15))
+  await stampWorkingDay(page)
+  await tick(page, 'Get up, shower, coffee')
+  await tab(page, 'Review')
+  // The body's parts: the figures first, then the two readings.
+  const parts = page.locator('.review-body > *')
+  await expect(parts.nth(2)).toBeVisible()
+  const [figures, first, second] = await Promise.all([parts.nth(0).boundingBox(), parts.nth(1).boundingBox(), parts.nth(2).boundingBox()])
+  expect(Math.round(second!.y), 'the two readings share a row').toBe(Math.round(first!.y))
+  expect(second!.x, 'the second stands beside the first').toBeGreaterThan(first!.x + first!.width)
+  expect(Math.round(first!.x), 'the first starts where the figures start').toBe(Math.round(figures!.x))
+  expect(Math.round(second!.x + second!.width), 'the second ends where the figures end').toBe(Math.round(figures!.x + figures!.width))
 })

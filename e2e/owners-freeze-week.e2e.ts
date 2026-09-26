@@ -181,6 +181,22 @@ function plan(page: Page) {
 
 const card = (page: Page, title: string) => page.getByRole('listitem').filter({ has: page.getByRole('checkbox', { name: title, exact: true }) })
 
+/**
+ * Every mark on every meta line keeps its word: the time, the night's mark,
+ * the category, core, the note, a book's chapter, the length. On a 375px
+ * phone a night's card carries all of them, and the line takes a second row
+ * rather than cutting each to a letter and dots. Only a box that hides its
+ * overflow can cut a word, so that is what is asked.
+ */
+async function noMetaCut(page: Page, what: string) {
+  const cut = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.task-list > li .task-meta > *')]
+      .filter(el => getComputedStyle(el).overflow !== 'visible' && el.offsetWidth > 1 && el.scrollWidth > el.clientWidth + 1)
+      .map(el => el.textContent?.trim()),
+  )
+  expect(cut, `${what}: no mark on a meta line is cut short`).toEqual([])
+}
+
 /** The kind's own blocks as the date holds them: the reading block is its book. */
 const ownTitles = (kind: Kind) => kind.blocks.filter(b => !b.afterMidnight).map(b => (b.library ? BOOK : b.title)).sort()
 
@@ -297,6 +313,7 @@ test('each date holds its kind: its blocks, the night before on its morning, the
       routineIds.set(routine.title, task.routineId!)
     }
     if (weekday === 0) expect(there, `${what} is a Sunday`).toEqual([])
+    await noMetaCut(page, what)
     // The grey band the day wakes from ends at this kind's waking hour.
     const bands = await sleepBands(page, phone)
     expect(bands.length, `${what} draws its sleep`).toBeGreaterThan(0)
@@ -483,6 +500,7 @@ test('opened at half past two in the first night, today is the night\'s morning:
   // What is running now is said on the first screen.
   const running = kind.blocks.filter(b => b.afterMidnight && b.time && minutes(b.time) <= 150).sort((a, b) => minutes(b.time!) - minutes(a.time!))[0]
   if (running) await expect(page.getByText(running.title).filter({ visible: true }).first()).toBeVisible()
+  await noMetaCut(page, `${morning} at 02:30`)
 })
 
 test('the date after the nights, which the roster does not name yet, holds the night\'s hours and no kind of its own', async ({ page }, info) => {

@@ -28,7 +28,9 @@ const FILE = JSON.stringify({
       blocks: [
         { time: '18:00', title: 'Travel in', minutes: 45 },
         { time: '19:00', title: 'Shift', minutes: 720, core: true, ongoing: true },
-        { time: '02:30', title: 'Snack', minutes: 20, afterMidnight: true },
+        // A note and the core mark, so its card carries every mark a night's card can: the night's letter and
+        // words, the category, core, the note and the length - on a 375px phone more than one line holds.
+        { time: '02:30', title: 'Snack', minutes: 20, afterMidnight: true, category: 'Meals', core: true, note: 'Small on purpose.' },
         { time: '07:15', title: 'Travel home', minutes: 25, afterMidnight: true },
       ],
     },
@@ -62,6 +64,14 @@ test("opened at half past two in a night shift, today is the night's morning: it
   await expect(page.getByText(/Snack/).filter({ visible: true }).first()).toBeVisible()
   // And on a desktop, where the grid stands beside the list, the shift's last hours at its top.
   if (info.project.name === 'desktop') await expect(page.getByText(/Shift/).filter({ visible: true }).first()).toBeVisible()
+  // Every mark on a meta line keeps its word - the night's, the category, core, the note - on the
+  // phone too, where the line takes a second row rather than cutting each of them to a letter and dots.
+  const cut = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.task-list > li .task-meta > *')]
+      .filter(el => getComputedStyle(el).overflow !== 'visible' && el.offsetWidth > 1 && el.scrollWidth > el.clientWidth + 1)
+      .map(el => el.textContent?.trim()),
+  )
+  expect(cut, 'no mark on a meta line is cut short').toEqual([])
 })
 
 /**

@@ -54,6 +54,26 @@ test('phone: the journal opens, takes a sentence and closes, with nothing scroll
   expect(written).toEqual(['Rained all afternoon. Walked anyway.'])
 })
 
+/**
+ * The whole journal on a phone is a column: the month, then the day's box
+ * under it. Found on the last evening before the freeze: the body kept the
+ * desktop's wrap while the phone turned it into a column, and a column that
+ * wraps breaks into columns - the month's box was cut to what was left and
+ * the writing box was painted over its last rows.
+ */
+test('phone: on the full journal the writing box stands under the month, not over its last rows', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'the phone walk')
+  await openFreshAt(page, wednesdayAt(22))
+  await stampWorkingDay(page)
+  await page.getByRole('button', { name: 'Journal' }).click()
+  await page.getByRole('button', { name: 'Open full' }).click()
+  const box = page.getByRole('textbox', { name: /^Journal for / })
+  await expect(box).toBeVisible()
+  const month = (await page.locator('.journal-view-side .mini-calendar').boundingBox())!
+  const write = (await box.boundingBox())!
+  expect(write.y, 'the writing box starts under the month').toBeGreaterThanOrEqual(month.y + month.height)
+})
+
 test('the evening card asks nothing, and offers only the way out of the day', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'the phone walk')
   await openFreshAt(page, wednesdayAt(22))
