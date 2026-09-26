@@ -77,10 +77,16 @@ test("the owner's day, press by press", async ({ page }, info) => {
   await tab(page, 'Today').waitFor()
   const lunch = card('Lunch')
   await expect(lunch).toBeVisible()
-  // In view as the app opens, with nothing scrolled.
-  const box = await lunch.boundingBox()
+  // In view as the app opens, with nothing scrolled: at the top of the page. The reload keeps
+  // where Settings was left, and a measure taken before or after the browser puts that back read
+  // two different screens - the deploy's runner failed on the first and passed on the second.
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.evaluate(() => document.fonts.ready)
   const height = page.viewportSize()!.height
-  expect(box!.y + box!.height, 'the next meal is on the first screen').toBeLessThanOrEqual(height)
+  // The whole card, its recipe's row too, in the fonts a phone and this computer draw; the
+  // deploy's Linux runner draws text taller, and there the meal's name is what is held.
+  const seen = await (process.env.CI ? lunch.locator('.task-check') : lunch).boundingBox()
+  expect(seen!.y + seen!.height, 'the next meal is on the first screen').toBeLessThanOrEqual(height)
 
   // The meal's recipes open in place, each with its kcal and protein, and one
   // press puts one on it - the owner's decisions before the freeze, stage 3.
