@@ -9,10 +9,12 @@ are. How the app got here, version by version, is
 [`HISTORY.md`](HISTORY.md): written as each version was done, so the code it
 names is the code of that time.
 
-**Last updated:** 2026-09-26, the last work before the freeze - the owner's
-four stages after the shift, written up in
-[`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md), "After the shift", and in the
-section after the shift's. The freeze begins on Monday 2026-09-28.
+**Last updated:** 2026-09-26, the last evening before the freeze - the
+owner's week lived on the real file, a fresh look at every screen, and the
+handover, written up in [`SHIFT-2026-09-25.md`](SHIFT-2026-09-25.md), "The
+last evening before the freeze". The freeze begins on Monday 2026-09-28,
+on the tree tagged `v2.45-freeze`; [`FREEZE.md`](FREEZE.md) is its one
+page.
 
 ## Freeze nuo 2026-09-28: kas leidziama (bug fix, duomenu saugumas, docs) ir kas ne (naujos funkcijos, jos eina i BACKLOG parking skyriu)
 
@@ -22,6 +24,10 @@ BACKLOG. The heading is the owner's, word for word.*
 
 From Monday 2026-09-28 Dienius gets no new features. Everything that is
 here has to stay reliable, fast, and clear to whoever picks it up next.
+The tree the freeze starts from is tagged `v2.45-freeze` - v2.45 is the
+last version with anything new in it - and [`FREEZE.md`](FREEZE.md) is
+the one page for it: what the app does on the first day, how a bug is
+reported, what is allowed, and where things wait.
 
 **Allowed:**
 
@@ -266,6 +272,40 @@ followed, each pushed on its own with every gate green - SHIFT-2026-09-25.md,
   left.
 - **The freeze begins on Monday 2026-09-28** - the first section above.
 
+## The last evening before the freeze
+
+2026-09-26, the evening before it, in four stages, each pushed on its own
+with every gate green - SHIFT-2026-09-25.md, "The last evening before the
+freeze":
+
+- **The owner's week lived on the real file** (`e2e/owners-freeze-week.e2e.ts`,
+  on a 375px phone and a desktop, skipped where the file is not): the last
+  free day before the nights, the first night, the night after a night and
+  the day after the nights, each with its blocks, the night's hours the
+  morning after, the gym at the kind's time, the sleep it wakes from and
+  the book on its reading block; the close card at each kind's time and
+  never in a shift; every meal choosing among Kitchen's recipes of its kind
+  with kcal and protein, kept; the app at half past two in the night. All
+  held. Found: the first screen had been measured to the window's foot, not
+  to the phone's bar - both walks hold the meal as the card after the
+  running one now, the whole card on a desktop's first screen, and write
+  the phone's fold down, since the runner's fonts put even the generic
+  day's meal under the bar - and on the owner's kinds at waking the next
+  meal is one flick under it (BACKLOG, Parked); the roster ends at the
+  second night, so the day after the nights has no kind until the file
+  names it (OPEN-QUESTIONS).
+- **A fresh look at every screen**, both sizes, both themes: three things
+  drawn broken, each fixed with a test that failed first (DECISIONS "Three
+  things a fresh look found on the last evening before the freeze") - a
+  phone's meta line cut every mark to a letter and dots on a night's card
+  and a reading block; the journal's page on a phone painted the writing
+  box over the month's last rows; Review on a desktop had stood its
+  readings in a column of their own widths since one look, its wide frame
+  overridden by a later rule.
+- **The handover**: FREEZE.md, this file, the tag `v2.45-freeze`.
+- **The report**: SHIFT-2026-09-25.md, with the five minutes the owner
+  checks by hand on Sunday.
+
 ---
 
 ## 1. What Dienius is
@@ -374,6 +414,7 @@ after that a version is found by its number in the commit messages
 
 | Version | What it was |
 |---|---|
+| **The last evening** | 2026-09-26: the owner's week lived on the real file, three things drawn broken since one look fixed, the handover; the tag `v2.45-freeze` - SHIFT-2026-09-25.md, FREEZE.md |
 | **The shift** | 2026-09-25: the file pasted again, the archive, a reading block's list, four defects, and the owner's month in a test - SHIFT-2026-09-25.md |
 | **The freeze preparation** | 2026-09-23 to 2026-09-28: every backup format since v2.20 proven, screens that fail alone, the phone with no network and a deploy that takes over, Lighthouse and the keyboard, dead code out, these documents |
 | **One look** | Eight stages, done 2026-09-23: the whole app made one - on a desktop no page scrolls, a row stays a row, nothing is stretched, one left line, one height in a row |
@@ -442,12 +483,14 @@ after that a version is found by its number in the commit messages
 
 ### Nothing is half-built
 
-Checked, not assumed, before the freeze (2026-09-26):
-**3681 unit tests in 248 files**, **167 browser tests** on a desktop and a
+Checked, not assumed, on the last evening before the freeze (2026-09-26):
+**3681 unit tests in 248 files**, **181 browser tests** on a desktop and a
 phone (and 8 unit tests skipped on purpose: a backup from before v2.29 is
 the same file back only after one import, not at once -
-`lib/backupVersions.test.ts`; and the browser walks that have nothing to
-say on one of the two sizes skip there), a clean typecheck and build, and
+`lib/backupVersions.test.ts`; and 19 browser walks skipped on purpose,
+where a walk has nothing to say on one of the two sizes - the walks that
+read the owner's file skip on any other machine besides), a clean
+typecheck and build, and
 every measuring pass at zero - the sweep at four desktop sizes and on the
 phone, the keyboard walk over 39 screens, the precision pass, the three
 text sizes, and the privacy guard.
