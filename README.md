@@ -177,7 +177,7 @@ Requires Node 22 or newer.
 
 ## License
 
-**[MIT](LICENSE)** - © 2026 Quicasha.
+**[MIT](LICENSE)**.
 
 In one sentence: take it, change it, ship it, sell it. No permission needed
 and nothing owed. Keep the copyright line and the license text with any copy
