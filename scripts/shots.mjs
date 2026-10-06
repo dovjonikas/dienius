@@ -7,7 +7,7 @@ import { createServer } from 'vite'
  * The README's screenshots, produced rather than taken.
  *
  * `npm run shots` starts the dev server, opens the sample fortnight, and
- * writes eight PNGs into docs/screenshots/. Every one of them is of the same
+ * writes ten PNGs into docs/screenshots/. Every one of them is of the same
  * afternoon: the clock is pinned to a Wednesday at 15:00 before the page
  * loads, so the demo seeds around that day, the now line sits where it sits,
  * the running block is the same block, and running this twice produces the
@@ -84,6 +84,19 @@ async function main() {
       await page.getByRole('heading', { name: 'Review' }).waitFor()
       await settle(page)
       await save(page, 'review.png')
+
+      // Kitchen and North, since 2026-10-06: the recipes by meal with their
+      // numbers, and the one text on its cards - two of the places a reader
+      // of the README had no picture of.
+      await tab(page, 'Kitchen')
+      await page.getByRole('button', { name: 'Paste many' }).waitFor()
+      await settle(page)
+      await save(page, 'kitchen.png')
+
+      await tab(page, 'North')
+      await page.getByRole('button', { name: 'Replace text' }).waitFor()
+      await settle(page)
+      await save(page, 'north.png')
     })
 
     await shoot(browser, { viewport: DESKTOP, colorScheme: 'light' }, async page => {
