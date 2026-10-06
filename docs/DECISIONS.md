@@ -5738,3 +5738,40 @@ numbers to the report, since what stands above the bar depends on the
 fonts - on the deploy's Linux runner the generic day's meal name is under
 it too. The owner day walk had measured the whole card to the window and
 passed with the card's recipe row under the bar.
+
+## The gap after waking has its floor, and the two-line floor is read off the tokens
+
+2026-10-06, under the freeze, from the README's own pictures: on every
+desktop day since one look, the first block's title had the "30 min free"
+of the gap before it painted under it, and every hour-long block drew its
+title and its times with their descenders shaved. Two causes, both fixed
+with tests that failed first; neither adds anything.
+
+**A gap's box is the layout's.** `computeVerticalLayout` floors the
+stretch between two clusters at the gap floor, 28px on a mouse and 44 on a
+finger, and places everything after it from there - and floored nothing
+before the first cluster or after the last, while the grid draws the free
+time after waking as a gap all the same. Every button carries the 44px
+minimum a finger needs, so on a mouse each gap's box stood 16px taller than
+the 28 the layout had reserved and ran into the block under it; and the
+gap after waking, drawn on a day fitted to its window where that stretch
+had no pixels at all, stood wholly over the first block. The grid hands
+the layout the gaps it draws now (`flooredGaps`), the lead and the tail
+stretches are split around them with the gap's own part at the floor, the
+gap's rule in the stylesheet lets the layout decide its height, and the
+grid draws each gap at the layout's pixels and not a floor of its own.
+`timelineLayout.test.ts` holds the gap after waking at its floor on a
+dense day; `e2e/demo.e2e.ts` holds that no gap's box stands over a block
+at 1366x768, 1440x900 and 1920x1080.
+
+**The two-line floor is summed from the stylesheet.** It was 48, the sum
+of 6px of padding, a 13px title at 1.4, a 2px gap and an 11px time line at
+1.4; one look made the padding a step of the scale and the gap a small
+step, and the two lines needed 56 in a box of 48, so both shrank and lost
+their descenders - which the sweep takes as shortened on purpose, since the
+lines end in an ellipsis. `twoLinesPx` sums the hairline, the padding,
+the step between the lines and the two lines at the interface line height
+from the tokens themselves now, and both lines say that line height rather
+than leaving it to the face, so the floor and the stylesheet cannot drift
+apart again and the figure moves with the text size and the density.
+`e2e/demo.e2e.ts` holds every block's two lines whole.

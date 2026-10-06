@@ -104,22 +104,29 @@ const TIMES_FROM_MINUTES = 60
 
 /**
  * The drawn height a block needs for its times to have a line of their own
- * under the title: 6px of padding above and below, a 13px title at 1.4,
- * the 2px gap and an 11px time line at 1.4 come to 48. Under this the
- * times go beside the title instead, never away - `timeline-anchor-inline`
- * in the stylesheet - because a block with one line of room still has a
- * line, and a time is short enough to share it. It was 40, which is what a
- * two-line block looked as if it needed and eight pixels less than it
- * does, and "Deep work block" at 41px carried half a time line under its
- * title for a version.
+ * under the title: the hairline border above and below, a step of padding
+ * above and below, a 13px title at the interface line height, the small
+ * step between the lines, and an 11px time line at the same height - 2 +
+ * 16 + 18.2 + 4 + 15.4, which is 56. Under this the times go beside the
+ * title instead, never away - `timeline-anchor-inline` in the stylesheet -
+ * because a block with one line of room still has a line, and a time is
+ * short enough to share it. It was 40, which is what a two-line block
+ * looked as if it needed and eight pixels less than it does, and "Deep work
+ * block" at 41px carried half a time line under its title for a version.
+ * Then it was 48, summed over 6px of padding and a 2px gap, and one look
+ * made the padding a step of the scale and the gap a small step: 56 was
+ * needed, 48 was reserved, and both lines shrank into it and lost their
+ * descenders on every hour-long block of every desktop day, from one look
+ * to 2026-10-06. The sweep takes a line that ends in an ellipsis as
+ * shortened on purpose, so it never said.
  *
- * It is the height at the middle text size. See `twoLinesPx` below for what
- * happens at the other two.
+ * This is the figure where there is no stylesheet to read, which is jsdom:
+ * the tests set block heights themselves and are asking about the
+ * arithmetic, not about the tokens. In a browser `twoLinesPx` sums it from
+ * the tokens themselves, so the floor cannot drift from the stylesheet
+ * again, and moves with the text size and the density.
  */
-const TWO_LINES_PX = 48
-
-/** The `--t-sm` the 48 above was measured against. */
-const TWO_LINES_TITLE_PX = 13
+const TWO_LINES_PX = 56
 
 /**
  * The same figure at whatever text size is set.
@@ -146,8 +153,17 @@ const TWO_LINES_TITLE_PX = 13
  */
 function twoLinesPx(): number {
   if (typeof document === 'undefined') return TWO_LINES_PX
-  const title = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-sm'))
-  return title ? Math.round(TWO_LINES_PX * (title / TWO_LINES_TITLE_PX)) : TWO_LINES_PX
+  const root = getComputedStyle(document.documentElement)
+  const token = (name: string) => parseFloat(root.getPropertyValue(name))
+  const hairline = token('--hairline')
+  const padding = token('--s2')
+  const between = token('--s1')
+  const title = token('--t-sm')
+  const time = token('--t-xs')
+  const lineHeight = token('--lh-ui')
+  const parts = [hairline, padding, between, title, time, lineHeight]
+  if (!parts.every(Number.isFinite)) return TWO_LINES_PX
+  return Math.ceil(2 * hairline + 2 * padding + between + title * lineHeight + time * lineHeight)
 }
 
 /**
@@ -715,6 +731,10 @@ export function TimelineGrid({
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
     unsizedAnchorFloorPx,
     gapFloorPx: unsizedAnchorCount > 0 ? 0 : gapMinHeightPx,
+    // Every gap the grid draws, the one after waking and the one before
+    // sleep included, so the layout reserves each its floor and the button
+    // drawn on it never runs over the block under it.
+    flooredGaps: gaps.map(gap => ({ start: gap.startMinutes, end: gap.endMinutes })),
     // A block an hour or longer is floored at two lines, so its times keep
     // a line of their own under the title however dense the day is drawn.
     // A shorter block says its times beside the title on its one line and
@@ -1166,7 +1186,11 @@ export function TimelineGrid({
             {gaps.map(gap => {
               const top = vertical.topPx(gap.startMinutes)
               const bottom = vertical.topPx(gap.endMinutes)
-              const height = Math.max(bottom - top, gapMinHeightPx)
+              // The layout's own pixels, which already hold the gap floor
+              // (flooredGaps above): a floor added here, over pixels the
+              // layout had not reserved, is how the gap after waking stood
+              // over the first block's title until 2026-10-06.
+              const height = bottom - top
               const isOpen = openGapStart === gap.startMinutes
               const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to fill this time.`
               // Where the words go so the now line never runs through them,
