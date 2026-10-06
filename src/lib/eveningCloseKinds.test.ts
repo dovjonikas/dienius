@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { actions, getData } from './store'
 import { defaultData } from './storage'
 import { DEFAULT_EVENING_CLOSE, closingAt, closingDay } from './eveningClose'
@@ -73,9 +73,18 @@ function closes(today: string, clock: string, dismissed: (date: string) => boole
 
 beforeEach(() => {
   localStorage.clear()
+  // The clock stands before the roster's first date: a file pasted on a later day leaves the dates
+  // behind it as they were lived, which is to say empty here - this suite failed the morning of
+  // 6 October, the day after the roster's Monday, with every date it reads not stamped at all.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 1, 6, 0))
   actions.resetForTests(defaultData())
   const { read } = actions.importTemplatesJson(FILE)
   expect(read.error).toBeUndefined()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('the card comes half an hour before the sleep that ends the day', () => {
