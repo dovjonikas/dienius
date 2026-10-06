@@ -555,6 +555,15 @@ export function computeVerticalLayout(
     /** Floor for the real, interior gap between two clusters. 0 when the day draws no gaps at all. */
     gapFloorPx: number
     /**
+     * The gaps the grid draws, so that the ones before the first cluster and
+     * after the last are floored too. A stretch between two clusters has the
+     * floor whole; the free half hour after waking lies before the first
+     * cluster, and until 2026-10-06 nothing reserved it - on a day fitted to
+     * its window it had no pixels, the grid floored its button anyway, and
+     * the button stood over the first block's title.
+     */
+    flooredGaps?: readonly Interval[]
+    /**
      * The floor for a sized anchor at least `longAnchorMinutes` long - two
      * lines, because such a block carries its times under its title
      * (CONVENTIONS section 4). Both or neither: absent, every sized anchor
@@ -574,17 +583,35 @@ export function computeVerticalLayout(
   }
   const within = (cluster: AnchorCluster) => clusterSegments(cluster, floorFor)
 
+  // A stretch outside every cluster, split around the drawn gaps inside it:
+  // each gap's own part at the gap floor, the rest - sleep, the buffer - at none.
+  const aroundGaps = (stretch: Interval): Array<{ start: number; end: number; floorPx: number }> => {
+    const inside = (opts.flooredGaps ?? [])
+      .map(g => ({ start: Math.max(g.start, stretch.start), end: Math.min(g.end, stretch.end) }))
+      .filter(g => g.end > g.start)
+      .sort((a, b) => a.start - b.start)
+    const parts: Array<{ start: number; end: number; floorPx: number }> = []
+    let at = stretch.start
+    for (const g of inside) {
+      if (g.start > at) parts.push({ start: at, end: g.start, floorPx: 0 })
+      parts.push({ start: g.start, end: g.end, floorPx: opts.gapFloorPx })
+      at = g.end
+    }
+    if (stretch.end > at || parts.length === 0) parts.push({ start: at, end: stretch.end, floorPx: 0 })
+    return parts
+  }
+
   const segments: Array<{ start: number; end: number; floorPx: number }> = []
   if (clusters.length === 0) {
     segments.push({ start: window.start, end: window.end, floorPx: 0 })
   } else {
-    segments.push({ start: window.start, end: clusters[0].start, floorPx: 0 })
+    segments.push(...aroundGaps({ start: window.start, end: clusters[0].start }))
     segments.push(...within(clusters[0]))
     for (let i = 1; i < clusters.length; i++) {
       segments.push({ start: clusters[i - 1].end, end: clusters[i].start, floorPx: opts.gapFloorPx })
       segments.push(...within(clusters[i]))
     }
-    segments.push({ start: clusters[clusters.length - 1].end, end: window.end, floorPx: 0 })
+    segments.push(...aroundGaps({ start: clusters[clusters.length - 1].end, end: window.end }))
   }
 
   const breakpoints: Array<{ real: number; px: number }> = [{ real: segments[0].start, px: 0 }]

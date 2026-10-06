@@ -39,6 +39,51 @@ for (const viewport of [
   })
 }
 
+/**
+ * The grid's boxes keep to the layout's. A gap stands on the pixels the
+ * layout gave it and never over the block under it, and a long block's two
+ * lines - its title and its times - are whole. Found on 2026-10-06 in the
+ * README's own pictures: every gap carried a 44px minimum written for a
+ * finger while the layout had reserved 28px for a mouse, so each gap's box
+ * ran into the block under it and the leading gap's label stood under the
+ * first block's title; and one look's spacing tokens had made a two-line
+ * block need more than its 48px floor, so both lines shrank and lost their
+ * descenders on every hour-long block. The sweep sees neither: a gap's label
+ * is hidden from readers, and a shrunken line ends in an ellipsis, which it
+ * takes as shortened on purpose.
+ */
+for (const viewport of [
+  { width: 1366, height: 768 },
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`no gap stands over a block and no line of a block is shorter than its text at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport)
+    await openDemo(page)
+    const found = await page.evaluate(() => {
+      const box = (el: Element) => el.getBoundingClientRect()
+      const anchors = [...document.querySelectorAll('.timeline-anchor')]
+      const over: string[] = []
+      for (const gap of document.querySelectorAll('.timeline-gap')) {
+        const g = box(gap)
+        for (const anchor of anchors) {
+          const b = box(anchor)
+          const y = Math.min(g.bottom, b.bottom) - Math.max(g.top, b.top)
+          const x = Math.min(g.right, b.right) - Math.max(g.left, b.left)
+          if (y > 1 && x > 0) over.push(`${gap.textContent?.trim()} over ${anchor.textContent?.trim().slice(0, 24)} by ${Math.round(y)}px`)
+        }
+      }
+      const cut: string[] = []
+      for (const line of document.querySelectorAll<HTMLElement>('.timeline-anchor-title, .timeline-anchor-time')) {
+        if (line.scrollHeight > line.clientHeight + 1) cut.push(`${line.textContent?.trim().slice(0, 24)}: ${line.clientHeight} of ${line.scrollHeight}px`)
+      }
+      return { over, cut }
+    })
+    expect(found.over, 'no gap stands over a block').toEqual([])
+    expect(found.cut, 'no line of a block is shorter than its text').toEqual([])
+  })
+}
+
 test('at most one notice sits above the day', async ({ page }) => {
   await openDemo(page)
   const visible = page.locator('.day-notices > *').filter({ visible: true })

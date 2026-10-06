@@ -284,6 +284,23 @@ test('a gap far above the floor is not inflated: positions match plain proportio
   expect(vertical.totalHeightPx).toBeCloseTo(totalMinutes * OPTS.pxPerMinute, 5)
 })
 
+test('the gap between waking and the first block is floored like a gap between two blocks', () => {
+  // Found on 2026-10-06 in the README's own pictures: the free half hour after
+  // waking is a gap the grid draws, and the layout floored only the stretches
+  // between two clusters - so on a day fitted to its window that gap had no
+  // pixels, the grid floored its button anyway, and the button stood over
+  // the first block's title.
+  const sleep = { profiles: [{ id: 'night', name: 'Night', window: { start: '23:00', end: '07:00' } }] }
+  const layout = computeTimelineLayout([anchor('Coffee', '07:30', 20), anchor('Commute', '08:00', 45)], 'night', sleep)
+  const first = layout.gaps[0]
+  expect(first).toMatchObject({ startMinutes: 7 * 60, endMinutes: 7 * 60 + 30 })
+  const dense = { ...OPTS, pxPerMinute: 0.1, flooredGaps: layout.gaps.map(g => ({ start: g.startMinutes, end: g.endMinutes })) }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, dense)
+  expect(vertical.topPx(first.endMinutes) - vertical.topPx(first.startMinutes)).toBeGreaterThanOrEqual(OPTS.gapFloorPx)
+  // And the block after it starts where the gap ends, not under it.
+  expect(vertical.topPx(layout.anchors[0].startMinutes)).toBeGreaterThanOrEqual(vertical.topPx(first.endMinutes))
+})
+
 test.each([15, 25, 35])(
   'a %i-minute gap gets its full 44px floor and the following anchor never overlaps it',
   gapMinutes => {

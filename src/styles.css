@@ -2245,6 +2245,14 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   margin: 0 var(--s2) 0 0;
   border: none;
   border-radius: var(--r-control);
+  /* Its height is the layout's, and only the layout's: computeVerticalLayout
+     floors a gap at 28px on a mouse and 44px on a finger (gapMinHeightPx in
+     TimelineGrid.tsx) and places the block under it from there. Every
+     button carries a 44px minimum for a finger, and on a mouse that minimum
+     stood over the 28px the layout had given, so each gap's box ran 16px
+     into the block under it and the first gap's label stood under the first
+     block's title - on every desktop, from one look to 2026-10-06. */
+  min-height: 0;
   /* Barely there at rest. A gap is the absence of something, and drawing it
      as a filled panel made empty time look like a third kind of block sitting
      between the real ones. It brightens under the pointer, where it becomes a
@@ -2444,6 +2452,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .timeline-anchor-title {
   font-size: var(--t-sm);
   font-weight: var(--w-strong);
+  /* Said, not left to the face: twoLinesPx in TimelineGrid.tsx sums this
+     line and the time's from the tokens, and a line box the face decides
+     is one the floor cannot know. */
+  line-height: var(--lh-ui);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2452,6 +2464,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .timeline-anchor-time {
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
+  line-height: var(--lh-ui);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
